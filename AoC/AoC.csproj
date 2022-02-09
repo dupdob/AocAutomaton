@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>default</LangVersion>
+        <PackageVersion>0.0.1</PackageVersion>
+        <Title>Advent Of Code automaton</Title>
+        <Authors>Cyrille DUPUYDAUBY</Authors>
+        <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.IO.Abstractions" Version="16.1.10"/>
+    </ItemGroup>
+
+</Project>
