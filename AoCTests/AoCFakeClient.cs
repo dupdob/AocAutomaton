@@ -26,41 +26,42 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace AoC.AoCTests;
-
-public sealed class AoCFakeClient : AoCClientBase
+namespace AoC.AoCTests
 {
-    private readonly Dictionary<int, string> _responseFile = new();
-    private string _inputData;
-
-    public AoCFakeClient(int year) : base(year)
+    public sealed class AoCFakeClient : AoCClientBase
     {
-    }
+        private readonly Dictionary<int, string> _responseFile = new();
+        private string _inputData;
 
-    public int NbRequest { get; private set; }
+        public AoCFakeClient(int year) : base(year)
+        {
+        }
 
-    public void SetInputData(string data)
-    {
-        _inputData = data;
-    }
+        public int NbRequest { get; private set; }
 
-    public void SetAnswerResponseFilename(int id, string fileName)
-    {
-        _responseFile[id] = fileName;
-    }
+        public void SetInputData(string data)
+        {
+            _inputData = data;
+        }
 
-    public override Task<string> RequestPersonalInput()
-    {
-        NbRequest++;
-        return Task.FromResult(_inputData);
-    }
+        public void SetAnswerResponseFilename(int id, string fileName)
+        {
+            _responseFile[id] = fileName;
+        }
 
-    public override Task<string> PostAnswer(int id, string value)
-    {
-        return File.ReadAllTextAsync(_responseFile[id]);
-    }
+        public override Task<string> RequestPersonalInput()
+        {
+            NbRequest++;
+            return Task.FromResult(_inputData);
+        }
 
-    public override void Dispose()
-    {
+        public override Task<string> PostAnswer(int id, string value)
+        {
+            return File.ReadAllTextAsync(_responseFile[id]);
+        }
+
+        public override void Dispose()
+        {
+        }
     }
 }

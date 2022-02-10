@@ -22,11 +22,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace AoC;
-
-public interface ISolver
+namespace AoC
 {
-    void SetupRun(Automaton automaton);
-    object GetAnswer1(string data);
-    object GetAnswer2(string data);
+    public interface ISolver
+    {
+        void SetupRun(Automaton automaton);
+        object GetAnswer1(string data);
+        object GetAnswer2(string data);
+    }
 }

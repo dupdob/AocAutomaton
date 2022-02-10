@@ -22,41 +22,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace AoC.AoCTests;
-
-internal class FakeSolver : ISolver
+namespace AoC.AoCTests
 {
-    private readonly object _answer1;
-    private readonly object _answer2;
-    private readonly int _day;
-
-    public FakeSolver(int day, object answer1, object answer2)
+    internal class FakeSolver : ISolver
     {
-        _day = day;
-        _answer1 = answer1;
-        _answer2 = answer2;
-    }
+        private readonly object _answer1;
+        private readonly object _answer2;
+        private readonly int _day;
 
-    public int GetAnswer1Calls { get; private set; }
-    public int GetAnswer2Calls { get; private set; }
+        public FakeSolver(int day, object answer1, object answer2)
+        {
+            _day = day;
+            _answer1 = answer1;
+            _answer2 = answer2;
+        }
 
-    public string InputData { get; private set; }
+        public int GetAnswer1Calls { get; private set; }
+        public int GetAnswer2Calls { get; private set; }
 
-    public void SetupRun(Automaton automaton)
-    {
-        automaton.Day = _day;
-    }
+        public string InputData { get; private set; }
 
-    public object GetAnswer1(string data)
-    {
-        InputData = data;
-        GetAnswer1Calls++;
-        return _answer1;
-    }
+        public void SetupRun(Automaton automaton)
+        {
+            automaton.Day = _day;
+        }
 
-    public object GetAnswer2(string data)
-    {
-        GetAnswer2Calls++;
-        return _answer2;
+        public object GetAnswer1(string data)
+        {
+            InputData = data;
+            GetAnswer1Calls++;
+            return _answer1;
+        }
+
+        public object GetAnswer2(string data)
+        {
+            GetAnswer2Calls++;
+            return _answer2;
+        }
     }
 }
