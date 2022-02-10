@@ -48,8 +48,12 @@ namespace AoC
         private Task<string> _myData;
         private Task _pendingWrite;
 
-        public Automaton(int year, AoCClientBase client = null, IFileSystem fileSystem = null)
+        public Automaton(int year = 0, AoCClientBase client = null, IFileSystem fileSystem = null)
         {
+            if (year == 0)
+            {
+                year = DateTime.Today.Year;
+            }
             _client = client ?? new AoCClient(year);
             _fileSystem = fileSystem ?? new FileSystem();
         }
@@ -58,7 +62,7 @@ namespace AoC
         private string DataPath => string.Format(_dataPathNameFormat, Day, _client.Year);
 
         /// <summary>
-        ///     Gets/sets the current day
+        /// xGets/sets the current day
         /// </summary>
         public int Day
         {

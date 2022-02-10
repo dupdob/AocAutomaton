@@ -54,6 +54,7 @@ namespace AoC
         }
 
         public abstract object GetAnswer1();
+        
         public abstract object GetAnswer2();
 
         /// <summary>
