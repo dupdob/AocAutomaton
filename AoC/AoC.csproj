@@ -7,9 +7,21 @@
         <Authors>Cyrille DUPUYDAUBY</Authors>
         <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.</Description>
         <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageProjectUrl>https://github.com/dupdob/AocAutomaton</PackageProjectUrl>
+        <PackageLicenseUrl></PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/dupdob/AocAutomaton.git</RepositoryUrl>
+        <RepositoryType>Git</RepositoryType>
+        <Copyright>© 2022 Cyrille Dupuydauby</Copyright>
+        <PackageTags>Aoc;C#</PackageTags>
+        <PackageReleaseNotes>First Release</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="System.IO.Abstractions" Version="16.1.10" />
     </ItemGroup>
 
