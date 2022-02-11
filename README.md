@@ -140,11 +140,13 @@ for each method.
 
 ### Solver with separated parser
 This abstract class offers a method to parse data outside of the solving logic.
-This design is perfect as soon as converting the input data to some specialized structure that
-will be stored as fields/properties.
+This design is perfect as soon as you want need to convert the input data to some
+specialized structure that will be stored as fields/properties.
 Parsing occurs only once per solver.
 
 ``` [Csharp]
+// this class definition is for documentation purpose
+// actual definition is different 
 public class SolverWithParser
 {
   // provides the puzzle data
@@ -158,5 +160,29 @@ public class SolverWithParser
   
   // parse the puzzle data
   protected abstract void Parse(string data);
+}
+```
+
+### Solver with line parser 
+This is a variant from the previous one. Most AoC puzzles use a data set
+consisting of one line records. Parsing will be implemented via the `ParseLine` method.
+It receives each line to parse, with its index and total number of lines.
+
+``` [Csharp]
+// this class definition is for documentation purpose
+// actual definition is different 
+public class SolverWithParser
+{
+  // provides the puzzle data
+  public abstract void SetupRun(Automaton automaton);
+  
+  // compute the answer to the first part
+  public abstract object GetAnswer1();
+
+  // compute the answer to the second part
+  public abstract object GetAnswer2();
+  
+  // parse a single line
+  protected abstract void ParseLine(string line, int index, int lineCount);
 }
 ```
