@@ -16,7 +16,7 @@
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -245,7 +245,7 @@ namespace AoC
             }
         }
 
-        private bool IsAcceptableInAFileName(string name)
+        private static bool IsAcceptableInAFileName(string name)
         {
             return name.Length <= 20 && name.All(character =>
                 char.IsDigit(character) || char.IsLetter(character) || "-_#*".Contains(character));
@@ -343,13 +343,23 @@ namespace AoC
             return responseText;
         }
 
+        private static string AnalyseInvalidAnswer(string response)
+        {
+            if (response.Contains("500 Internal Server Error"))
+            {
+                Console.WriteLine("Internal Server Error. This may be an indication of an invalid session token.");
+                return response;
+            }
+            Console.WriteLine("Failed to parse response.");
+            return response;           
+        }
+        
         private static string ExtractAnswerText(string response)
         {
             var start = response.IndexOf("<article>", StringComparison.InvariantCulture);
             if (start == -1)
             {
-                Console.WriteLine("Failed to parse response.");
-                return response;
+                return AnalyseInvalidAnswer(response);
             }
 
             start += 9;
@@ -404,7 +414,7 @@ namespace AoC
         public Automaton RegisterTestResult(object result, int question = 1)
         {
             if (!_testData.ContainsKey(question))
-                throw new ApplicationException("You must call RegisterTestData before colling this method.");
+                throw new ApplicationException("You must call RegisterTestData before calling this method.");
 
             _testData[question][^1] = (_testData[question][^1].data, result);
             return this;

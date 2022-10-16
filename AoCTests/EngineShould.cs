@@ -38,6 +38,7 @@ namespace AoC.AoCTests
     {
         private const string GoodAnswerFile = "GoodAnswer.html";
         private const string WrongAnswerFile = "WrongAnswer.html";
+        private const string InternalErrorFile = "error500.html";
 
         private static MockFileSystem GetFileSystem()
         {
@@ -88,7 +89,7 @@ namespace AoC.AoCTests
         }
 
         [Test]
-        public void HandlerWrongAnswer()
+        public void HandleWrongAnswer()
         {
             var fakeClient = new AoCFakeClient(2015);
             var mockFileSystem = GetFileSystem();
@@ -109,7 +110,29 @@ namespace AoC.AoCTests
         }
 
         [Test]
-        public void HandlerGoodAnswer()
+        public void HandleError500()
+        {
+            var fakeClient = new AoCFakeClient(2015);
+            var mockFileSystem = GetFileSystem();
+            using var console = new CaptureConsole();
+
+            fakeClient.SetAnswerResponseFilename(1, InternalErrorFile);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 58, null);
+            engine.RunDay(() => algo);
+
+            Check.That(algo.GetAnswer1Calls).IsEqualTo(1);
+            Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
+
+            Check.That(console.Output).Contains("AoC site response");
+            Check.That(console.Output).Contains("Day 10-1:");
+            Check.That(mockFileSystem.AllFiles.Any(p => Regex.IsMatch(p, "Answer1.*\\.html")));
+            Check.That(console.Output).Contains("Internal Server Error");
+        }
+
+
+        [Test]
+        public void HandleGoodAnswer()
         {
             var fakeClient = new AoCFakeClient(2015);
             using var console = new CaptureConsole();

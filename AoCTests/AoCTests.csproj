@@ -8,9 +8,9 @@
 
         <LangVersion>9</LangVersion>
 
-        <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
-
         <OutputType>Library</OutputType>
+
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,6 +34,9 @@
         </None>
         <None Update="GoodAnswer.html">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="error500.html">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
