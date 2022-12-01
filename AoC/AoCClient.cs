@@ -64,7 +64,11 @@ namespace AoC
                 ["answer"] = value,
                 ["level"] = question.ToString()
             };
-            return _client.PostAsync(url, new FormUrlEncodedContent(data)).Result.Content.ReadAsStringAsync();
+
+            var content = new FormUrlEncodedContent(data);
+            content.Headers.Add("User-Agent", @"https://github.com/dupdob/AocAutomaton");
+            
+            return _client.PostAsync(url, content).Result.Content.ReadAsStringAsync();
         }
 
         public override void Dispose()
