@@ -60,6 +60,8 @@ namespace AoC.AoCTests
             return File.ReadAllTextAsync(_responseFile[id]);
         }
 
+        public override string GetSetupDocumentation() => "Nothing to setup for the fake client.";
+
         public override void Dispose()
         {
         }

@@ -258,7 +258,7 @@ namespace AoC
 
             var directoryName = Path.GetDirectoryName(DataCachePathName);
             if (!string.IsNullOrEmpty(directoryName) && !_fileSystem.Directory.Exists(directoryName))
-                _fileSystem.Directory.CreateDirectory(directoryName ?? throw new InvalidOperationException());
+                _fileSystem.Directory.CreateDirectory(directoryName);
             _pendingWrite = _fileSystem.File.WriteAllTextAsync(DataCachePathName, result);
             return result;
         }
@@ -283,8 +283,13 @@ namespace AoC
             var responseFilename = _fileSystem.Path.Combine(DataPath, $"Answer{question} for {answerId}.html");
             var responseText = PostAndRetrieve(question, value, responseFilename, out var responseTime);
             // extract the response as plain text
-            var resultText = ExtractAnswerText(responseText);
+            var (isOk, resultText) = ExtractAnswerText(responseText);
             OutputAoCMessage(resultText);
+            if (!isOk)
+            {
+                // technical error, so we do not save the result
+                return false;
+            }
             // did we answer too fast?
             var match = TooSoon.Match(resultText);
             while (match.Success)
@@ -311,8 +316,10 @@ namespace AoC
             var result = GoodAnswer.IsMatch(resultText);
 
             if (_pendingWrite is { IsCompleted: false })
+            {
                 // await the ongoing write
                 _pendingWrite.Wait();
+            }
 
             _pendingWrite = _fileSystem.File.WriteAllTextAsync(responseFilename, responseText);
             return result;
@@ -343,35 +350,44 @@ namespace AoC
             return responseText;
         }
 
-        private static string AnalyseInvalidAnswer(string response)
+        private string AnalyseInvalidAnswer(string response)
         {
             if (response.Contains("500 Internal Server Error"))
             {
-                Console.WriteLine("Internal Server Error. This may be an indication of an invalid session token.");
+                Console.WriteLine("AoC: Internal Server Error. This is likely an indication of a corrupted AOC session token. See below for setup documentation.");
+                Console.WriteLine(_client.GetSetupDocumentation());
+                return response;
+            }
+            if (response.Contains("400 Bad Request"))
+            {
+                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation   .");
+                Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
             }
             Console.WriteLine("Failed to parse response.");
             return response;           
         }
         
-        private static string ExtractAnswerText(string response)
+        private (bool isOk, string answer) ExtractAnswerText(string response)
         {
             var start = response.IndexOf("<article>", StringComparison.InvariantCulture);
             if (start == -1)
             {
-                return AnalyseInvalidAnswer(response);
+                // no text tag, this is a technical error
+                return (false, AnalyseInvalidAnswer(response));
             }
 
             start += 9;
             var end = response.IndexOf("</article>", start, StringComparison.InvariantCulture);
             if (end == -1)
             {
+                // no end tag, we got an incorrect response from server
                 Console.WriteLine("Failed to parse response.");
-                return response;
+                return (false, response);
             }
 
             response = response.Substring(start, end - start);
-            return Regex.Replace(response, @"<(.|\n)*?>", string.Empty);
+            return (true, Regex.Replace(response, @"<(.|\n)*?>", string.Empty));
         }
 
         /// <summary>

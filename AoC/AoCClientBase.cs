@@ -27,7 +27,6 @@ using System.Threading.Tasks;
 
 namespace AoC
 {
-
     public abstract class AoCClientBase : IDisposable
     {
         protected AoCClientBase(int year)
@@ -47,5 +46,7 @@ namespace AoC
 
         public abstract Task<string> RequestPersonalInput();
         public abstract Task<string> PostAnswer(int question, string value);
+
+        public abstract string GetSetupDocumentation();
     }
 }

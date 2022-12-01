@@ -32,16 +32,16 @@ namespace AoC
 {
     public sealed class AoCClient : AoCClientBase
     {
+        private const string EnvVarName = "AOC_SESSION";
         private readonly HttpClient _client;
         private readonly HttpClientHandler _handler;
         private readonly string _url;
 
         public AoCClient(int year) : base(year)
         {
-            var sessionId = Environment.GetEnvironmentVariable("AOC_SESSION");
+            var sessionId = Environment.GetEnvironmentVariable(EnvVarName);
             if (string.IsNullOrEmpty(sessionId))
-                throw new InvalidOperationException(
-                    "AOC_SESSION environment variable must contain an Advent Of Code session id.");
+                throw new InvalidOperationException(GetSetupDocumentation());
 
             _url = $"https://adventofcode.com/{year}/day/";
             _handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
@@ -66,6 +66,11 @@ namespace AoC
             };
             return _client.PostAsync(url, new FormUrlEncodedContent(data)).Result.Content.ReadAsStringAsync();
         }
+
+        public override string GetSetupDocumentation() =>
+            @$"Define an environment variable named {EnvVarName} which value is the Advent of Code session id.
+The session id is stored in a cookie, named 'session', valid for '.adventofcode.com'.
+To get a valid value, you must log through AoC site first.";
 
         public override void Dispose()
         {
