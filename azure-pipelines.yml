@@ -29,5 +29,6 @@ steps:
 
 - task: VSTest@2
   inputs:
+    testAssemblyVer2: '**\AoC*tests*.dll'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
