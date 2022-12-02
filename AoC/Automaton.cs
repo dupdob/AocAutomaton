@@ -39,7 +39,7 @@ namespace AoC
         // default input cache name
         // AoC answers RegEx
         private static readonly Regex GoodAnswer = new(".*That's the right answer!.*");
-        private static readonly Regex TooSoon = new(".*You have (\\d*)m? (\\d*)s? left to wait\\..*");
+        private static readonly Regex TooSoon = new(".*You have (\\d*)m? ?(\\d*)s? left to wait\\..*");
         private readonly AoCClientBase _client;
         private readonly IFileSystem _fileSystem;
         private readonly Dictionary<int, List<(string data, object result)>> _testData = new();
@@ -294,9 +294,15 @@ namespace AoC
             var match = TooSoon.Match(resultText);
             while (match.Success)
             {
+                var secondsToWait = int.Parse(match.Groups[1].Value);
+                if (!string.IsNullOrWhiteSpace(match.Groups[2].Value))
+                {
+                    // if there is a second value, the first one is in minutes.
+                    secondsToWait *= 60;
+                    secondsToWait+=int.Parse(match.Groups[2].Value);
+                }
                 // we need to wait.
-                responseTime += TimeSpan.FromSeconds(int.Parse(match.Groups[2].Value)) +
-                                TimeSpan.FromMinutes(int.Parse(match.Groups[1].Value));
+                responseTime += TimeSpan.FromSeconds(secondsToWait);
                 Console.WriteLine($"Wait until {responseTime}.");
                 // wait until we can try again
                 do
@@ -308,7 +314,14 @@ namespace AoC
                 _fileSystem.File.Delete(responseFilename);
                 // send our new answer
                 responseText = PostAndRetrieve(question, value, responseFilename, out responseTime);
+                // extract the response as plain text
+                (isOk, resultText) = ExtractAnswerText(responseText);
                 OutputAoCMessage(resultText);
+                if (!isOk)
+                {
+                    // technical error, so we do not save the result
+                    return false;
+                }
                 match = TooSoon.Match(resultText);
             }
 
