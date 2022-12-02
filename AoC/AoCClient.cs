@@ -65,10 +65,18 @@ namespace AoC
                 ["level"] = question.ToString()
             };
 
-            var content = new FormUrlEncodedContent(data);
-            content.Headers.Add("User-Agent", @"https://github.com/dupdob/AocAutomaton");
-            
-            return _client.PostAsync(url, content).Result.Content.ReadAsStringAsync();
+            var query = new HttpRequestMessage(HttpMethod.Post, url);
+            query.Headers.TryAddWithoutValidation("User-Agent", @"https://github.com/dupdob/AocAutomaton");
+            query.Content = new FormUrlEncodedContent(data);
+
+            return _client.SendAsync(query).ContinueWith(t =>
+            {
+                var response = t.Result;
+                if (response.StatusCode == HttpStatusCode.OK)
+                    return response.Content.ReadAsStringAsync().Result;
+                throw new InvalidOperationException(
+                    $"Error while posting answer: {response.StatusCode} - {response.ReasonPhrase}");
+            });
         }
 
         public override string GetSetupDocumentation() =>
