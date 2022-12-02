@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <LangVersion>9</LangVersion>
-        <PackageVersion>0.0.3</PackageVersion>
+        <PackageVersion>0.0.3.1</PackageVersion>
         <Title>Advent Of Code automaton</Title>
         <Authors>Cyrille DUPUYDAUBY</Authors>
         <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.</Description>
