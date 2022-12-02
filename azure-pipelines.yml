@@ -29,6 +29,6 @@ steps:
 
 - task: VSTest@2
   inputs:
-    testAssemblyVer2: '**\net6.0\AoCtests.dll'
+    testAssemblyVer2: '**\bin\**\net6.0\AoCtests.dll'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
