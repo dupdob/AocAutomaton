@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace AoC
@@ -49,6 +50,8 @@ namespace AoC
             // add our identifier to the request
             _handler.CookieContainer.Add(new Cookie("session",
                 sessionId, "/", ".adventofcode.com"));
+            _client.DefaultRequestHeaders.UserAgent.Add( new ProductInfoHeaderValue("AocAutomaton", this.GetType().Assembly.GetName().Version?.ToString()??"1.0"));
+            _client.DefaultRequestHeaders.UserAgent.Add( new ProductInfoHeaderValue(@"(https://github.com/dupdob/AocAutomaton)"));
         }
 
         public override Task<string> RequestPersonalInput()
@@ -64,6 +67,7 @@ namespace AoC
                 ["answer"] = value,
                 ["level"] = question.ToString()
             };
+
             return _client.PostAsync(url, new FormUrlEncodedContent(data)).Result.Content.ReadAsStringAsync();
         }
 

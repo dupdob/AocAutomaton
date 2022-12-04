@@ -3,6 +3,7 @@
 AoCAutomaton provides skeleton classes and interfaces that
 makes [Advent of Code](https://adventofcode.com/) even more enjoyable by 
 simplifying mundane tasks, so you can concentrate on solving the puzzle.
+It is available as a Nuget package, named **AOC**.
 
 ## Details
 AoCAutomaton implements an overall logic as well as some helpers.

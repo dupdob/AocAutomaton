@@ -30,7 +30,7 @@ namespace AoC.AoCTests
 {
     public sealed class AoCFakeClient : AoCClientBase
     {
-        private readonly Dictionary<int, string> _responseFile = new();
+        private readonly Dictionary<int, Queue<string>> _responseFile = new();
         private string _inputData;
 
         public AoCFakeClient(int year) : base(year)
@@ -46,7 +46,11 @@ namespace AoC.AoCTests
 
         public void SetAnswerResponseFilename(int id, string fileName)
         {
-            _responseFile[id] = fileName;
+            if (!_responseFile.ContainsKey(id))
+            {
+                _responseFile[id] = new Queue<string>();
+            }
+            _responseFile[id].Enqueue(fileName);
         }
 
         public override Task<string> RequestPersonalInput()
@@ -57,7 +61,7 @@ namespace AoC.AoCTests
 
         public override Task<string> PostAnswer(int id, string value)
         {
-            return File.ReadAllTextAsync(_responseFile[id]);
+            return File.ReadAllTextAsync(_responseFile[id].Dequeue());
         }
 
         public override string GetSetupDocumentation() => "Nothing to setup for the fake client.";

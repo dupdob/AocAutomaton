@@ -39,7 +39,8 @@ namespace AoC
         // default input cache name
         // AoC answers RegEx
         private static readonly Regex GoodAnswer = new(".*That's the right answer!.*");
-        private static readonly Regex TooSoon = new(".*You have (\\d*)m? (\\d*)s? left to wait\\..*");
+        private static readonly Regex AlreadyAnswered = new(".*You don't seem to be solving the right level\\..*");
+        private static readonly Regex TooSoon = new(".*You have (\\d*)m? ?(\\d*)s? left to wait\\..*");
         private readonly AoCClientBase _client;
         private readonly IFileSystem _fileSystem;
         private readonly Dictionary<int, List<(string data, object result)>> _testData = new();
@@ -281,22 +282,40 @@ namespace AoC
             var answerId = value;
             if (!IsAcceptableInAFileName(answerId)) answerId = answerId.GetHashCode().ToString();
             var responseFilename = _fileSystem.Path.Combine(DataPath, $"Answer{question} for {answerId}.html");
-            var responseText = PostAndRetrieve(question, value, responseFilename, out var responseTime);
-            // extract the response as plain text
-            var (isOk, resultText) = ExtractAnswerText(responseText);
-            OutputAoCMessage(resultText);
-            if (!isOk)
+            string resultText;
+            while (true)
             {
-                // technical error, so we do not save the result
-                return false;
-            }
-            // did we answer too fast?
-            var match = TooSoon.Match(resultText);
-            while (match.Success)
-            {
+                var responseText = PostAndRetrieve(question, value, responseFilename, out var responseTime);
+                // extract the response as plain text
+                bool isOk;
+                (isOk, resultText) = ExtractAnswerText(responseText);
+                OutputAoCMessage(resultText);
+                if (!isOk)
+                {
+                    // technical error, so we abort
+                    return false;
+                }
+                CacheResponse(responseFilename, responseText);
+                if (AlreadyAnswered.IsMatch(resultText))
+                {
+                    Console.WriteLine("Question is already answered, so we skip it.");
+                    return true;
+                }
+                // did we answer too fast?
+                var match = TooSoon.Match(resultText);
+                if (!match.Success)
+                {
+                    break;
+                }
+                var secondsToWait = int.Parse(match.Groups[1].Value);
+                if (!string.IsNullOrWhiteSpace(match.Groups[2].Value))
+                {
+                    // if there is a second value, the first one is in minutes.
+                    secondsToWait *= 60;
+                    secondsToWait+=int.Parse(match.Groups[2].Value);
+                }
                 // we need to wait.
-                responseTime += TimeSpan.FromSeconds(int.Parse(match.Groups[2].Value)) +
-                                TimeSpan.FromMinutes(int.Parse(match.Groups[1].Value));
+                responseTime += TimeSpan.FromSeconds(secondsToWait);
                 Console.WriteLine($"Wait until {responseTime}.");
                 // wait until we can try again
                 do
@@ -306,15 +325,14 @@ namespace AoC
 
                 // delete any cached response to ensure we post again
                 _fileSystem.File.Delete(responseFilename);
-                // send our new answer
-                responseText = PostAndRetrieve(question, value, responseFilename, out responseTime);
-                OutputAoCMessage(resultText);
-                match = TooSoon.Match(resultText);
             }
 
             // is it the correct answer ?
-            var result = GoodAnswer.IsMatch(resultText);
+            return GoodAnswer.IsMatch(resultText);
+        }
 
+        private void CacheResponse(string responseFilename, string responseText)
+        {
             if (_pendingWrite is { IsCompleted: false })
             {
                 // await the ongoing write
@@ -322,7 +340,6 @@ namespace AoC
             }
 
             _pendingWrite = _fileSystem.File.WriteAllTextAsync(responseFilename, responseText);
-            return result;
         }
 
         private static void OutputAoCMessage(string resultText)
