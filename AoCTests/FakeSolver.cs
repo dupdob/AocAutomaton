@@ -22,6 +22,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
+using System.Collections.Generic;
+
 namespace AoC.AoCTests
 {
     internal class FakeSolver : ISolver
@@ -29,27 +32,34 @@ namespace AoC.AoCTests
         private readonly object _answer1;
         private readonly object _answer2;
         private readonly int _day;
+        private readonly Action<Automaton> _testDataBuilder;
 
-        public FakeSolver(int day, object answer1, object answer2)
+        public FakeSolver(int day, object answer1, object answer2, Action<Automaton> testBuilder = null)
         {
             _day = day;
             _answer1 = answer1;
             _answer2 = answer2;
+            _testDataBuilder = testBuilder;
         }
-
+        
         public int GetAnswer1Calls { get; private set; }
+        
         public int GetAnswer2Calls { get; private set; }
 
         public string InputData { get; private set; }
 
+        public List<(int question, string data)> AllInputs = new();
+        
         public void SetupRun(Automaton automaton)
         {
             automaton.Day = _day;
+            _testDataBuilder?.Invoke(automaton);
         }
 
         public object GetAnswer1(string data)
         {
             InputData = data;
+            AllInputs.Add((1, data));
             GetAnswer1Calls++;
             return _answer1;
         }
@@ -57,6 +67,7 @@ namespace AoC.AoCTests
         public object GetAnswer2(string data)
         {
             GetAnswer2Calls++;
+            AllInputs.Add((2, data));
             return _answer2;
         }
     }

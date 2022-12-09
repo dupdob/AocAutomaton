@@ -205,8 +205,8 @@ namespace AoC
                 var answer = GetAnswer(testAlgo, id, data);
                 if (!answer.Equals(expected))
                 {
-                    Console.Error.WriteLine($"Test failed: got {answer} instead of {expected} using:");
-                    Console.Error.WriteLine(data);
+                    Console.WriteLine($"Test failed: got {answer} instead of {expected} using:");
+                    Console.WriteLine(data);
                     success = false;
                 }
                 else
@@ -414,8 +414,8 @@ namespace AoC
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
         private void InitiatePersonalInputFetching(int day)
         {
-            _testData.Clear();
             if (day == _client.Day || day == 0) return;
+            _testData.Clear();
             _client.SetCurrentDay(day);
             var fileName = DataCachePathName;
             _myData = _fileSystem.File.Exists(fileName)
@@ -424,7 +424,7 @@ namespace AoC
         }
 
         /// <summary>
-        ///     Registers test data so that they are used.
+        ///     Registers test data so that they are used for validating the solver
         /// </summary>
         /// <param name="data">input data as a string.</param>
         /// <param name="expected">expected result (either string or a number).</param>
@@ -436,6 +436,11 @@ namespace AoC
             return this;
         }
 
+        /// <summary>
+        ///     Registers test data so that they are used for validating the solver
+        /// </summary>
+        /// <param name="data">input data as a string.</param>
+        /// <param name="question">question id (1 or 2)</param>
         public Automaton RegisterTestData(string data, int question = 1)
         {
             if (!_testData.ContainsKey(question)) _testData[question] = new List<(string data, object result)>();
@@ -444,12 +449,28 @@ namespace AoC
             return this;
         }
 
-        public Automaton RegisterTestResult(object result, int question = 1)
+        /// <summary>
+        ///     Registers test result so that they are used for validating the solver
+        /// </summary>
+        /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
+        /// <param name="expected">expected result (either string or a number).</param>
+        /// <param name="question">question id (1 or 2)</param>
+        public Automaton RegisterTestResult(object expected, int question = 1)
         {
             if (!_testData.ContainsKey(question))
-                throw new ApplicationException("You must call RegisterTestData before calling this method.");
+            {
+                if (question == 2 && _testData.ContainsKey(1))
+                {
+                    // we assume the data is reused across questions
+                    RegisterTestData(_testData[1][^1].data, 2);
+                }
+                else
+                {
+                    throw new ApplicationException("You must call RegisterTestData before calling this method.");
+                }
+            }
 
-            _testData[question][^1] = (_testData[question][^1].data, result);
+            _testData[question][^1] = (_testData[question][^1].data, expected);
             return this;
         }
     }

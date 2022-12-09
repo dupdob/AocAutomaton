@@ -34,28 +34,12 @@ using NUnit.Framework;
 
 namespace AoC.AoCTests
 {
-
-
     public class EngineShould
     {
-        private const string GoodAnswerFile = "GoodAnswer.html";
-        private const string WrongAnswerFile = "WrongAnswer.html";
-        private const string InternalErrorFile = "error500.html";
-        private const string BadRequestFile = "error400.html";
-        private const string NeedToWaitFile = "NeedToWait.html";
-        private const string AlreadyAnsweredFile = "alreadyAnswered.html";
-
-        private static MockFileSystem GetFileSystem()
-        {
-            var mockFileSystem = new MockFileSystem();
-            mockFileSystem.Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
-            return mockFileSystem;
-        }
-
         [Test]
         public void SetUpEverythingProperly()
         {
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
 
             var testInputData = "Silly input data";
@@ -74,7 +58,7 @@ namespace AoC.AoCTests
         [Test]
         public void HandleWhenNoAnswerProvided()
         {
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
 
             var testInputData = "Silly input data";
@@ -97,10 +81,10 @@ namespace AoC.AoCTests
         public void HandleWrongAnswer()
         {
             var fakeClient = new AoCFakeClient(2015);
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             using var console = new CaptureConsole();
 
-            fakeClient.SetAnswerResponseFilename(1, WrongAnswerFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.WrongAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 58, null);
             engine.RunDay(() => algo);
@@ -118,11 +102,11 @@ namespace AoC.AoCTests
         public void HandleWait()
         {
             var fakeClient = new AoCFakeClient(2015);
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             using var console = new CaptureConsole();
 
-            fakeClient.SetAnswerResponseFilename(1, NeedToWaitFile);
-            fakeClient.SetAnswerResponseFilename(1, GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.NeedToWaitFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 58, null);
             var start = new Stopwatch();
@@ -143,10 +127,10 @@ namespace AoC.AoCTests
         public void HandleError500()
         {
             var fakeClient = new AoCFakeClient(2015);
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             using var console = new CaptureConsole();
 
-            fakeClient.SetAnswerResponseFilename(1, InternalErrorFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.InternalErrorFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 58, null);
             engine.RunDay(() => algo);
@@ -164,10 +148,10 @@ namespace AoC.AoCTests
         public void HandleError400()
         {
             var fakeClient = new AoCFakeClient(2015);
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             using var console = new CaptureConsole();
 
-            fakeClient.SetAnswerResponseFilename(1, BadRequestFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.BadRequestFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 58, null);
             engine.RunDay(() => algo);
@@ -186,9 +170,9 @@ namespace AoC.AoCTests
         {
             var fakeClient = new AoCFakeClient(2015);
             using var console = new CaptureConsole();
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
 
-            fakeClient.SetAnswerResponseFilename(1, GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 12, null);
             engine.RunDay(() => algo);
@@ -206,10 +190,10 @@ namespace AoC.AoCTests
         {
             var fakeClient = new AoCFakeClient(2015);
             using var console = new CaptureConsole();
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
 
-            fakeClient.SetAnswerResponseFilename(1, GoodAnswerFile);
-            fakeClient.SetAnswerResponseFilename(2, WrongAnswerFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 12, 13);
             engine.RunDay(() => algo);
@@ -230,10 +214,10 @@ namespace AoC.AoCTests
         {
             var fakeClient = new AoCFakeClient(2015);
             using var console = new CaptureConsole();
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
 
-            fakeClient.SetAnswerResponseFilename(1, GoodAnswerFile);
-            fakeClient.SetAnswerResponseFilename(2, GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.GoodAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 12, 13);
             engine.RunDay(() => algo);
@@ -246,7 +230,7 @@ namespace AoC.AoCTests
         [Test]
         public void CacheInputData()
         {
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
 
             var testInputData = "Silly input data";
@@ -264,10 +248,10 @@ namespace AoC.AoCTests
         {
             var fakeClient = new AoCFakeClient(2015);
             using var console = new CaptureConsole();
-            var mockFileSystem = GetFileSystem();
+            var mockFileSystem = TestHelpers.GetFileSystem();
 
-            fakeClient.SetAnswerResponseFilename(1, AlreadyAnsweredFile);
-            fakeClient.SetAnswerResponseFilename(2, WrongAnswerFile);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AlreadyAnsweredFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 12, 13);
             engine.RunDay(() => algo);
