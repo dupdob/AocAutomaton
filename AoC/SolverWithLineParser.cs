@@ -24,8 +24,6 @@
 
 namespace AoC
 {
-
-
     public abstract class SolverWithLineParser : SolverWithParser
     {
         protected abstract void ParseLine(string line, int index, int lineCount);

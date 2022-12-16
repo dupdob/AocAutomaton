@@ -16,7 +16,7 @@
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -24,8 +24,6 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NFluent;
@@ -183,6 +181,26 @@ namespace AoC.AoCTests
             Check.That(algo.GetAnswer2Calls).IsEqualTo(1);
             Check.That(mockFileSystem.AllFiles.Any(p => Regex.IsMatch(p, "Answer1.*\\.html")));
             Check.That(console.Output).Contains("Question 1 passed!");
+        }
+        
+        [Test]
+        public void ResetAlgorithmBetweenQuestions()
+        {
+            var fakeClient = new AoCFakeClient(2015);
+            using var console = new CaptureConsole();
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            var buildCounter = 0;
+                fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 12, null);
+            engine.ResetBetweenQuestions();
+            engine.RunDay(() =>
+            {
+                buildCounter++;
+                return algo;
+            });
+
+            Check.That(buildCounter).IsEqualTo(2);
         }
 
         [Test]
