@@ -110,6 +110,16 @@ internal class TheSolver : ISolver
   }
 }
 ```
+## Available command for the automation engine
+### Behavioral
+The following methods or properties can be used to modify the automaton behavior.
+
+1. Day (property): Sets the day number. This is mandatory for interaction wit the AoC website (if not set, an exception will stop the program).
+2. ResetBetweenQuestions() (method): When called, the automation engine will use separate (solver) instances for question 1 and 2. This can be helpful when the solver alter its initialization data.
+Note that it implies that data will be (automatically) parsed again.
+
+### TestRelated
+The following methods can be used to provide test data that the automation will use to check your solver before trying to solve the exercise with your AoC provided input.
 
 ## Provided solver designs
 You can choose any of the design of each of your solver.
