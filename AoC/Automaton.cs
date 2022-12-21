@@ -124,7 +124,9 @@ namespace AoC
             var dayAlgoType = typeof(T);
             var constructorInfo = dayAlgoType.GetConstructor(Type.EmptyTypes);
             if (constructorInfo == null)
+            {
                 throw new ApplicationException($"Can't find a parameterless constructor for {dayAlgoType}.");
+            }
 
             ISolver Builder()
             {
@@ -150,6 +152,8 @@ namespace AoC
             var algorithms = new Dictionary<string, ISolver>();
             if (_testData.Count > 0 && !RunTest(1, builder, algorithms))
             {
+                // ensure input data is cached
+                RetrieveMyData();
                 return;
             }
             // perform the actual run
@@ -217,7 +221,7 @@ namespace AoC
             return answer;
         }
 
-        private bool RunTest(int id, Func<ISolver> builder, Dictionary<string, ISolver> algorithms)
+            private bool RunTest(int id, Func<ISolver> builder, Dictionary<string, ISolver> algorithms)
         {
             if (!_testData.ContainsKey(id))
             {
@@ -236,7 +240,22 @@ namespace AoC
                 }
 
                 var answer = GetAnswer(testAlgo, id, data);
-                if (!answer.Equals(expected))
+                if (expected == null)
+                {
+                    Console.WriteLine($"Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+                    Console.WriteLine(answer);
+                    var assessment = Console.ReadLine()!.ToLower();
+                    return assessment.Length > 0 && assessment[0] == 'y';
+                }
+                // no answer provided
+                if (answer == null)
+                {
+                    Console.WriteLine($"Test failed: got no answer instead of {expected} using:");
+                    Console.WriteLine(data);
+                    return false;
+                }
+                // not the expected answer
+                if (!answer.ToString()!.Equals(expected.ToString()))
                 {
                     Console.WriteLine($"Test failed: got {answer} instead of {expected} using:");
                     Console.WriteLine(data);
@@ -480,12 +499,25 @@ namespace AoC
         /// </summary>
         /// <param name="data">input data as a string.</param>
         /// <param name="question">question id (1 or 2)</param>
-        public Automaton RegisterTestData(string data, int question = 1)
+        public Automaton RegisterTestData(string data, int question = 3)
+        {
+            if (question == 3)
+            {
+                StoreTestData(1, data);
+                StoreTestData(2, data);
+            }
+            else
+            {
+                StoreTestData(question, data);
+            }
+            return this;
+        }
+
+        private void StoreTestData(int question, string data)
         {
             if (!_testData.ContainsKey(question)) _testData[question] = new List<(string data, object result)>();
 
             _testData[question].Add((data, null));
-            return this;
         }
 
         /// <summary>
@@ -509,6 +541,10 @@ namespace AoC
                 }
             }
 
+            if (_testData[question][^1].result != null)
+            {
+                throw new ApplicationException("You must call RegisterTestData before calling this method.");
+            }
             _testData[question][^1] = (_testData[question][^1].data, expected);
             return this;
         }
