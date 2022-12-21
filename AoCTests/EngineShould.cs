@@ -54,6 +54,39 @@ namespace AoC.AoCTests
         }
 
         [Test]
+        public void AutoBuildProperInstance()
+        {
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.WrongAnswerFile);
+
+            var testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            using var console = new CaptureConsole();
+            var count = AutoFakeSolver.Count;
+            engine.RunDay<AutoFakeSolver>();
+            // one instance should have been create
+            Check.That(AutoFakeSolver.Count).IsEqualTo(count + 1);
+            // verify the day is properly set up
+            Check.That(engine.Day).IsEqualTo(10);
+        }
+
+        [Test]
+        public void FailToBuildInstanceIfNoParameterlessConstructor()
+        {
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.WrongAnswerFile);
+
+            var testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            using var console = new CaptureConsole();
+            Check.ThatCode(() => engine.RunDay<FakeSolver>()).ThrowsAny();
+        }
+        
+        [Test]
         public void HandleWhenNoAnswerProvided()
         {
             var mockFileSystem = TestHelpers.GetFileSystem();
@@ -251,7 +284,7 @@ namespace AoC.AoCTests
             var mockFileSystem = TestHelpers.GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
 
-            var testInputData = "Silly input data";
+            const string testInputData = "Silly input data";
             fakeClient.SetInputData(testInputData);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             // run the algo twice

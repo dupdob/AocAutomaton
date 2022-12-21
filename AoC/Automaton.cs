@@ -124,7 +124,9 @@ namespace AoC
             var dayAlgoType = typeof(T);
             var constructorInfo = dayAlgoType.GetConstructor(Type.EmptyTypes);
             if (constructorInfo == null)
+            {
                 throw new ApplicationException($"Can't find a parameterless constructor for {dayAlgoType}.");
+            }
 
             ISolver Builder()
             {
@@ -150,6 +152,8 @@ namespace AoC
             var algorithms = new Dictionary<string, ISolver>();
             if (_testData.Count > 0 && !RunTest(1, builder, algorithms))
             {
+                // ensure input data is cached
+                RetrieveMyData();
                 return;
             }
             // perform the actual run
