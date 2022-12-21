@@ -27,7 +27,7 @@ as soon as possible.
 ## Philosophy
 **AocAutomaton** is designed to be used within your IDE of choice, focusing on **reducing friction when
 solving AoC puzzles**. Friction appears as the need to copy/paste your input data between the site and
-your code (either in line or as dedicated data files), but also when copy/pasting the answer 
+your code (either in-line or as dedicated data files), but also when copy/pasting the answer 
 or inputting manually, which leads to the occasional typo error. 
 One can also add dealing with provided examples to use as test/validation input.
 
@@ -50,7 +50,7 @@ your own design.
 ### Prerequisite
 In order to interact with the AoC site, AoCAutomaton requires your AoC
 session id. It is stored as an hexadecimal value in a `session` cookie;
-you must get this value (via your browser of choice and store it in an environment variable named 
+you must get this value (via your browser of choice) and store it in an environment variable named 
 `AOC_SESSION`. Bear in mind that these tokens have a lifetime of roughly a month so expect
 to have to refresh it through the website sometimes. As of now, there is limited error handling, so
 you will get some exception if the token is invalid
@@ -72,7 +72,7 @@ use the `Automaton.RunDay` method that will:
 
 ## Sample code
 
-``` [Csharp]
+```[csharp]
 internal class Program
 {
     private void Main()
@@ -129,7 +129,7 @@ This is the default interface, with only three methods. It is recommended when t
 is straightforward, which is usually the case for the initial puzzles of each year.
 This is also the interface than must be implemented by any custom design you may provide.
 
-``` [Csharp]
+```[csharp]
 public interface ISolver
 {
   // provides the puzzle data
@@ -179,7 +179,7 @@ This is a variant from the previous one. Most AoC puzzles use a data set
 consisting of one line records. Parsing will be implemented via the `ParseLine` method.
 It receives each line to parse, with its index and total number of lines.
 
-``` [Csharp]
+```[csharp]
 // this class definition is for documentation purpose
 // actual definition is different 
 public class SolverWithParser

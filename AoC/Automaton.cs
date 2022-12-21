@@ -44,10 +44,20 @@ namespace AoC
         private readonly AoCClientBase _client;
         private readonly IFileSystem _fileSystem;
         private readonly Dictionary<int, List<(string data, object result)>> _testData = new();
-        private int _currentDay;
         private string _dataPathNameFormat = ".";
+        private string DataCacheFileName => $"InputAoc-{Day,2}-{_client.Year,4}.txt";
+
+        // default path
+        private string DataPath => string.Format(_dataPathNameFormat, Day, _client.Year);
+        private string DataCachePathName => string.IsNullOrEmpty(DataPath)
+            ? DataCacheFileName
+            : _fileSystem.Path.Combine(DataPath, DataCacheFileName);
+
         private Task<string> _myData;
         private Task _pendingWrite;
+        // settings
+        private int _currentDay;
+        private bool _resetBetweenQuestions;
 
         public Automaton(int year = 0, AoCClientBase client = null, IFileSystem fileSystem = null)
         {
@@ -58,9 +68,6 @@ namespace AoC
             _client = client ?? new AoCClient(year);
             _fileSystem = fileSystem ?? new FileSystem();
         }
-
-        // default path
-        private string DataPath => string.Format(_dataPathNameFormat, Day, _client.Year);
 
         /// <summary>
         /// xGets/sets the current day
@@ -75,14 +82,9 @@ namespace AoC
             }
         }
 
-        private string DataCacheFileName => $"InputAoc-{Day,2}-{_client.Year,4}.txt";
-
-        private string DataCachePathName => string.IsNullOrEmpty(DataPath)
-            ? DataCacheFileName
-            : _fileSystem.Path.Combine(DataPath, DataCacheFileName);
-
+    
         /// <summary>
-        ///     Cleanup data. Mainly ensure that ongoing writes are persisted, if any, and closes the HTTP session.
+        ///  Cleanup data. Mainly ensure that ongoing writes are persisted, if any, and closes the HTTP session.
         /// </summary>
         public void Dispose()
         {
@@ -92,6 +94,12 @@ namespace AoC
             GC.SuppressFinalize(this);
         }
 
+        public Automaton ResetBetweenQuestions()
+        {
+            _resetBetweenQuestions = true;
+            return this;
+        }
+        
         /// <summary>
         ///     Sets the path used by the engine to cache data (input and response).
         ///     You can provide a format pattern string, knowing that {0} will be replaced by
@@ -140,12 +148,31 @@ namespace AoC
 
             // tests if data are provided
             var algorithms = new Dictionary<string, ISolver>();
-            if (_testData.Count > 0 && !RunTest(1, builder, algorithms)) return;
+            if (_testData.Count > 0 && !RunTest(1, builder, algorithms))
+            {
+                return;
+            }
             // perform the actual run
             var data = RetrieveMyData();
-            if (!CheckResponse(1, GetAnswer(dayAlgo, 1, data))) return;
-            if (_testData.Count > 0 && !RunTest(2, builder, algorithms)) return;
-            if (!CheckResponse(2, GetAnswer(dayAlgo, 2, data))) return;
+            if (!CheckResponse(1, GetAnswer(dayAlgo, 1, data)))
+            {
+                return;
+            }
+            
+            if (_testData.Count > 0 && !RunTest(2, builder, algorithms))
+            {
+                return;
+            }
+
+            if (_resetBetweenQuestions)
+            {
+                dayAlgo = builder();
+                dayAlgo.SetupRun(this);
+            }
+            if (!CheckResponse(2, GetAnswer(dayAlgo, 2, data)))
+            {
+                return;
+            }
             EnsureDataIsCached();
         }
 
@@ -166,7 +193,10 @@ namespace AoC
         // ensure data are cached properly
         private void EnsureDataIsCached()
         {
-            if (_pendingWrite == null) return;
+            if (_pendingWrite == null)
+            {
+                return;
+            }
             // wait for cache writing completion
             if (!_pendingWrite.IsCompleted)
                 if (!_pendingWrite.Wait(500))
@@ -189,14 +219,17 @@ namespace AoC
 
         private bool RunTest(int id, Func<ISolver> builder, Dictionary<string, ISolver> algorithms)
         {
-            if (!_testData.ContainsKey(id)) return true;
+            if (!_testData.ContainsKey(id))
+            {
+                return true;
+            }
             var success = true;
             Console.WriteLine($"* Test question {id} *");
             foreach (var (data, expected) in GetTestInfo(id))
             {
                 // gets a cached algorithm if any
                 var testAlgo = algorithms.GetValueOrDefault(data);
-                if (testAlgo == null)
+                if (testAlgo == null || _resetBetweenQuestions)
                 {
                     testAlgo = builder();
                     algorithms[data] = testAlgo;
@@ -205,8 +238,8 @@ namespace AoC
                 var answer = GetAnswer(testAlgo, id, data);
                 if (!answer.Equals(expected))
                 {
-                    Console.Error.WriteLine($"Test failed: got {answer} instead of {expected} using:");
-                    Console.Error.WriteLine(data);
+                    Console.WriteLine($"Test failed: got {answer} instead of {expected} using:");
+                    Console.WriteLine(data);
                     success = false;
                 }
                 else
@@ -380,6 +413,12 @@ namespace AoC
                 Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation   .");
                 Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
+            }            
+            if (response.Contains(" 404 Not Found"))
+            {
+                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation   .");
+                Console.WriteLine(_client.GetSetupDocumentation());
+                return response;
             }
             Console.WriteLine("Failed to parse response.");
             return response;           
@@ -414,8 +453,8 @@ namespace AoC
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
         private void InitiatePersonalInputFetching(int day)
         {
-            _testData.Clear();
             if (day == _client.Day || day == 0) return;
+            _testData.Clear();
             _client.SetCurrentDay(day);
             var fileName = DataCachePathName;
             _myData = _fileSystem.File.Exists(fileName)
@@ -424,7 +463,7 @@ namespace AoC
         }
 
         /// <summary>
-        ///     Registers test data so that they are used.
+        ///     Registers test data so that they are used for validating the solver
         /// </summary>
         /// <param name="data">input data as a string.</param>
         /// <param name="expected">expected result (either string or a number).</param>
@@ -436,6 +475,11 @@ namespace AoC
             return this;
         }
 
+        /// <summary>
+        ///     Registers test data so that they are used for validating the solver
+        /// </summary>
+        /// <param name="data">input data as a string.</param>
+        /// <param name="question">question id (1 or 2)</param>
         public Automaton RegisterTestData(string data, int question = 1)
         {
             if (!_testData.ContainsKey(question)) _testData[question] = new List<(string data, object result)>();
@@ -444,12 +488,28 @@ namespace AoC
             return this;
         }
 
-        public Automaton RegisterTestResult(object result, int question = 1)
+        /// <summary>
+        ///     Registers test result so that they are used for validating the solver
+        /// </summary>
+        /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
+        /// <param name="expected">expected result (either string or a number).</param>
+        /// <param name="question">question id (1 or 2)</param>
+        public Automaton RegisterTestResult(object expected, int question = 1)
         {
             if (!_testData.ContainsKey(question))
-                throw new ApplicationException("You must call RegisterTestData before calling this method.");
+            {
+                if (question == 2 && _testData.ContainsKey(1))
+                {
+                    // we assume the data is reused across questions
+                    RegisterTestData(_testData[1][^1].data, 2);
+                }
+                else
+                {
+                    throw new ApplicationException("You must call RegisterTestData before calling this method.");
+                }
+            }
 
-            _testData[question][^1] = (_testData[question][^1].data, result);
+            _testData[question][^1] = (_testData[question][^1].data, expected);
             return this;
         }
     }
