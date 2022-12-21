@@ -113,13 +113,49 @@ internal class TheSolver : ISolver
 ## Available command for the automation engine
 ### Behavioral
 The following methods or properties can be used to modify the automaton behavior.
+These methods or properties should be used during the setup phase, i.e. within your `ISolver.SetupRun` method implementation. Using them at some other time is not documented
+and may lead to surprising results
+#### Day
+`int Day {get;set}`
 
-1. Day (property): Sets the day number. This is mandatory for interaction wit the AoC website (if not set, an exception will stop the program).
-2. ResetBetweenQuestions() (method): When called, the automation engine will use separate (solver) instances for question 1 and 2. This can be helpful when the solver alter its initialization data.
+Sets the day number. This is mandatory for interaction wit the AoC website (if not set, an exception will stop the program).
+#### ResetBetweenQuestions
+`void ResetBetweenQuestions()`
+
+When called, the automation engine will use separate (solver) instances for question 1 and 2. This can be helpful 
+when the solver alter its initialization data.
 Note that it implies that data will be (automatically) parsed again.
 
-### TestRelated
+### Test Related
 The following methods can be used to provide test data that the automation will use to check your solver before trying to solve the exercise with your AoC provided input.
+AoCAutomaton support as many test examples as you may provide. It also supports providing example specific data for part one and two.
+
+#### RegisterTestData
+`Automaton RegisterTestData(string data, int question = 3);`
+
+where
+
+`data`: input data to be used for testing purposes
+`question` : identifies for which question part the data must be used. `1` for the first part, `2` for the second part or `3` for both parts (default case).
+
+Provides input data for testing the solver. By default this test data will be used for both part of the question, but you can specify which part this is for.
+You can register as much test data as you wish (memory permitting, of course). 
+
+Note that test data and test results must be registered in the same order, 
+otherwise there will be mix ups.
+
+#### RegisterTestResult 
+`public Automaton RegisterTestResult(object expected, int question = 1)`
+where
+
+`expected`: the expected answer.
+`question` : identifies for which question part the data must be used. `1` for the first part or `2` for the second part.
+
+Provides an expected result for testing the solver. Associated test data must have already been registered, otherwise an exception is raised, with one tolerance: 
+you can register one (1) result for part two without providing test data for it. AoCAutomaton will automatically reuse the test data provided for part one. 
+
+Note that test data and test results must be registered in the same order,
+otherwise there will be mix ups.
 
 ## Provided solver designs
 You can choose any of the design of each of your solver.
