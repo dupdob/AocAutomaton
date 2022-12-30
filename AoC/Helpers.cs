@@ -1,6 +1,6 @@
 // MIT License
 // 
-//  AocAutomaton
+//  AdventOfCode
 // 
 //  Copyright (c) 2022 Cyrille DUPUYDAUBY
 // ---
@@ -16,32 +16,45 @@
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
-using System.Threading.Tasks;
+using System.Linq;
 
-namespace AoC
+namespace AoC;
+
+public static class Helpers
 {
-    public abstract class AoCClientBase : IDisposable
+    private static bool IsAcceptableInAFileName(string name)
     {
-        protected AoCClientBase(int year) => Year = year;
+        return name.Length <= 20 && name.All(character =>
+            char.IsDigit(character) || char.IsLetter(character) || "-_#*".Contains(character));
+    }
 
-        public int Day { get; private set; }
-        public int Year { get; }
+    public static string AsAFileName(string value)
+    {
+        return IsAcceptableInAFileName(value) ? value : $"Hash {ComputeHash(value)}";
+    }
 
-        public abstract void Dispose();
-
-        public void SetCurrentDay(int day) => Day = day;
-
-        public abstract Task<string> RequestPersonalInput();
-        
-        public abstract Task<string> PostAnswer(int question, string value);
-
-        public abstract string GetSetupDocumentation();
+    private static int ComputeHash(string value)
+    {
+        var hash1 = 5381;
+        var hash2 = hash1;
+        for (var i = 0; i < value.Length; )
+        {
+            int c = value[i++];
+            hash1 = ((hash1 << 5) + hash1) ^ c;
+            if (i == value.Length)
+            {
+                break;
+            }
+            c = value[i++];
+            hash2 = ((hash2 << 5) + hash2) ^ c;
+            value += 2;
+        }
+        return hash1 + (hash2 * 1566083941);
     }
 }
