@@ -182,7 +182,7 @@ namespace AoC
 
         private bool CheckResponse(int id, object answer)
         {
-            if (answer == null)
+            if (answer == null ||string.IsNullOrWhiteSpace(answer.ToString()))
             {
                 Console.WriteLine($"No answer provided! Please overload GetAnswer{id}() with your code.");
                 return false;
@@ -298,12 +298,6 @@ namespace AoC
             }
         }
 
-        private static bool IsAcceptableInAFileName(string name)
-        {
-            return name.Length <= 20 && name.All(character =>
-                char.IsDigit(character) || char.IsLetter(character) || "-_#*".Contains(character));
-        }
-
         private string RetrieveMyData()
         {
             var result = _myData.Result;
@@ -331,16 +325,14 @@ namespace AoC
         /// </remarks>
         private bool PostAnswer(int question, string value)
         {
-            var answerId = value;
-            if (!IsAcceptableInAFileName(answerId)) answerId = answerId.GetHashCode().ToString();
+            var answerId = Helpers.AsAFileName(value);
             var responseFilename = _fileSystem.Path.Combine(DataPath, $"Answer{question} for {answerId}.html");
             string resultText;
             while (true)
             {
                 var responseText = PostAndRetrieve(question, value, responseFilename, out var responseTime);
                 // extract the response as plain text
-                bool isOk;
-                (isOk, resultText) = ExtractAnswerText(responseText);
+                (var isOk, resultText) = ExtractAnswerText(responseText);
                 OutputAoCMessage(resultText);
                 if (!isOk)
                 {
