@@ -23,18 +23,15 @@
 // SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace AoC
 {
-    public class Automaton : IDisposable
+    public class Automaton : AutomatonBase, IDisposable
     {
         // default input cache name
         // AoC answers RegEx
@@ -43,7 +40,6 @@ namespace AoC
         private static readonly Regex TooSoon = new(".*You have (\\d*)m? ?(\\d*)s? left to wait\\..*");
         private readonly AoCClientBase _client;
         private readonly IFileSystem _fileSystem;
-        private readonly Dictionary<int, List<(string data, object result)>> _testData = new();
         private string _dataPathNameFormat = ".";
         private string DataCacheFileName => $"InputAoc-{Day,2}-{_client.Year,4}.txt";
 
@@ -56,8 +52,6 @@ namespace AoC
         private Task<string> _myData;
         private Task _pendingWrite;
         // settings
-        private int _currentDay;
-        private bool _resetBetweenQuestions;
 
         public Automaton(int year = 0, AoCClientBase client = null, IFileSystem fileSystem = null)
         {
@@ -69,20 +63,7 @@ namespace AoC
             _fileSystem = fileSystem ?? new FileSystem();
         }
 
-        /// <summary>
-        /// xGets/sets the current day
-        /// </summary>
-        public int Day
-        {
-            get => _currentDay;
-            set
-            {
-                _currentDay = value;
-                InitiatePersonalInputFetching(_currentDay);
-            }
-        }
 
-    
         /// <summary>
         ///  Cleanup data. Mainly ensure that ongoing writes are persisted, if any, and closes the HTTP session.
         /// </summary>
@@ -94,12 +75,6 @@ namespace AoC
             GC.SuppressFinalize(this);
         }
 
-        public Automaton ResetBetweenQuestions()
-        {
-            _resetBetweenQuestions = true;
-            return this;
-        }
-        
         /// <summary>
         ///     Sets the path used by the engine to cache data (input and response).
         ///     You can provide a format pattern string, knowing that {0} will be replaced by
@@ -119,83 +94,12 @@ namespace AoC
         /// </summary>
         /// <typeparam name="T"><see cref="ISolver" /> type for the day.</typeparam>
         /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
-        public void RunDay<T>() where T : ISolver
-        {
-            var dayAlgoType = typeof(T);
-            var constructorInfo = dayAlgoType.GetConstructor(Type.EmptyTypes);
-            if (constructorInfo == null)
-            {
-                throw new ApplicationException($"Can't find a parameterless constructor for {dayAlgoType}.");
-            }
+        public bool RunDay<T>() where T : ISolver => RunDay(SolverFactory.ForType<T>());
 
-            ISolver Builder()
-            {
-                return constructorInfo.Invoke(null) as ISolver ??
-                       throw new Exception($"Can't build an instance of {dayAlgoType.Name}.");
-            }
-
-            RunDay(Builder);
-        }
-
-        public void RunDay(Func<ISolver> builder)
-        {
-            var dayAlgo = builder();
-            Day = 0;
-            dayAlgo.SetupRun(this);
-            if (Day == 0)
-            {
-                Console.Error.WriteLine("Please specify current day via the Day property");
-                return;
-            }
-
-            // tests if data are provided
-            var algorithms = new Dictionary<string, ISolver>();
-            if (_testData.Count > 0 && !RunTest(1, builder, algorithms))
-            {
-                // ensure input data is cached
-                RetrieveMyData();
-                return;
-            }
-            // perform the actual run
-            var data = RetrieveMyData();
-            if (!CheckResponse(1, GetAnswer(dayAlgo, 1, data)))
-            {
-                return;
-            }
-            
-            if (_testData.Count > 0 && !RunTest(2, builder, algorithms))
-            {
-                return;
-            }
-
-            if (_resetBetweenQuestions)
-            {
-                dayAlgo = builder();
-                dayAlgo.SetupRun(this);
-            }
-            if (!CheckResponse(2, GetAnswer(dayAlgo, 2, data)))
-            {
-                return;
-            }
-            EnsureDataIsCached();
-        }
-
-        private bool CheckResponse(int id, object answer)
-        {
-            if (answer == null ||string.IsNullOrWhiteSpace(answer.ToString()))
-            {
-                Console.WriteLine($"No answer provided! Please overload GetAnswer{id}() with your code.");
-                return false;
-            }
-
-            Console.WriteLine($"Day {Day}-{id}: {answer} [{_client.Year}].");
-            var success = PostAnswer(id, answer.ToString());
-            Console.WriteLine("Question {0} {1}!", id, success ? "passed" : "failed");
-            return success;
-        }
+        public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory(builder));
 
         // ensure data are cached properly
-        private void EnsureDataIsCached()
+        protected override void CleanUpDay()
         {
             if (_pendingWrite == null)
             {
@@ -209,96 +113,7 @@ namespace AoC
             _pendingWrite = null;
         }
 
-        private static object GetAnswer(ISolver algorithm, int id, string data)
-        {
-            var clock = new Stopwatch();
-            Console.WriteLine($"Computing answer {id} ({DateTime.Now:HH:mm:ss}).");
-            clock.Start();
-            var answer = id == 1 ? algorithm.GetAnswer1(data) : algorithm.GetAnswer2(data);
-            clock.Stop();
-            var message = clock.ElapsedMilliseconds < 2000 ? $"{clock.ElapsedMilliseconds} ms" : $"{clock.Elapsed:c}";
-            Console.WriteLine($"Took {message}.");
-            return answer;
-        }
-
-            private bool RunTest(int id, Func<ISolver> builder, Dictionary<string, ISolver> algorithms)
-        {
-            if (!_testData.ContainsKey(id))
-            {
-                return true;
-            }
-            var success = true;
-            Console.WriteLine($"* Test question {id} *");
-            foreach (var (data, expected) in GetTestInfo(id))
-            {
-                // gets a cached algorithm if any
-                var testAlgo = algorithms.GetValueOrDefault(data);
-                if (testAlgo == null || _resetBetweenQuestions)
-                {
-                    testAlgo = builder();
-                    algorithms[data] = testAlgo;
-                }
-
-                var answer = GetAnswer(testAlgo, id, data);
-                if (expected == null)
-                {
-                    Console.WriteLine($"Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
-                    Console.WriteLine(answer);
-                    var assessment = Console.ReadLine()!.ToLower();
-                    return assessment.Length > 0 && assessment[0] == 'y';
-                }
-                // no answer provided
-                if (answer == null)
-                {
-                    Console.WriteLine($"Test failed: got no answer instead of {expected} using:");
-                    Console.WriteLine(data);
-                    return false;
-                }
-                // not the expected answer
-                if (!answer.ToString()!.Equals(expected.ToString()))
-                {
-                    Console.WriteLine($"Test failed: got {answer} instead of {expected} using:");
-                    Console.WriteLine(data);
-                    success = false;
-                }
-                else
-                {
-                    Console.WriteLine($"Test success: got {answer} using:");
-                    Console.WriteLine(data);
-                }
-            }
-
-            return success;
-        }
-
-        /// <summary>
-        ///     Get the test data.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        private IEnumerable<(string data, object result)> GetTestInfo(int id)
-        {
-            for (var i = 0; i < _testData[id].Count; i++)
-            {
-                var (data, result) = _testData[id][i];
-                if (string.IsNullOrEmpty(data))
-                {
-                    if (id == 1)
-                        throw new Exception($"Can't test question 1 for expected {result}. No associated test data.");
-
-                    if (_testData[1].Count <= i)
-                        throw new Exception(
-                            $"Can't test question 2 for expected {result}. No associated test data (incl. for question 1).");
-                    // fetch data used for question 1.
-                    data = _testData[1][i].data;
-                }
-
-                yield return (data, result);
-            }
-        }
-
-        private string RetrieveMyData()
+        protected override string GetPersonalInput()
         {
             var result = _myData.Result;
             if (_fileSystem.File.Exists(DataCachePathName)) return result;
@@ -323,8 +138,9 @@ namespace AoC
         ///     the answer itself, or its hash if the answer cannot be part of a filename.
         ///     You can examine the response file to get details and/or removes them to resubmit a previously send proposal.
         /// </remarks>
-        private bool PostAnswer(int question, string value)
+        protected override bool SubmitAnswer(int question, string value)
         {
+            Console.WriteLine($"Day {Day}-{question}: {value} [{_client.Year}].");
             var answerId = Helpers.AsAFileName(value);
             var responseFilename = _fileSystem.Path.Combine(DataPath, $"Answer{question} for {answerId}.html");
             string resultText;
@@ -356,7 +172,7 @@ namespace AoC
                 {
                     // if there is a second value, the first one is in minutes.
                     secondsToWait *= 60;
-                    secondsToWait+=int.Parse(match.Groups[2].Value);
+                    secondsToWait+= int.Parse(match.Groups[2].Value);
                 }
                 // we need to wait.
                 responseTime += TimeSpan.FromSeconds(secondsToWait);
@@ -462,83 +278,14 @@ namespace AoC
         /// </summary>
         /// <param name="day">day to fetch</param>
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
-        private void InitiatePersonalInputFetching(int day)
+        protected override void InitializeDay(int day)
         {
             if (day == _client.Day || day == 0) return;
-            _testData.Clear();
             _client.SetCurrentDay(day);
             var fileName = DataCachePathName;
             _myData = _fileSystem.File.Exists(fileName)
                 ? _fileSystem.File.ReadAllTextAsync(fileName)
                 : _client.RequestPersonalInput();
-        }
-
-        /// <summary>
-        ///     Registers test data so that they are used for validating the solver
-        /// </summary>
-        /// <param name="data">input data as a string.</param>
-        /// <param name="expected">expected result (either string or a number).</param>
-        /// <param name="question">question id (1 or 2)</param>
-        public Automaton RegisterTestDataAndResult(string data, object expected, int question)
-        {
-            if (!_testData.ContainsKey(question)) _testData[question] = new List<(string data, object result)>();
-            _testData[question].Add((data, expected));
-            return this;
-        }
-
-        /// <summary>
-        ///     Registers test data so that they are used for validating the solver
-        /// </summary>
-        /// <param name="data">input data as a string.</param>
-        /// <param name="question">question id (1 or 2)</param>
-        public Automaton RegisterTestData(string data, int question = 3)
-        {
-            if (question == 3)
-            {
-                StoreTestData(1, data);
-                StoreTestData(2, data);
-            }
-            else
-            {
-                StoreTestData(question, data);
-            }
-            return this;
-        }
-
-        private void StoreTestData(int question, string data)
-        {
-            if (!_testData.ContainsKey(question)) _testData[question] = new List<(string data, object result)>();
-
-            _testData[question].Add((data, null));
-        }
-
-        /// <summary>
-        ///     Registers test result so that they are used for validating the solver
-        /// </summary>
-        /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
-        /// <param name="expected">expected result (either string or a number).</param>
-        /// <param name="question">question id (1 or 2)</param>
-        public Automaton RegisterTestResult(object expected, int question = 1)
-        {
-            if (!_testData.ContainsKey(question))
-            {
-                if (question == 2 && _testData.ContainsKey(1))
-                {
-                    // we assume the data is reused across questions
-                    RegisterTestData(_testData[1][^1].data, 2);
-                }
-                else
-                {
-                    throw new ApplicationException("You must call RegisterTestData before calling this method.");
-                }
-            }
-
-            if (_testData[question][^1].result != null)
-            {
-                throw new ApplicationException("You must call RegisterTestData before calling this method.");
-            }
-            _testData[question][^1] = (_testData[question][^1].data, expected);
-            return this;
         }
     }
 }

@@ -22,22 +22,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Threading;
+using System;
 
 namespace AoC.AoCTests
 {
     public class AutoFakeSolver : SolverWithLineParser
     {
-        public static int Count { get; set; } = 0;
+        public static int Count { get; set; }
 
         public AutoFakeSolver()
         {
             Count = Count + 1;
         }
 
-        public override void SetupRun(Automaton automaton)
+        public override void SetupRun(AutomatonBase automatonBase)
         {
-            automaton.Day = 10;
+            automatonBase.Day = 10;
         }
 
         public override object GetAnswer1() => 1L;

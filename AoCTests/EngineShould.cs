@@ -40,7 +40,7 @@ namespace AoC.AoCTests
             var mockFileSystem = TestHelpers.GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
 
-            var testInputData = "Silly input data";
+            const string testInputData = "Silly input data";
             fakeClient.SetInputData(testInputData);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, null, null);
@@ -60,14 +60,14 @@ namespace AoC.AoCTests
             var fakeClient = new AoCFakeClient(2015);
             fakeClient.SetAnswerResponseFilename(1, TestHelpers.WrongAnswerFile);
 
-            var testInputData = "Silly input data";
+            const string testInputData = "Silly input data";
             fakeClient.SetInputData(testInputData);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             using var console = new CaptureConsole();
             var count = AutoFakeSolver.Count;
             engine.RunDay<AutoFakeSolver>();
             // one instance should have been create
-            Check.That(AutoFakeSolver.Count).IsEqualTo(count + 1);
+            Check.That(AutoFakeSolver.Count).IsEqualTo(count + 2);
             // verify the day is properly set up
             Check.That(engine.Day).IsEqualTo(10);
         }
@@ -79,7 +79,7 @@ namespace AoC.AoCTests
             var fakeClient = new AoCFakeClient(2015);
             fakeClient.SetAnswerResponseFilename(1, TestHelpers.WrongAnswerFile);
 
-            var testInputData = "Silly input data";
+            const string testInputData = "Silly input data";
             fakeClient.SetInputData(testInputData);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             using var console = new CaptureConsole();
@@ -225,15 +225,15 @@ namespace AoC.AoCTests
             var buildCounter = 0;
                 fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
-            var algo = new FakeSolver(10, 12, null);
-            engine.ResetBetweenQuestions();
+            var algo = new FakeSolver(10, 12, null, automaton => automaton.ResetBetweenQuestions = true);
+            engine.ResetBetweenQuestions = true;
             engine.RunDay(() =>
             {
                 buildCounter++;
                 return algo;
             });
 
-            Check.That(buildCounter).IsEqualTo(2);
+            Check.That(buildCounter).IsEqualTo(3);
         }
 
         [Test]

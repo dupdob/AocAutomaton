@@ -39,7 +39,7 @@ namespace AoC
             }
         }
 
-        public abstract void SetupRun(Automaton automaton);
+        public abstract void SetupRun(AutomatonBase automatonBase);
 
         public object GetAnswer1(string data)
         {

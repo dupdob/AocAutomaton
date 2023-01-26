@@ -31,7 +31,7 @@ namespace AoC.AoCTests
     public sealed class AoCFakeClient : AoCClientBase
     {
         private readonly Dictionary<int, Queue<string>> _responseFile = new();
-        private string _inputData;
+        private string _inputData = string.Empty;
 
         public AoCFakeClient(int year) : base(year)
         {

@@ -26,7 +26,7 @@ namespace AoC
 {
     public interface ISolver
     {
-        void SetupRun(Automaton automaton);
+        void SetupRun(AutomatonBase automatonBase);
         object GetAnswer1(string data);
         object GetAnswer2(string data);
     }

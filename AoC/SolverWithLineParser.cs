@@ -40,7 +40,7 @@ namespace AoC
         protected override void Parse(string data)
         {
             var lines = data.Split('\n');
-            // we discard the last line if it is empty (trailing newline), but we keep any internal newlines
+            // we discard the last line if it is empty (trailing newline), but we keep any intermediate newlines
             if (lines[^1].Length == 0) lines = lines[..^1];
             var index = 0;
             foreach (var line in lines) ParseLine(line, index++, lines.Length);
