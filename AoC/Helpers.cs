@@ -26,7 +26,7 @@ using System.Linq;
 
 namespace AoC;
 
-public static class Helpers
+internal static class Helpers
 {
     private static bool IsAcceptableInAFileName(string name)
     {
@@ -38,7 +38,16 @@ public static class Helpers
     {
         return IsAcceptableInAFileName(value) ? value : $"Hash {ComputeHash(value)}";
     }
-
+    
+    /// <summary>
+    /// Compute a stable hash for a string using a computation similar to the default one.
+    /// </summary>
+    /// <param name="value">string we want the hash of</param>
+    /// <returns>the hash value, constant across sessions.</returns>
+    /// <remarks>
+    /// This custom string hash function ensures hash are stables across runs as
+    /// the automaton uses them for cache filenames.
+    /// </remarks>
     private static int ComputeHash(string value)
     {
         var hash1 = 5381;

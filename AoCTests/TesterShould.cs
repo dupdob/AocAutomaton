@@ -90,7 +90,7 @@ namespace AoC.AoCTests
         }
 
         [Test]
-        public void UseAllTestDataAndStopsIfOneIsWrongWrong()
+        public void UseAllTestDataAndStopsIfOneIsWrong()
         {
             var mockFileSystem = GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
@@ -101,14 +101,13 @@ namespace AoC.AoCTests
             var algo = new FakeSolver(10, 1, 2, 
                 x =>
                 {
-                    x.RegisterTestDataAndResult(testInputData, 1, 1);
                     x.RegisterTestDataAndResult("random data", 2, 1);
                     x.RegisterTestDataAndResult(testInputData, 1, 1);
                 });
             using var console = new CaptureConsole();
             engine.RunDay(() => algo);
-            // it should request the first answer three times
-            Check.That(algo.GetAnswer1Calls).IsEqualTo(3);
+            // it should request the first answer two times
+            Check.That(algo.GetAnswer1Calls).IsEqualTo(2);
             // and not the second
             Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
             // it should say that no answer was provided

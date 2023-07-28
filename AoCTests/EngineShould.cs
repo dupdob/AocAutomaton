@@ -85,7 +85,24 @@ namespace AoC.AoCTests
             using var console = new CaptureConsole();
             Check.ThatCode(() => engine.RunDay<FakeSolver>()).ThrowsAny();
         }
-        
+
+        [Test]
+        public void AutoBuildProperInstanceWithProvidedValue()
+        {
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.WrongAnswerFile);
+
+            const string testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            using var console = new CaptureConsole();
+            engine.RunDay<AutoFakeSolverWithParam>();
+            Check.That(AutoFakeSolverWithParam.InitValue).IsEqualTo(string.Empty);
+            // verify the day is properly set up
+            Check.That(engine.Day).IsEqualTo(10);
+        }
+
         [Test]
         public void HandleWhenNoAnswerProvided()
         {

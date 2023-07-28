@@ -32,14 +32,14 @@ namespace AoC;
 /// </summary>
 public class SolverFactory
 {
-    private readonly Dictionary<string, ISolver> _solvers = new();
-    private readonly Func<ISolver> _builder;
+    private readonly Dictionary<string, Dictionary<string, ISolver>> _solvers = new();
+    private readonly Func<string, ISolver> _builder;
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="builder">lambda returning an ISolver implementation</param>
-    public SolverFactory(Func<ISolver> builder)
+    public SolverFactory(Func<string, ISolver> builder)
     {
         _builder = builder;
     }
@@ -65,14 +65,23 @@ public class SolverFactory
     /// <returns>A <see cref="SolverFactory"/> instance.</returns>
     public static SolverFactory ForType(Type solverType)
     {
-        var constructorInfo = solverType.GetConstructor(Type.EmptyTypes);
+        var constructorInfo = solverType.GetConstructor(new []{typeof(string)});
+
+        if (constructorInfo != null)
+        {
+            return new SolverFactory(
+                (data) => constructorInfo.Invoke(new object[]{data}) as ISolver ??
+                       throw new Exception($"Can't build an instance of {solverType.Name}."));            
+        }
+        constructorInfo = solverType.GetConstructor(Type.EmptyTypes);
+        
         if (constructorInfo == null)
         {
             throw new ApplicationException($"Can't find a parameterless constructor for {solverType.Name}.");
         }
 
         return new SolverFactory(
-            () => constructorInfo.Invoke(null) as ISolver ??
+            (_) => constructorInfo.Invoke(null) as ISolver ??
                   throw new Exception($"Can't build an instance of {solverType.Name}."));
     }
     
@@ -85,21 +94,30 @@ public class SolverFactory
     /// Returns an <see cref="ISolver"/> implementation for the provided input data.
     /// </summary>
     /// <param name="data">input data to be used by the solver.</param>
+    /// <param name="init">initial data for the solver (optional)</param>
     /// <returns>the appropriate <see cref="ISolver"/> implementation.</returns>
     /// <remarks>build a new instance or return a previously build instance associated with the same data (if <see cref="CacheActive"/> is true).</remarks>
-    public ISolver GetSolver(string data)
+    public ISolver GetSolver(string data, string init = null)
     {
-        if (CacheActive && _solvers.TryGetValue(data, out var solver))
+        init ??= string.Empty;
+        if (!CacheActive)
+        {
+            return _builder(init);
+        }
+        
+        if (!_solvers.TryGetValue(init, out var solvers))
+        {
+            solvers = new Dictionary<string, ISolver>();
+            _solvers[init] = solvers;
+        }
+
+        if (solvers.TryGetValue(data, out var solver))
         {
             return solver;
         }
-
-        solver = _builder();
-        if (CacheActive)
-        {
-            _solvers[data] = solver;
-        }
-
+        solver = _builder(init);
+        solvers[data] = solver;
+        
         return solver;
     }
 }

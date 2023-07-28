@@ -63,7 +63,6 @@ namespace AoC
             _fileSystem = fileSystem ?? new FileSystem();
         }
 
-
         /// <summary>
         ///  Cleanup data. Mainly ensure that ongoing writes are persisted, if any, and closes the HTTP session.
         /// </summary>
@@ -76,9 +75,9 @@ namespace AoC
         }
 
         /// <summary>
-        ///     Sets the path used by the engine to cache data (input and response).
-        ///     You can provide a format pattern string, knowing that {0} will be replaced by
-        ///     the exercise's day and {1} by the year.
+        /// Sets the path used by the engine to cache data (input and response).
+        /// You can provide a format pattern string, knowing that {0} will be replaced by
+        /// the exercise's day and {1} by the year.
         /// </summary>
         /// <param name="dataPath">path (or format string) used to store data.</param>
         /// <returns>This instance.</returns>
@@ -96,7 +95,7 @@ namespace AoC
         /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
         public bool RunDay<T>() where T : ISolver => RunDay(SolverFactory.ForType<T>());
 
-        public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory(builder));
+        public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory((_) => builder()));
 
         // ensure data are cached properly
         protected override void CleanUpDay()
@@ -235,15 +234,15 @@ namespace AoC
                 Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
             }
-            if (response.Contains("400 Bad Request"))
+            if (response.Contains("400 Bad Request") || response.Contains("To play, please identify yourself via one of these services:"))
             {
-                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation   .");
+                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
                 Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
             }            
-            if (response.Contains(" 404 Not Found"))
+            if (response.Contains("404 Not Found"))
             {
-                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation   .");
+                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
                 Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
             }

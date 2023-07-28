@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2022 Cyrille DUPUYDAUBY
+//  Copyright (c) 2023 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,30 +22,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
+namespace AoC.AoCTests;
 
-namespace AoC.AoCTests
+public class AutoFakeSolverWithParam : SolverWithLineParser
 {
-    public class AutoFakeSolver : SolverWithLineParser
+    public static string InitValue { get; private set; }
+    public static int Count { get; set; }
+
+    public AutoFakeSolverWithParam(string initValue)
     {
-        public static int Count { get; set; }
+        InitValue = initValue;
+        Count = Count + 1;
+    }
 
-        public AutoFakeSolver()
-        {
-            Count = Count + 1;
-        }
+    public override void SetupRun(Automaton automatonBase)
+    {
+        automatonBase.Day = 10;
+    }
 
-        public override void SetupRun(Automaton automatonBase)
-        {
-            automatonBase.Day = 10;
-        }
+    public override object GetAnswer1() => 1L;
 
-        public override object GetAnswer1() => 1L;
+    public override object GetAnswer2() => "2";
 
-        public override object GetAnswer2() => "2";
-
-        protected override void ParseLine(string line, int index, int lineCount)
-        {
-        }
+    protected override void ParseLine(string line, int index, int lineCount)
+    {
     }
 }

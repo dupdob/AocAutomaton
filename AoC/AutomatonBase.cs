@@ -30,9 +30,13 @@ namespace AoC;
 
 public abstract class AutomatonBase
 {
-    private readonly Dictionary<int, List<(string data, object result)>> _testData = new();
+    private readonly Dictionary<string, TestData> _tests = new ();
+    private TestData _last;
     private int _currentDay;
 
+    /// <summary>
+    /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
+    /// </summary>
     public bool ResetBetweenQuestions { get; set; }
 
     /// <summary>
@@ -47,7 +51,7 @@ public abstract class AutomatonBase
             {
                 return;
             }
-            _testData.Clear();
+            _tests.Clear();
             _currentDay = value;
         }
     }
@@ -66,16 +70,19 @@ public abstract class AutomatonBase
 
     private bool RunTests(int id, SolverFactory factory)
     {
-        if (!_testData.ContainsKey(id))
-        {
-            return true;
-        }
         var success = true;
         Console.WriteLine($"* Test question {id} *");
-        foreach (var (data, expected) in GetTestInfo(id))
+        foreach (var testData in _tests.Values)
         {
+            var expected = testData.Answers[id - 1];
+            if (expected == null && id == 2)
+            {
+                continue;
+            }
+            var data = testData.Data;
             // gets a cached algorithm if any
-            var testAlgo = factory.GetSolver(data);
+            var testAlgo = factory.GetSolver(data, testData.Init);
+            testData.SetupActions[id - 1]?.Invoke();
             var answer = GetAnswer(testAlgo, id, data);
             // no answer provided
             if (answer == null)
@@ -114,103 +121,74 @@ public abstract class AutomatonBase
     }
 
     /// <summary>
-    ///     Get the test data.
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    private IEnumerable<(string data, object result)> GetTestInfo(int id)
-    {
-        for (var i = 0; i < _testData[id].Count; i++)
-        {
-            var (data, result) = _testData[id][i];
-            if (string.IsNullOrEmpty(data))
-            {
-                if (id == 1)
-                    throw new Exception($"Can't test question 1 for expected {result}. No associated test data.");
-
-                if (_testData[1].Count <= i)
-                    throw new Exception(
-                        $"Can't test question 2 for expected {result}. No associated test data (incl. for question 1).");
-                // fetch data used for question 1.
-                data = _testData[1][i].data;
-            }
-
-            yield return (data, result);
-        }
-    }
-
-    /// <summary>
-    ///     Registers test data so that they are used for validating the solver
+    /// Registers test data so that they are used for validating the solver
     /// </summary>
     /// <param name="data">input data as a string.</param>
     /// <param name="expected">expected result (either string or a number).</param>
     /// <param name="question">question id (1 or 2)</param>
     public AutomatonBase RegisterTestDataAndResult(string data, object expected, int question)
     {
-        if (!_testData.ContainsKey(question))
+        if (!_tests.TryGetValue(data, out var set))
         {
-            _testData[question] = new List<(string data, object result)>();
+            set = new TestData(data);
+            _tests[data] = set;
         }
-        _testData[question].Add((data, expected));
-        return this;
-    }
-
-    /// <summary>
-    ///     Registers test data so that they are used for validating the solver
-    /// </summary>
-    /// <param name="data">input data as a string.</param>
-    /// <param name="question">question id (1 or 2)</param>
-    public AutomatonBase RegisterTestData(string data, int question = 3)
-    {
-        if (question == 3)
+        if (question == 1)
         {
-            StoreTestData(1, data);
-            StoreTestData(2, data);
+            set.Answer1(expected);
         }
         else
         {
-            StoreTestData(question, data);
+            set.Answer2(expected);
         }
+
+        _last = set;
         return this;
     }
 
-    private void StoreTestData(int question, string data)
+    /// <summary>
+    /// Register a new test.
+    /// </summary>
+    /// <param name="data">input data for this test</param>
+    /// <param name="init">initial data for this data</param>
+    /// <returns>a <see cref="TestData"/> instance that must be enriched with expected results.</returns>
+    public TestData RegisterTest(string data, string init = null)
     {
-        if (!_testData.ContainsKey(question))
-        {
-            _testData[question] = new List<(string data, object result)>();
-        }
-
-        _testData[question].Add((data, null));
+        _last = new TestData(data, init);
+        return _tests[data] = _last;
     }
 
     /// <summary>
-    ///     Registers test result so that they are used for validating the solver
+    /// Registers test data so that they are used for validating the solver
+    /// </summary>
+    /// <param name="data">input data as a string.</param>
+    /// <param name="init">initial data for this data</param>
+    public AutomatonBase RegisterTestData(string data, string init = null)
+    {
+        RegisterTest(data, init);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers test result so that they are used for validating the solver
     /// </summary>
     /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
     /// <param name="expected">expected result (either string or a number).</param>
     /// <param name="question">question id (1 or 2)</param>
     public AutomatonBase RegisterTestResult(object expected, int question = 1)
     {
-        if (!_testData.ContainsKey(question))
-        {
-            if (question == 2 && _testData.ContainsKey(1))
-            {
-                // we assume the data is reused across questions
-                RegisterTestData(_testData[1][^1].data, 2);
-            }
-            else
-            {
-                throw new ApplicationException("You must call RegisterTestData before calling this method.");
-            }
-        }
-
-        if (_testData[question][^1].result != null)
+        if (_last == null)
         {
             throw new ApplicationException("You must call RegisterTestData before calling this method.");
         }
-        _testData[question][^1] = (_testData[question][^1].data, expected);
+        if (question == 1)
+        {
+            _last.Answer1(expected);
+        }
+        else
+        {
+            _last.Answer2(expected);
+        }
         return this;
     }
 
@@ -218,8 +196,8 @@ public abstract class AutomatonBase
     {
         try
         {
-            Day = 0;
-            ResetBetweenQuestions = false;
+            ResetAutomaton();
+            _tests.Clear();
 
             factory.GetSolver(string.Empty).SetupRun(this);
             if (Day == 0)
@@ -260,6 +238,12 @@ public abstract class AutomatonBase
         }
     }
 
+    private void ResetAutomaton()
+    {
+        Day = 0;
+        ResetBetweenQuestions = false;
+    }
+
     private bool CheckResponse(int id, object answer)
     {
         if (answer == null ||string.IsNullOrWhiteSpace(answer.ToString()))
@@ -273,15 +257,14 @@ public abstract class AutomatonBase
         return success;
     }
 
+    protected virtual void InitializeDay(int day)
+    {}
+
     protected virtual void CleanUpDay()
-    {
-    }
+    {}
 
     protected abstract bool SubmitAnswer(int id, string answer);
 
     protected abstract string GetPersonalInput();
 
-    protected virtual void InitializeDay(int day)
-    {
-    }
 }
