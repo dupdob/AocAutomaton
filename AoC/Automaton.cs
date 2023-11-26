@@ -25,6 +25,7 @@
 using System;
 using System.IO;
 using System.IO.Abstractions;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -114,7 +115,19 @@ namespace AoC
 
         protected override string GetPersonalInput()
         {
-            var result = _myData.Result;
+            string result;
+            try
+            {
+                result = _myData.Result;
+            }
+            catch (AggregateException e)
+            {
+                if (e.InnerExceptions[0] is HttpRequestException requestException)
+                {
+                    AnalyseInvalidAnswer(requestException.Message);
+                }
+                throw;
+            }
             if (_fileSystem.File.Exists(DataCachePathName)) return result;
 
             var directoryName = Path.GetDirectoryName(DataCachePathName);
@@ -234,7 +247,7 @@ namespace AoC
                 Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
             }
-            if (response.Contains("400 Bad Request") || response.Contains("To play, please identify yourself via one of these services:"))
+            if (response.Contains("400 Bad Request") || response.Contains("400 (Bad Request)") || response.Contains("To play, please identify yourself via one of these services:"))
             {
                 Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
                 Console.WriteLine(_client.GetSetupDocumentation());
@@ -242,7 +255,7 @@ namespace AoC
             }            
             if (response.Contains("404 Not Found"))
             {
-                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
+                Console.WriteLine("AoC: Not Found. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
                 Console.WriteLine(_client.GetSetupDocumentation());
                 return response;
             }
