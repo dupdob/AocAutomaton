@@ -35,10 +35,13 @@ public class TestData
     }
     
     public string Data { get; }
+    
     public string Init { get; }
     
     public object[] Answers { get; } = new object[2];
 
+    public bool[] VisualConfirm { get; } = new bool[2];
+    
     public Action[] SetupActions { get; } = new Action[2];
 
     public bool CanTest(int id)
@@ -54,6 +57,12 @@ public class TestData
     public TestData Answer2(object answer)
     {
         Answers[1] = answer;
+        return this;
+    }
+
+    public TestData SetVisualConfirm(int question)
+    {
+        VisualConfirm[question-1] = true;
         return this;
     }
 }

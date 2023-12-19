@@ -75,10 +75,6 @@ public abstract class AutomatonBase
         foreach (var testData in _tests.Values)
         {
             var expected = testData.Answers[id - 1];
-            if (expected == null && id == 2)
-            {
-                continue;
-            }
             var data = testData.Data;
             // gets a cached algorithm if any
             var testAlgo = factory.GetSolver(data, testData.Init);
@@ -94,13 +90,16 @@ public abstract class AutomatonBase
             // no expected answer provided, we request manual confirmation 
             else if (expected == null)
             {
-                Console.WriteLine($"Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
-                Console.WriteLine(answer);
-                var assessment = Console.ReadLine()!.ToLower();
-
-                if (assessment.Length == 0 || assessment[0] != 'y')
+                if (testData.VisualConfirm[id-1])
                 {
-                    success = false;
+                    Console.WriteLine("Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+                    Console.WriteLine(answer);
+                    var assessment = Console.ReadLine()?.ToLower();
+
+                    if (string.IsNullOrEmpty(assessment) || assessment[0] != 'y')
+                    {
+                        success = false;
+                    }
                 }
             }
             // not the expected answer
@@ -129,7 +128,7 @@ public abstract class AutomatonBase
     public AutomatonBase RegisterTestDataAndResult(string data, object expected, int question)
     {
         if (!_tests.TryGetValue(data, out var set))
-        {
+        {   
             set = new TestData(data);
             _tests[data] = set;
         }
@@ -167,6 +166,11 @@ public abstract class AutomatonBase
     {
         RegisterTest(data, init);
         return this;
+    }
+    
+    public TestData AskVisualConfirm(int question)
+    {
+        return _last.SetVisualConfirm(question);
     }
 
     /// <summary>
@@ -266,5 +270,6 @@ public abstract class AutomatonBase
     protected abstract bool SubmitAnswer(int id, string answer);
 
     protected abstract string GetPersonalInput();
+
 
 }

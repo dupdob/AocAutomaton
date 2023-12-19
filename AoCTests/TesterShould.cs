@@ -81,7 +81,7 @@ namespace AoC.AoCTests
             // it should request the first answer twice: test and actual data
             Check.That(algo.GetAnswer1Calls).IsEqualTo(2);
             // and once the second
-            Check.That(algo.GetAnswer2Calls).IsEqualTo(1);
+            Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
             // it should say that no answer was provided
             Check.That(console.Output).Contains("* Test question 1 *");
             Check.That(console.Output).Contains("Question 2 failed!");
@@ -102,6 +102,7 @@ namespace AoC.AoCTests
                 x =>
                 {
                     x.RegisterTestDataAndResult("random data", 2, 1);
+                    x.AskVisualConfirm(1);
                     x.RegisterTestDataAndResult(testInputData, 1, 1);
                 });
             using var console = new CaptureConsole();
@@ -143,6 +144,66 @@ namespace AoC.AoCTests
             // it should say that no answer was provided
             Check.That(console.Output).Contains("* Test question 2 *");
             Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
+            // it should have received the provided input data
+            Check.That(algo.InputData).IsEqualTo(testInputData);            
+        }
+
+        [Test]
+        public void DoNotTestFirstAnswerWhenNotNeeded()
+        {
+            var mockFileSystem = GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+
+            const string testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 1, 2, x =>
+            {
+                x.RegisterTestDataAndResult("random data", 1, 2);
+                x.RegisterTestDataAndResult(testInputData, 1, 1);
+
+            });
+            using var console = new CaptureConsole();
+            engine.RunDay(() => algo);
+            // it should request the first answer three times: two tests + actual data
+            Check.That(algo.GetAnswer1Calls).IsEqualTo(3);
+            // Second test fails
+            Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
+
+            Check.That(console.Output).Contains("* Test question 2 *");
+            Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
+            // it should have received the provided input data
+            Check.That(algo.InputData).IsEqualTo(testInputData);            
+        }
+
+        [Test]
+        public void AskVisualConfirmationWhenRequested()
+        {
+            var mockFileSystem = GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+
+            const string testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 1, 2, x =>
+            {
+                x.RegisterTestDataAndResult("random data", 2, 2);
+                x.RegisterTestDataAndResult(testInputData, 1, 1);
+                x.AskVisualConfirm(2);
+
+            });
+            using var console = new CaptureConsole();
+            engine.RunDay(() => algo);
+            // it should request the first answer three times: two tests + actual data
+            Check.That(algo.GetAnswer1Calls).IsEqualTo(3);
+            // and only two times for second test (as the second test is not confirmed manually)
+            Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
+            Check.That(console.Output).Contains("* Test question 2 *");
+            Check.That(console.Output).Contains("Test failed: got a result but no expected answer provided. Please confirm result manually");
             // it should have received the provided input data
             Check.That(algo.InputData).IsEqualTo(testInputData);            
         }
