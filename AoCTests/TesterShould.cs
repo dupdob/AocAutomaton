@@ -75,7 +75,7 @@ namespace AoC.AoCTests
             fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 1, 2, 
-                x => x.RegisterTestDataAndResult(testInputData, 1, 1));
+                x => x.RegisterTestDataAndResult(testInputData, 1, 1).RegisterTestResult(2,2));
             using var console = new CaptureConsole();
             engine.RunDay(() => algo);
             // it should request the first answer twice: test and actual data

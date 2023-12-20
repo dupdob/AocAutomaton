@@ -46,7 +46,7 @@ public class TestData
 
     public bool CanTest(int id)
     {
-        return Answers[id - 1] != null;
+        return Answers[id - 1] != null || VisualConfirm[id-1];
     }
     
     public TestData Answer1(object answer)

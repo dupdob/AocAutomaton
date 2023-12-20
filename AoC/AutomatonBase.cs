@@ -25,6 +25,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace AoC;
 
@@ -71,7 +72,17 @@ public abstract class AutomatonBase
     private bool RunTests(int id, SolverFactory factory)
     {
         var success = true;
+        if (_tests.Count == 0)
+        {
+            return true;
+        }
         Console.WriteLine($"* Test question {id} *");
+        // is there are no expected value or visual confirmation registered for this question
+        if (!_tests.Values.Any(t => t.CanTest(id)))
+        {
+            // we ensure at least one visual confirmation 
+            _tests.Values.First().SetVisualConfirm(id);
+        }
         foreach (var testData in _tests.Values)
         {
             var expected = testData.Answers[id - 1];
