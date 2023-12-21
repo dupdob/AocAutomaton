@@ -250,10 +250,8 @@ public abstract class AutomatonBase
             Console.WriteLine("* Computing answer 1 from your input. *");
             if (!CheckResponse(1, GetAnswer(factory.GetSolver(data), 1, data)))
             {
-                _dayState.First.Solved = false;
                 return false;
             }
-            _dayState.First.Solved = true;
             
             if (!RunTests(2, factory))
             {
@@ -263,7 +261,6 @@ public abstract class AutomatonBase
             Console.WriteLine("* Computing answer 2 from your input. *");
             if (CheckResponse(2, GetAnswer(factory.GetSolver(data), 2, data)))
             {
-                _dayState.First.Solved = true;
                 return true;
             }
 
@@ -300,6 +297,7 @@ public abstract class AutomatonBase
             if (success)
             {
                 state.Answer = answerText;
+                state.Solved = true;
             }
         }
         else

@@ -44,13 +44,17 @@ namespace AoC
         private readonly IFileSystem _fileSystem;
         private string _dataPathNameFormat = ".";
         private string DataCacheFileName => $"InputAoc-{Day,2}-{_client.Year,4}.txt";
-        private string StateFileNAme => $"AoC-{Day,2}-{_client.Year,4}-state.json";
+        private string StateFileName => $"AoC-{Day,2}-{_client.Year,4}-state.json";
 
         // default path
         private string DataPath => string.Format(_dataPathNameFormat, Day, _client.Year);
         private string DataCachePathName => string.IsNullOrEmpty(DataPath)
             ? DataCacheFileName
             : _fileSystem.Path.Combine(DataPath, DataCacheFileName);
+
+        private string StatePathName => string.IsNullOrEmpty(DataPath)
+            ? StateFileName
+            : _fileSystem.Path.Combine(DataPath, StateFileName);
 
         private Task<string> _myData;
         private Task _pendingWrite;
@@ -111,7 +115,7 @@ namespace AoC
             if (!_pendingWrite.IsCompleted)
                 if (!_pendingWrite.Wait(500))
                     Console.WriteLine("Local caching of input may have failed!");
-            _fileSystem.File.WriteAllText(StateFileNAme, _dayState.ToJson());
+            _fileSystem.File.WriteAllText(StatePathName, _dayState.ToJson());
             _pendingWrite = null;
         }
 
@@ -303,11 +307,11 @@ namespace AoC
 
             _dayState = null;
             // deal with state
-            if (_fileSystem.File.Exists(StateFileNAme))
+            if (_fileSystem.File.Exists(StatePathName))
             {
                 try
                 {
-                    _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(StateFileNAme));
+                    _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(StatePathName));
                     if (_dayState.Day != day)
                     {
                         // the state looks corrupted
