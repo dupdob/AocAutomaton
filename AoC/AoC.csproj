@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <LangVersion>default</LangVersion>
-        <PackageVersion>0.1.0.0</PackageVersion>
+        <PackageVersion>0.2.0.0</PackageVersion>
         <Title>Advent Of Code automaton</Title>
         <Authors>Cyrille DUPUYDAUBY</Authors>
         <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.</Description>
@@ -14,8 +14,7 @@
         <RepositoryType>Git</RepositoryType>
         <Copyright>© 2022-23 Cyrille Dupuydauby</Copyright>
         <PackageTags>Aoc;C#</PackageTags>
-        <PackageReleaseNotes>First beta release
-Fix crashing when id token is expired</PackageReleaseNotes>
+        <PackageReleaseNotes></PackageReleaseNotes>
         <AssemblyVersion>0.0.6</AssemblyVersion>
         <FileVersion>0.0.6</FileVersion>
         <PackageIcon>ico.png</PackageIcon>
