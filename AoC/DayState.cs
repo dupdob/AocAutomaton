@@ -1,7 +1,8 @@
+// MIT License
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2022 Cyrille DUPUYDAUBY
+//  Copyright (c) 2023 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -15,33 +16,47 @@
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Text.Json;
 
-namespace AoC
+namespace AoC;
+
+public class DayQuestion
 {
-    public abstract class AoCClientBase : IDisposable
-    {
-        protected AoCClientBase(int year) => Year = year;
+    public bool Solved { get; set; }
+    
+    public string Answer { get; set; }
 
-        public int Day { get; private set; }
-      
-        public int Year { get; }
+    public List<string> Attempts { get; set; } = new();
 
-        public abstract void Dispose();
-
-        public void SetCurrentDay(int day) => Day = day;
-
-        public abstract Task<string> RequestPersonalInput();
-        
-        public abstract Task<string> PostAnswer(int question, string value);
-
-        public abstract string GetSetupDocumentation();
-    }
+    public long? Low { get; set; }
+    
+    public long? High { get; set; }
 }
+
+public class DayState
+{
+    public string SchemaVersion { get; set; } = "1";
+    
+    public int Day { get; set; }
+
+    public DayQuestion First { get; set; } = new DayQuestion();
+
+    public DayQuestion Second { get; set; } = new DayQuestion();
+
+    public string ToJson()
+    {
+        return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    public static DayState FromJson(string text)
+    {
+        return JsonSerializer.Deserialize<DayState>(text);
+    }
+}   

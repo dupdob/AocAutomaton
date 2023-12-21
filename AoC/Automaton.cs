@@ -26,6 +26,7 @@ using System;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net.Http;
+
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,6 +44,7 @@ namespace AoC
         private readonly IFileSystem _fileSystem;
         private string _dataPathNameFormat = ".";
         private string DataCacheFileName => $"InputAoc-{Day,2}-{_client.Year,4}.txt";
+        private string StateFileNAme => $"AoC-{Day,2}-{_client.Year,4}-state.json";
 
         // default path
         private string DataPath => string.Format(_dataPathNameFormat, Day, _client.Year);
@@ -109,7 +111,7 @@ namespace AoC
             if (!_pendingWrite.IsCompleted)
                 if (!_pendingWrite.Wait(500))
                     Console.WriteLine("Local caching of input may have failed!");
-
+            _fileSystem.File.WriteAllText(StateFileNAme, _dayState.ToJson());
             _pendingWrite = null;
         }
 
@@ -192,7 +194,7 @@ namespace AoC
                 // wait until we can try again
                 do
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(500);
                 } while (responseTime >= DateTime.Now);
 
                 // delete any cached response to ensure we post again
@@ -286,7 +288,7 @@ namespace AoC
         }
 
         /// <summary>
-        ///     Retrieves personal data (associated to the AoC session ID).
+        /// Retrieves personal data (associated to the AoC session ID).
         /// </summary>
         /// <param name="day">day to fetch</param>
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
@@ -298,6 +300,30 @@ namespace AoC
             _myData = _fileSystem.File.Exists(fileName)
                 ? _fileSystem.File.ReadAllTextAsync(fileName)
                 : _client.RequestPersonalInput();
+
+            _dayState = null;
+            // deal with state
+            if (_fileSystem.File.Exists(StateFileNAme))
+            {
+                try
+                {
+                    _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(StateFileNAme));
+                    if (_dayState.Day != day)
+                    {
+                        // the state looks corrupted
+                        _dayState = null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Failed to load the current state: {e}");
+                }
+            }
+
+            // if it failed for any reason
+            _dayState ??= new DayState();
+            // we enforce the current day
+            _dayState.Day = day;
         }
     }
 }

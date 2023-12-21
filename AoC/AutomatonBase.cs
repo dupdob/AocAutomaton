@@ -34,6 +34,9 @@ public abstract class AutomatonBase
     private readonly Dictionary<string, TestData> _tests = new ();
     private TestData _last;
     private int _currentDay;
+    
+    protected DayState _dayState;
+
 
     /// <summary>
     /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
@@ -136,6 +139,7 @@ public abstract class AutomatonBase
     /// <param name="data">input data as a string.</param>
     /// <param name="expected">expected result (either string or a number).</param>
     /// <param name="question">question id (1 or 2)</param>
+    /// <returns>The automation base instance for linked calls.</returns>
     public AutomatonBase RegisterTestDataAndResult(string data, object expected, int question)
     {
         if (!_tests.TryGetValue(data, out var set))
@@ -162,6 +166,7 @@ public abstract class AutomatonBase
     /// <param name="data">input data for this test</param>
     /// <param name="init">initial data for this data</param>
     /// <returns>a <see cref="TestData"/> instance that must be enriched with expected results.</returns>
+    /// <returns>The automation base instance for linked calls.</returns>
     public TestData RegisterTest(string data, string init = null)
     {
         _last = new TestData(data, init);
@@ -173,15 +178,22 @@ public abstract class AutomatonBase
     /// </summary>
     /// <param name="data">input data as a string.</param>
     /// <param name="init">initial data for this data</param>
+    /// <returns>The automation base instance for linked calls.</returns>
     public AutomatonBase RegisterTestData(string data, string init = null)
     {
         RegisterTest(data, init);
         return this;
     }
     
-    public TestData AskVisualConfirm(int question)
+    /// <summary>
+    /// Register that the result should be manually confirmed during execution
+    /// </summary>
+    /// <param name="question">question's answer to be confirmed manually</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    public AutomatonBase AskVisualConfirm(int question)
     {
-        return _last.SetVisualConfirm(question);
+        _last.SetVisualConfirm(question);
+        return this;
     }
 
     /// <summary>
@@ -190,6 +202,7 @@ public abstract class AutomatonBase
     /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
     /// <param name="expected">expected result (either string or a number).</param>
     /// <param name="question">question id (1 or 2)</param>
+    /// <returns>The automation base instance for linked calls.</returns>
     public AutomatonBase RegisterTestResult(object expected, int question = 1)
     {
         if (_last == null)
@@ -220,7 +233,8 @@ public abstract class AutomatonBase
                 Console.Error.WriteLine("Please specify current day via the Day property");
                 return false;
             }
-            
+
+            _dayState = new DayState { Day = Day };
             InitializeDay(Day);
             factory.CacheActive = !ResetBetweenQuestions;
 
@@ -236,8 +250,10 @@ public abstract class AutomatonBase
             Console.WriteLine("* Computing answer 1 from your input. *");
             if (!CheckResponse(1, GetAnswer(factory.GetSolver(data), 1, data)))
             {
+                _dayState.First.Solved = false;
                 return false;
             }
+            _dayState.First.Solved = true;
             
             if (!RunTests(2, factory))
             {
@@ -245,7 +261,13 @@ public abstract class AutomatonBase
             }
 
             Console.WriteLine("* Computing answer 2 from your input. *");
-            return CheckResponse(2, GetAnswer(factory.GetSolver(data), 2, data));
+            if (CheckResponse(2, GetAnswer(factory.GetSolver(data), 2, data)))
+            {
+                _dayState.First.Solved = true;
+                return true;
+            }
+
+            return false;
         }
         finally
         {
@@ -261,13 +283,30 @@ public abstract class AutomatonBase
 
     private bool CheckResponse(int id, object answer)
     {
-        if (answer == null ||string.IsNullOrWhiteSpace(answer.ToString()))
+        var answerText = answer?.ToString();
+        if (string.IsNullOrWhiteSpace(answerText))
         {
             Console.WriteLine($"No answer provided! Please overload GetAnswer{id}() with your code.");
             return false;
         }
 
-        var success = SubmitAnswer(id, answer.ToString());
+        var state = id == 1 ? _dayState.First : _dayState.Second;
+        bool success;
+        if (!state.Attempts.Contains(answerText))
+        {
+            // new attempt
+            state.Attempts.Add(answerText);
+            success = SubmitAnswer(id, answerText);
+            if (success)
+            {
+                state.Answer = answerText;
+            }
+        }
+        else
+        {
+            // already tried, was it the correct answer?
+            success = state.Answer == answerText;
+        }
         Console.WriteLine("Question {0} {1}!", id, success ? "passed" : "failed");
         return success;
     }

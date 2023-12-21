@@ -32,14 +32,15 @@ namespace AoC.AoCTests
 {
     public class TesterShould
     {
-        
+
         private static MockFileSystem GetFileSystem()
         {
             var mockFileSystem = new MockFileSystem();
             mockFileSystem.Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
+            mockFileSystem.Directory.CreateDirectory(mockFileSystem.Directory.GetCurrentDirectory());
             return mockFileSystem;
         }
-        
+
         [Test]
         public void StopWhenFirstTestFails()
         {
@@ -60,7 +61,7 @@ namespace AoC.AoCTests
             Check.That(console.Output).Contains("* Test question 1 *");
             Check.That(console.Output).Contains("Test failed: got 1 instead of 2 using:");
             // it should have received the provided input data
-            Check.That(algo.InputData).IsEqualTo(testInputData);            
+            Check.That(algo.InputData).IsEqualTo(testInputData);
         }
 
         [Test]
@@ -74,8 +75,8 @@ namespace AoC.AoCTests
             fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
-            var algo = new FakeSolver(10, 1, 2, 
-                x => x.RegisterTestDataAndResult(testInputData, 1, 1).RegisterTestResult(2,2));
+            var algo = new FakeSolver(10, 1, 2,
+                x => x.RegisterTestDataAndResult(testInputData, 1, 1).RegisterTestResult(2, 2));
             using var console = new CaptureConsole();
             engine.RunDay(() => algo);
             // it should request the first answer twice: test and actual data
@@ -86,7 +87,7 @@ namespace AoC.AoCTests
             Check.That(console.Output).Contains("* Test question 1 *");
             Check.That(console.Output).Contains("Question 2 failed!");
             // it should have received the provided input data
-            Check.That(algo.InputData).IsEqualTo(testInputData);            
+            Check.That(algo.InputData).IsEqualTo(testInputData);
         }
 
         [Test]
@@ -98,7 +99,7 @@ namespace AoC.AoCTests
             var testInputData = "Silly input data";
             fakeClient.SetInputData(testInputData);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
-            var algo = new FakeSolver(10, 1, 2, 
+            var algo = new FakeSolver(10, 1, 2,
                 x =>
                 {
                     x.RegisterTestDataAndResult("random data", 2, 1);
@@ -115,9 +116,9 @@ namespace AoC.AoCTests
             Check.That(console.Output).Contains("* Test question 1 *");
             Check.That(console.Output).Not.Contains("Question 1");
             // it should have received the provided input data
-            Check.That(algo.InputData).IsEqualTo(testInputData);            
+            Check.That(algo.InputData).IsEqualTo(testInputData);
         }
-        
+
         [Test]
         public void HandleSharedDataForTwoQuestions()
         {
@@ -145,7 +146,7 @@ namespace AoC.AoCTests
             Check.That(console.Output).Contains("* Test question 2 *");
             Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
             // it should have received the provided input data
-            Check.That(algo.InputData).IsEqualTo(testInputData);            
+            Check.That(algo.InputData).IsEqualTo(testInputData);
         }
 
         [Test]
@@ -175,7 +176,7 @@ namespace AoC.AoCTests
             Check.That(console.Output).Contains("* Test question 2 *");
             Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
             // it should have received the provided input data
-            Check.That(algo.InputData).IsEqualTo(testInputData);            
+            Check.That(algo.InputData).IsEqualTo(testInputData);
         }
 
         [Test]
@@ -203,9 +204,30 @@ namespace AoC.AoCTests
             // and only two times for second test (as the second test is not confirmed manually)
             Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
             Check.That(console.Output).Contains("* Test question 2 *");
-            Check.That(console.Output).Contains("Test failed: got a result but no expected answer provided. Please confirm result manually");
+            Check.That(console.Output)
+                .Contains("Test failed: got a result but no expected answer provided. Please confirm result manually");
             // it should have received the provided input data
-            Check.That(algo.InputData).IsEqualTo(testInputData);            
+            Check.That(algo.InputData).IsEqualTo(testInputData);
+        }
+
+        [Test]
+        public void ShouldStoreState()
+        {
+            var mockFileSystem = GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+
+            const string testInputData = "Silly input data"; 
+            fakeClient.SetInputData(testInputData);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 1, 2, x =>
+            {
+                x.RegisterTestDataAndResult(testInputData, 1, 1);
+            });
+            using var console = new CaptureConsole();
+            engine.RunDay(() => algo);
+            Check.That(mockFileSystem.FileExists("AoC-10-2015-state.json")).IsTrue();
         }
     }
 }
