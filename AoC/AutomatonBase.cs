@@ -35,7 +35,7 @@ public abstract class AutomatonBase
     private TestData _last;
     private int _currentDay;
     
-    protected DayState _dayState;
+    protected DayState DayState;
 
 
     /// <summary>
@@ -80,6 +80,7 @@ public abstract class AutomatonBase
             return true;
         }
         Console.WriteLine($"* Test question {id} *");
+        var solved = DayState?.First.Solved == true;
         // is there are no expected value or visual confirmation registered for this question
         if (!_tests.Values.Any(t => t.CanTest(id)))
         {
@@ -234,8 +235,14 @@ public abstract class AutomatonBase
                 return false;
             }
 
-            _dayState = new DayState { Day = Day };
+            DayState = new DayState { Day = Day };
             InitializeDay(Day);
+            if (DayState?.First.Solved == true && DayState.Second.Solved)
+            {
+                Console.WriteLine("Day has already been solved. Nothing to do.");
+                return true;
+            }
+            
             factory.CacheActive = !ResetBetweenQuestions;
 
             // tests if data are provided
@@ -246,6 +253,7 @@ public abstract class AutomatonBase
             {
                 return false;
             }
+            
             // perform the actual run
             Console.WriteLine("* Computing answer 1 from your input. *");
             if (!CheckResponse(1, GetAnswer(factory.GetSolver(data), 1, data)))
@@ -287,7 +295,7 @@ public abstract class AutomatonBase
             return false;
         }
 
-        var state = id == 1 ? _dayState.First : _dayState.Second;
+        var state = id == 1 ? DayState.First : DayState.Second;
         bool success;
         if (!state.Attempts.Contains(answerText))
         {

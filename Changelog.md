@@ -1,5 +1,7 @@
 # Changelog for AoC Automaton
 
+# The one with a fix(V 0.2.2)
+- Question si flagged as solved in the sate appropriately
 # The one with a state at the right place(V 0.2.1)
 - Store the state in the configured cache folder (if any)
 # The one with a state (V 0.2)

@@ -115,7 +115,7 @@ namespace AoC
             if (!_pendingWrite.IsCompleted)
                 if (!_pendingWrite.Wait(500))
                     Console.WriteLine("Local caching of input may have failed!");
-            _fileSystem.File.WriteAllText(StatePathName, _dayState.ToJson());
+            _fileSystem.File.WriteAllText(StatePathName, DayState.ToJson());
             _pendingWrite = null;
         }
 
@@ -305,17 +305,17 @@ namespace AoC
                 ? _fileSystem.File.ReadAllTextAsync(fileName)
                 : _client.RequestPersonalInput();
 
-            _dayState = null;
+            DayState = null;
             // deal with state
             if (_fileSystem.File.Exists(StatePathName))
             {
                 try
                 {
-                    _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(StatePathName));
-                    if (_dayState.Day != day)
+                    DayState = DayState.FromJson(_fileSystem.File.ReadAllText(StatePathName));
+                    if (DayState.Day != day)
                     {
                         // the state looks corrupted
-                        _dayState = null;
+                        DayState = null;
                     }
                 }
                 catch (Exception e)
@@ -325,9 +325,9 @@ namespace AoC
             }
 
             // if it failed for any reason
-            _dayState ??= new DayState();
+            DayState ??= new DayState();
             // we enforce the current day
-            _dayState.Day = day;
+            DayState.Day = day;
         }
     }
 }

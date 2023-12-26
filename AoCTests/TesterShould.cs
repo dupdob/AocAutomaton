@@ -22,6 +22,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions.TestingHelpers;
 using NFluent;
@@ -46,7 +47,6 @@ namespace AoC.AoCTests
         {
             var mockFileSystem = GetFileSystem();
             var fakeClient = new AoCFakeClient(2015);
-
             var testInputData = "Silly input data";
             fakeClient.SetInputData("don't care");
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
@@ -219,6 +219,49 @@ namespace AoC.AoCTests
             const string testInputData = "Silly input data"; 
             fakeClient.SetInputData(testInputData);
             fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.GoodAnswerFile);
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 1, 2, x =>
+            {
+                x.RegisterTestDataAndResult(testInputData, 1, 1);
+                x.RegisterTestDataAndResult(testInputData, 2, 2);
+            });
+            using var console = new CaptureConsole();
+            engine.RunDay(() => algo);
+            Check.That(mockFileSystem.FileExists("AoC-10-2015-state.json")).IsTrue();
+            var state = DayState.FromJson(mockFileSystem.File.ReadAllText("AoC-10-2015-state.json"));
+
+            Check.That(state.Day).IsEqualTo(10);
+            Check.That(state.First).HasFieldsWithSameValues(new { Solved = true });
+            Check.That(state.Second).HasFieldsWithSameValues(new { Solved = true });
+        }
+        
+        [Test]
+        public void ShouldSkipIfAlreadyDone()
+        {
+            var mockFileSystem = GetFileSystem();
+            var fakeClient = new AoCFakeClient(2015);
+            var test = new DayState
+            {
+                Day = 10,
+                First =
+                {
+                    Answer = "goodAnswer",
+                    Attempts = new List<string>() { "goodAnswer" },
+                    Solved = true
+                },
+                Second = 
+                {
+                    Answer = "goodAnswer",
+                    Attempts = new List<string>() { "goodAnswer" },
+                    Solved = true
+                }
+            };
+            
+            mockFileSystem.File.WriteAllText("AoC-10-2015-state.json", test.ToJson());
+            const string testInputData = "Silly input data"; 
+            fakeClient.SetInputData(testInputData);
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             fakeClient.SetAnswerResponseFilename(2, TestHelpers.WrongAnswerFile);
             var engine = new Automaton(2015, fakeClient, mockFileSystem);
             var algo = new FakeSolver(10, 1, 2, x =>
@@ -227,7 +270,9 @@ namespace AoC.AoCTests
             });
             using var console = new CaptureConsole();
             engine.RunDay(() => algo);
-            Check.That(mockFileSystem.FileExists("AoC-10-2015-state.json")).IsTrue();
+            // no call should happen
+            Check.That(algo.GetAnswer1Calls).IsEqualTo(0);
         }
+        
     }
 }
