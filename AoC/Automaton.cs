@@ -38,6 +38,8 @@ namespace AoC
         // default input cache name
         // AoC answers RegEx
         private static readonly Regex GoodAnswer = new(".*That's the right answer!.*");
+        private static readonly Regex AnswerTooHigh= new(".*your answer is too high.*");
+        private static readonly Regex AnswerTooLow= new(".*your answer is too low.*");
         private static readonly Regex AlreadyAnswered = new(".*You don't seem to be solving the right level\\..*");
         private static readonly Regex TooSoon = new(".*You have (\\d*)m? ?(\\d*)s? left to wait\\..*");
         private readonly AoCClientBase _client;
@@ -114,7 +116,7 @@ namespace AoC
             // wait for cache writing completion
             if (!_pendingWrite.IsCompleted)
                 if (!_pendingWrite.Wait(500))
-                    Console.WriteLine("Local caching of input may have failed!");
+                    Trace("Local caching of input may have failed!");
             _fileSystem.File.WriteAllText(StatePathName, DayState.ToJson());
             _pendingWrite = null;
         }
@@ -174,10 +176,25 @@ namespace AoC
                     return false;
                 }
                 CacheResponse(responseFilename, responseText);
+                // is it the good answer?
                 if (AlreadyAnswered.IsMatch(resultText))
                 {
-                    Console.WriteLine("Question is already answered, so we skip it.");
+                    Trace("Question is already answered, so we skip it.");
                     return true;
+                }
+                // is it too high?
+                if (AnswerTooHigh.IsMatch(resultText) && long.TryParse(value, out var number))
+                {
+                    var questionState = GetQuestionState(question);
+                    questionState.High = questionState.High == null ? number : Math.Min(questionState.High.Value, number);
+                    return false;
+                }
+                // is it too low?
+                if (AnswerTooLow.IsMatch(resultText) && long.TryParse(value, out number))
+                {
+                    var questionState = GetQuestionState(question);
+                    questionState.Low = questionState.Low == null ? number : Math.Max(questionState.Low.Value, number);
+                    return false;
                 }
                 // did we answer too fast?
                 var match = TooSoon.Match(resultText);
@@ -194,7 +211,7 @@ namespace AoC
                 }
                 // we need to wait.
                 responseTime += TimeSpan.FromSeconds(secondsToWait);
-                Console.WriteLine($"Wait until {responseTime}.");
+                Trace($"Wait until {responseTime}.");
                 // wait until we can try again
                 do
                 {
@@ -222,7 +239,7 @@ namespace AoC
 
         private static void OutputAoCMessage(string resultText)
         {
-            Console.WriteLine("AoC site response: '{0}'", resultText);
+            Trace($"AoC site response: '{resultText}'");
         }
 
         private string PostAndRetrieve(int question, string value, string responseFilename, out DateTime responseTime)
@@ -231,7 +248,7 @@ namespace AoC
             // if we already have the response file...
             if (_fileSystem.File.Exists(responseFilename))
             {
-                Console.WriteLine($"Response {value} as already been attempted.");
+                Trace($"Response {value} as already been attempted.");
                 responseText = _fileSystem.File.ReadAllText(responseFilename);
                 responseTime = _fileSystem.File.GetLastWriteTime(responseFilename);
             }
@@ -249,23 +266,23 @@ namespace AoC
         {
             if (response.Contains("500 Internal Server Error"))
             {
-                Console.WriteLine("AoC: Internal Server Error. This is likely an indication of a corrupted AOC session token. See below for setup documentation.");
-                Console.WriteLine(_client.GetSetupDocumentation());
+                Trace("AoC: Internal Server Error. This is likely an indication of a corrupted AOC session token. See below for setup documentation.");
+                Trace(_client.GetSetupDocumentation());
                 return response;
             }
             if (response.Contains("400 Bad Request") || response.Contains("400 (Bad Request)") || response.Contains("To play, please identify yourself via one of these services:"))
             {
-                Console.WriteLine("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
-                Console.WriteLine(_client.GetSetupDocumentation());
+                Trace("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
+                Trace(_client.GetSetupDocumentation());
                 return response;
             }            
             if (response.Contains("404 Not Found"))
             {
-                Console.WriteLine("AoC: Not Found. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
-                Console.WriteLine(_client.GetSetupDocumentation());
+                Trace("AoC: Not Found. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
+                Trace(_client.GetSetupDocumentation());
                 return response;
             }
-            Console.WriteLine("Failed to parse response.");
+            Trace("Failed to parse response.");
             return response;           
         }
         
@@ -283,9 +300,9 @@ namespace AoC
             if (end == -1)
             {
                 // no end tag, we got an incorrect response from server
-                Console.WriteLine("Failed to parse response.");
+                Trace("Failed to parse response.");
                 return (false, response);
-            }
+            }   
 
             response = response.Substring(start, end - start);
             return (true, Regex.Replace(response, @"<(.|\n)*?>", string.Empty));
@@ -305,7 +322,6 @@ namespace AoC
                 ? _fileSystem.File.ReadAllTextAsync(fileName)
                 : _client.RequestPersonalInput();
 
-            DayState = null;
             // deal with state
             if (_fileSystem.File.Exists(StatePathName))
             {
@@ -320,7 +336,7 @@ namespace AoC
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Failed to load the current state: {e}");
+                    ReportError($"Failed to load the current state: {e}");
                 }
             }
 

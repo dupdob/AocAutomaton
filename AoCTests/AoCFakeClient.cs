@@ -39,6 +39,8 @@ namespace AoC.AoCTests
 
         public int NbRequest { get; private set; }
 
+        public int NbSubmissions;
+
         public void SetInputData(string data)
         {
             _inputData = data;
@@ -61,6 +63,7 @@ namespace AoC.AoCTests
 
         public override Task<string> PostAnswer(int id, string value)
         {
+            NbSubmissions++;
             return File.ReadAllTextAsync(_responseFile[id].Dequeue());
         }
 

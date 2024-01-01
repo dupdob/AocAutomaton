@@ -32,7 +32,7 @@ public class AutoFakeSolverWithParam : SolverWithLineParser
     public AutoFakeSolverWithParam(string initValue)
     {
         InitValue = initValue;
-        Count = Count + 1;
+        Count += 1;
     }
 
     public override void SetupRun(Automaton automatonBase)

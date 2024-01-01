@@ -147,6 +147,100 @@ namespace AoC.AoCTests
         }
         
         [Test]
+        public void HandleAnswerStillToHigh()
+        {
+            var fakeClient = new AoCFakeClient(2015);
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            using var console = new CaptureConsole();
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 58, null);
+            // our attempt will get a 'too high response'
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AnswerIsTooHigh);
+            engine.RunDay(() => algo);
+            var calls = fakeClient.NbSubmissions;
+            // our next attempt is higher than the previous one
+            // so it must not be submitted to the AoC site.
+            var secondAlgo = new FakeSolver(10, 60, null);
+            engine.RunDay(() => secondAlgo);
+
+            // no supplemental call
+            Check.That(fakeClient.NbSubmissions).IsEqualTo(calls);
+        }
+        
+        [Test]
+        public void HandleAnswerStillToLow()
+        {
+            var fakeClient = new AoCFakeClient(2015);
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            using var console = new CaptureConsole();
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 58, null);
+            // our attempt will get a 'too low response'
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AnswerIsTooLow);
+            engine.RunDay(() => algo);
+            var calls = fakeClient.NbSubmissions;
+            // our next attempt is higher than the previous one
+            // so it must not be submitted to the AoC site.
+            var secondAlgo = new FakeSolver(10, 54, null);
+            engine.RunDay(() => secondAlgo);
+
+            // no supplemental call
+            Check.That(fakeClient.NbSubmissions).IsEqualTo(calls);
+        }
+        
+        [Test]
+        public void UpdateHighLimit()
+        {
+            var fakeClient = new AoCFakeClient(2015);
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            using var console = new CaptureConsole();
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 58, null);
+            // our attempt will get a 'too high response'
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AnswerIsTooHigh);
+            engine.RunDay(() => algo);
+            var calls = fakeClient.NbSubmissions;
+            // our next attempt is lower than the previous one, but still too high
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AnswerIsTooHigh);
+            // so it must be submitted to the AoC site.
+            var secondAlgo = new FakeSolver(10, 54, null);
+            engine.RunDay(() => secondAlgo);
+            Check.That(fakeClient.NbSubmissions).IsEqualTo(calls + 1);
+            // our next attempt is higher than the previous one
+            // so it must not be submitted to the AoC site, proving that the upper limit has been adjusted
+            var thirdAlgo = new FakeSolver(10, 56, null);
+            engine.RunDay(() => thirdAlgo);
+            // no supplemental call
+            Check.That(fakeClient.NbSubmissions).IsEqualTo(calls+1);
+        }
+        
+        [Test]
+        public void UpdateLowLimit()
+        {
+            var fakeClient = new AoCFakeClient(2015);
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            using var console = new CaptureConsole();
+            var engine = new Automaton(2015, fakeClient, mockFileSystem);
+            var algo = new FakeSolver(10, 54, null);
+            // our attempt will get a 'too high response'
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AnswerIsTooLow);
+            engine.RunDay(() => algo);
+            var calls = fakeClient.NbSubmissions;
+            // our next attempt is lower than the previous one, but still too high
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.AnswerIsTooLow);
+            // so it must be submitted to the AoC site.
+            var secondAlgo = new FakeSolver(10, 58, null);
+            engine.RunDay(() => secondAlgo);
+            Check.That(fakeClient.NbSubmissions).IsEqualTo(calls + 1);
+            // our next attempt is higher than the previous one
+            // so it must not be submitted to the AoC site, proving that the upper limit has been adjusted
+            var thirdAlgo = new FakeSolver(10, 56, null);
+            engine.RunDay(() => thirdAlgo);
+            // no supplemental call
+            Check.That(fakeClient.NbSubmissions).IsEqualTo(calls+1);
+        }
+        
+        [Test]
         public void HandleWait()
         {
             var fakeClient = new AoCFakeClient(2015);

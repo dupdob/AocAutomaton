@@ -34,10 +34,8 @@ public abstract class AutomatonBase
     private readonly Dictionary<string, TestData> _tests = new ();
     private TestData _last;
     private int _currentDay;
-    
     protected DayState DayState;
-
-
+    
     /// <summary>
     /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
     /// </summary>
@@ -55,20 +53,30 @@ public abstract class AutomatonBase
             {
                 return;
             }
-            _tests.Clear();
+            _tests.Clear(); 
             _currentDay = value;
         }
+    }
+
+    protected static void Trace(string message)
+    {
+        Console.WriteLine(message);
+    }
+
+    protected static void ReportError(string message)
+    {
+        Console.Error.WriteLine(message);
     }
 
     private static object GetAnswer(ISolver algorithm, int id, string data)
     {
         var clock = new Stopwatch();
-        Console.WriteLine($"Computing answer {id} ({DateTime.Now:HH:mm:ss}).");
+        Trace($"Computing answer {id} ({DateTime.Now:HH:mm:ss}).");
         clock.Start();
         var answer = id == 1 ? algorithm.GetAnswer1(data) : algorithm.GetAnswer2(data);
         clock.Stop();
         var message = clock.ElapsedMilliseconds < 2000 ? $"{clock.ElapsedMilliseconds} ms" : $"{clock.Elapsed:c}";
-        Console.WriteLine($"Took {message}.");
+        Trace($"Took {message}.");
         return answer;
     }
 
@@ -79,8 +87,7 @@ public abstract class AutomatonBase
         {
             return true;
         }
-        Console.WriteLine($"* Test question {id} *");
-        var solved = DayState?.First.Solved == true;
+        Trace($"* Test question {id} *");
         // is there are no expected value or visual confirmation registered for this question
         if (!_tests.Values.Any(t => t.CanTest(id)))
         {
@@ -98,17 +105,18 @@ public abstract class AutomatonBase
             // no answer provided
             if (answer == null)
             {
-                Console.WriteLine($"Test failed: got no answer instead of {expected} using:");
-                Console.WriteLine(data);
+                Trace($"Test failed: got no answer instead of {expected} using:");
+                Trace(data);
                 success = false;
             }
+            
             // no expected answer provided, we request manual confirmation 
             else if (expected == null)
             {
                 if (testData.VisualConfirm[id-1])
                 {
-                    Console.WriteLine("Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
-                    Console.WriteLine(answer);
+                    Trace("Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+                    Trace(answer.ToString());
                     var assessment = Console.ReadLine()?.ToLower();
 
                     if (string.IsNullOrEmpty(assessment) || assessment[0] != 'y')
@@ -120,14 +128,14 @@ public abstract class AutomatonBase
             // not the expected answer
             else if (!answer.ToString()!.Equals(expected.ToString()))
             {
-                Console.WriteLine($"Test failed: got {answer} instead of {expected} using:");
-                Console.WriteLine(data);
+                Trace($"Test failed: got {answer} instead of {expected} using:");
+                Trace(data);
                 success = false;
             }
             else
             {
-                Console.WriteLine($"Test succeeded: got {answer} using:");
-                Console.WriteLine(data);
+                Trace($"Test succeeded: got {answer} using:");
+                Trace(data);
             }
         }
 
@@ -226,20 +234,18 @@ public abstract class AutomatonBase
         try
         {
             ResetAutomaton();
-            _tests.Clear();
 
             factory.GetSolver(string.Empty).SetupRun(this);
             if (Day == 0)
             {
-                Console.Error.WriteLine("Please specify current day via the Day property");
+                ReportError("Please specify current day via the Day property");
                 return false;
             }
 
-            DayState = new DayState { Day = Day };
             InitializeDay(Day);
             if (DayState?.First.Solved == true && DayState.Second.Solved)
             {
-                Console.WriteLine("Day has already been solved. Nothing to do.");
+                Trace($"Day {Day} has already been solved (first part:{DayState.First.Answer}, second part:{DayState.Second.Answer}). Nothing to do.");
                 return true;
             }
             
@@ -255,7 +261,7 @@ public abstract class AutomatonBase
             }
             
             // perform the actual run
-            Console.WriteLine("* Computing answer 1 from your input. *");
+            Trace("* Computing answer 1 from your input. *");
             if (!CheckResponse(1, GetAnswer(factory.GetSolver(data), 1, data)))
             {
                 return false;
@@ -266,13 +272,8 @@ public abstract class AutomatonBase
                 return false;
             }
 
-            Console.WriteLine("* Computing answer 2 from your input. *");
-            if (CheckResponse(2, GetAnswer(factory.GetSolver(data), 2, data)))
-            {
-                return true;
-            }
-
-            return false;
+            Trace("* Computing answer 2 from your input. *");
+            return CheckResponse(2, GetAnswer(factory.GetSolver(data), 2, data));
         }
         finally
         {
@@ -284,6 +285,7 @@ public abstract class AutomatonBase
     {
         Day = 0;
         ResetBetweenQuestions = false;
+        _tests.Clear();
     }
 
     private bool CheckResponse(int id, object answer)
@@ -291,17 +293,28 @@ public abstract class AutomatonBase
         var answerText = answer?.ToString();
         if (string.IsNullOrWhiteSpace(answerText))
         {
-            Console.WriteLine($"No answer provided! Please overload GetAnswer{id}() with your code.");
+            Trace($"No answer provided! Please overload GetAnswer{id}() with your code.");
             return false;
         }
 
-        var state = id == 1 ? DayState.First : DayState.Second;
+        var state = GetQuestionState(id);
         bool success;
         if (!state.Attempts.Contains(answerText))
         {
             // new attempt
             state.Attempts.Add(answerText);
-            success = SubmitAnswer(id, answerText);
+            if (answer is int number)
+            {
+                success = CheckRange(number, state) && SubmitAnswer(id, answerText);
+            }
+            else if (answer is long lNumber)
+            {
+                success = CheckRange(lNumber, state) && SubmitAnswer(id, answerText);
+            }
+            else
+            {
+                success = SubmitAnswer(id, answerText);
+            }
             if (success)
             {
                 state.Answer = answerText;
@@ -313,12 +326,35 @@ public abstract class AutomatonBase
             // already tried, was it the correct answer?
             success = state.Answer == answerText;
         }
-        Console.WriteLine("Question {0} {1}!", id, success ? "passed" : "failed");
+        Trace($"Question {id} {(success ? "passed" : "failed")}!");
         return success;
     }
 
+    protected DayQuestion GetQuestionState(int id)
+    {
+        return id == 1 ? DayState.First : DayState.Second;
+    }
+
+    private bool CheckRange(long number, DayQuestion state)
+    {
+        if (state.Low.HasValue && number <= state.Low.Value)
+        {
+            Trace($"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is even lower.");
+            return false;
+        }
+
+        if (state.High.HasValue && number >= state.High.Value)
+        {
+            Trace($"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is even higher.");
+            return false;
+        }
+        return true;
+    }
+
     protected virtual void InitializeDay(int day)
-    {}
+    {
+        DayState = new DayState { Day = Day };
+    }
 
     protected virtual void CleanUpDay()
     {}
@@ -326,6 +362,4 @@ public abstract class AutomatonBase
     protected abstract bool SubmitAnswer(int id, string answer);
 
     protected abstract string GetPersonalInput();
-
-
 }

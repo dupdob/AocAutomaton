@@ -35,6 +35,8 @@ namespace AoC.AoCTests
         public const string BadRequestFile = "error400.html";
         public const string NeedToWaitFile = "NeedToWait.html";
         public const string AlreadyAnsweredFile = "alreadyAnswered.html";
+        public const string AnswerIsTooHigh = "TooHigh.html";
+        public const string AnswerIsTooLow = "TooLow.html";
 
         public static MockFileSystem GetFileSystem()
         {
