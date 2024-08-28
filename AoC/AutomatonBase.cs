@@ -303,18 +303,12 @@ public abstract class AutomatonBase
         {
             // new attempt
             state.Attempts.Add(answerText);
-            if (answer is int number)
+            success = answer switch
             {
-                success = CheckRange(number, state) && SubmitAnswer(id, answerText);
-            }
-            else if (answer is long lNumber)
-            {
-                success = CheckRange(lNumber, state) && SubmitAnswer(id, answerText);
-            }
-            else
-            {
-                success = SubmitAnswer(id, answerText);
-            }
+                int number => CheckRange(number, state) && SubmitAnswer(id, answerText),
+                long lNumber => CheckRange(lNumber, state) && SubmitAnswer(id, answerText),
+                _ => SubmitAnswer(id, answerText)
+            };
             if (success)
             {
                 state.Answer = answerText;
@@ -324,6 +318,7 @@ public abstract class AutomatonBase
         else
         {
             // already tried, was it the correct answer?
+            Trace($"Answer {answer} already attempted.");
             success = state.Answer == answerText;
         }
         Trace($"Question {id} {(success ? "passed" : "failed")}!");
@@ -335,17 +330,17 @@ public abstract class AutomatonBase
         return id == 1 ? DayState.First : DayState.Second;
     }
 
-    private bool CheckRange(long number, DayQuestion state)
+    private static bool CheckRange(long number, DayQuestion state)
     {
         if (state.Low.HasValue && number <= state.Low.Value)
         {
-            Trace($"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is even lower.");
+            Trace($"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too.");
             return false;
         }
 
         if (state.High.HasValue && number >= state.High.Value)
         {
-            Trace($"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is even higher.");
+            Trace($"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
             return false;
         }
         return true;

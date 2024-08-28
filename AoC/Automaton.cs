@@ -176,7 +176,7 @@ namespace AoC
                     return false;
                 }
                 CacheResponse(responseFilename, responseText);
-                // is it the good answer?
+                // did we answer it already
                 if (AlreadyAnswered.IsMatch(resultText))
                 {
                     Trace("Question is already answered, so we skip it.");
@@ -189,7 +189,7 @@ namespace AoC
                     questionState.High = questionState.High == null ? number : Math.Min(questionState.High.Value, number);
                     return false;
                 }
-                // is it too low?
+                // or too low?
                 if (AnswerTooLow.IsMatch(resultText) && long.TryParse(value, out number))
                 {
                     var questionState = GetQuestionState(question);
@@ -200,6 +200,7 @@ namespace AoC
                 var match = TooSoon.Match(resultText);
                 if (!match.Success)
                 {
+                    // so it is either a success or an unsupported message
                     break;
                 }
                 var secondsToWait = int.Parse(match.Groups[1].Value);
