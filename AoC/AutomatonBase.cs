@@ -266,6 +266,12 @@ public abstract class AutomatonBase
             {
                 return false;
             }
+
+            if (Day == 25)
+            {
+                Trace($"* Only one question on day {Day}. You're done*");
+                return true;
+            }
             
             if (!RunTests(2, factory))
             {

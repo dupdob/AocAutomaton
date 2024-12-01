@@ -2,11 +2,12 @@
 
     <PropertyGroup>
         <LangVersion>default</LangVersion>
-        <PackageVersion>0.3.0.0</PackageVersion>
+        <PackageVersion>0.4.0.0</PackageVersion>
         <Title>Advent Of Code automaton</Title>
         <Authors>Cyrille DUPUYDAUBY</Authors>
-        <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.</Description>
-        <TargetFrameworks>net6.0;net7.0;netstandard2.1</TargetFrameworks>
+        <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.
+This supersedes the previous package that I can no longer update.</Description>
+        <TargetFrameworks>net6.0;net7.0;netstandard2.1;net9.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageProjectUrl>https://github.com/dupdob/AocAutomaton</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -15,10 +16,11 @@
         <Copyright>© 2022-24 Cyrille Dupuydauby</Copyright>
         <PackageTags>Aoc;C#</PackageTags>
         <PackageReleaseNotes>Handle too high/low hints from AoC website</PackageReleaseNotes>
-        <AssemblyVersion>0.3</AssemblyVersion>
-        <FileVersion>0.3</FileVersion>
+        <AssemblyVersion>0.4</AssemblyVersion>
+        <FileVersion>0.4</FileVersion>
         <PackageIcon>ico.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageId>AoC2</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
