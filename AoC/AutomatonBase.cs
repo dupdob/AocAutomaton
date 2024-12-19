@@ -109,17 +109,16 @@ public abstract class AutomatonBase
                 Trace(data);
                 success = false;
             }
-            
             // no expected answer provided, we request manual confirmation 
             else if (expected == null)
             {
                 if (testData.VisualConfirm[id-1])
                 {
-                    Trace("Test failed: got a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+                    Trace("Testing with:");
+                    Trace(data);
+                    Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
                     Trace(answer.ToString());
-                    var assessment = Console.ReadLine()?.ToLower();
-
-                    if (string.IsNullOrEmpty(assessment) || assessment[0] != 'y')
+                    if (!AskYesNo())
                     {
                         success = false;
                     }
@@ -140,6 +139,12 @@ public abstract class AutomatonBase
         }
 
         return success;
+    }
+
+    private static bool AskYesNo()
+    {
+        var assessment = Console.ReadLine()?.ToLower();
+        return !string.IsNullOrEmpty(assessment) && assessment[0] == 'y';
     }
 
     /// <summary>
@@ -246,7 +251,11 @@ public abstract class AutomatonBase
             if (DayState?.First.Solved == true && DayState.Second.Solved)
             {
                 Trace($"Day {Day} has already been solved (first part:{DayState.First.Answer}, second part:{DayState.Second.Answer}). Nothing to do.");
-                return true;
+                Trace("Do you want to run it anyway?");
+                if (!AskYesNo())
+                {
+                    return true;
+                }
             }
             
             factory.CacheActive = !ResetBetweenQuestions;
@@ -304,28 +313,19 @@ public abstract class AutomatonBase
         }
 
         var state = GetQuestionState(id);
-        bool success;
-        if (!state.Attempts.Contains(answerText))
+
+        // new attempt
+        state.Attempts.Add(answerText);
+        var success = answer switch
         {
-            // new attempt
-            state.Attempts.Add(answerText);
-            success = answer switch
-            {
-                int number => CheckRange(number, state) && SubmitAnswer(id, answerText),
-                long lNumber => CheckRange(lNumber, state) && SubmitAnswer(id, answerText),
-                _ => SubmitAnswer(id, answerText)
-            };
-            if (success)
-            {
-                state.Answer = answerText;
-                state.Solved = true;
-            }
-        }
-        else
+            int number => CheckRange(number, state) && SubmitAnswer(id, answerText),
+            long lNumber => CheckRange(lNumber, state) && SubmitAnswer(id, answerText),
+            _ => SubmitAnswer(id, answerText)
+        };
+        if (success)
         {
-            // already tried, was it the correct answer?
-            Trace($"Answer {answer} already attempted.");
-            success = state.Answer == answerText;
+            state.Answer = answerText;
+            state.Solved = true;
         }
         Trace($"Question {id} {(success ? "passed" : "failed")}!");
         return success;
@@ -340,13 +340,27 @@ public abstract class AutomatonBase
     {
         if (state.Low.HasValue && number <= state.Low.Value)
         {
-            Trace($"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too.");
+            if (state.Low == number)
+            {
+                Trace($"Answer not submitted. '{number}' was attempted and reported as too low.");
+            }
+            else
+            {
+                Trace($"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too low.");
+            }
             return false;
         }
 
         if (state.High.HasValue && number >= state.High.Value)
         {
-            Trace($"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
+            if (state.High == number)
+            {
+                Trace($"Answer not submitted. '{number}' was attempted and reported as too high.");
+            }
+            else
+            {
+                Trace($"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
+            }
             return false;
         }
         return true;

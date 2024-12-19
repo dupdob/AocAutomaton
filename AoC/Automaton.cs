@@ -185,6 +185,7 @@ namespace AoC
                 // is it too high?
                 if (AnswerTooHigh.IsMatch(resultText) && long.TryParse(value, out var number))
                 {
+                    Trace($"{number} is too high.");
                     var questionState = GetQuestionState(question);
                     questionState.High = questionState.High == null ? number : Math.Min(questionState.High.Value, number);
                     return false;
@@ -192,6 +193,7 @@ namespace AoC
                 // or too low?
                 if (AnswerTooLow.IsMatch(resultText) && long.TryParse(value, out number))
                 {
+                    Trace($"{number} is too low.");
                     var questionState = GetQuestionState(question);
                     questionState.Low = questionState.Low == null ? number : Math.Max(questionState.Low.Value, number);
                     return false;
@@ -212,11 +214,11 @@ namespace AoC
                 }
                 // we need to wait.
                 responseTime += TimeSpan.FromSeconds(secondsToWait);
-                Trace($"Wait until {responseTime}.");
+                Trace($"Waiting until {responseTime} to push answer.");
                 // wait until we can try again
                 do
                 {
-                    Thread.Sleep(500);
+                    Thread.Sleep(100);
                 } while (responseTime >= DateTime.Now);
 
                 // delete any cached response to ensure we post again
@@ -316,7 +318,22 @@ namespace AoC
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
         protected override void InitializeDay(int day)
         {
-            if (day == _client.Day || day == 0) return;
+            if (day == 0)
+            {
+                if (DateTime.Now.Month != 12)
+                {
+                    Trace($"Error: please specify target day.");
+                    return;
+                }
+                day = DateTime.Now.Day;
+                Trace($"Warning: Day not set, assuming day {day}.");
+            }
+
+            if (day == _client.Day)
+            {
+                return;
+            }
+
             _client.SetCurrentDay(day);
             var fileName = DataCachePathName;
             _myData = _fileSystem.File.Exists(fileName)
@@ -333,6 +350,7 @@ namespace AoC
                     {
                         // the state looks corrupted
                         DayState = null;
+                        Trace($"Warning: failed to restore state.");
                     }
                 }
                 catch (Exception e)
