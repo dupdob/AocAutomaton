@@ -142,6 +142,7 @@ namespace AoC
             if (!string.IsNullOrEmpty(directoryName) && !_fileSystem.Directory.Exists(directoryName))
                 _fileSystem.Directory.CreateDirectory(directoryName);
             _pendingWrite = _fileSystem.File.WriteAllTextAsync(DataCachePathName, result);
+            _fileSystem.File.SetAttributes(DataCachePathName, FileAttributes.ReadOnly);
             return result;
         }
 
