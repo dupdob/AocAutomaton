@@ -112,16 +112,17 @@ public abstract class AutomatonBase
             // no expected answer provided, we request manual confirmation 
             else if (expected == null)
             {
-                if (testData.VisualConfirm[id-1])
+                if (!testData.VisualConfirm[id - 1])
                 {
-                    Trace("Testing with:");
-                    Trace(data);
-                    Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
-                    Trace(answer.ToString());
-                    if (!AskYesNo())
-                    {
-                        success = false;
-                    }
+                    continue;
+                }
+                Trace("Testing with:");
+                Trace(data);
+                Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+                Trace(answer.ToString());
+                if (!AskYesNo())
+                {
+                    success = false;
                 }
             }
             // not the expected answer
@@ -340,30 +341,21 @@ public abstract class AutomatonBase
     {
         if (state.Low.HasValue && number <= state.Low.Value)
         {
-            if (state.Low == number)
-            {
-                Trace($"Answer not submitted. '{number}' was attempted and reported as too low.");
-            }
-            else
-            {
-                Trace($"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too low.");
-            }
+            Trace(state.Low == number
+                ? $"Answer not submitted. '{number}' was attempted and reported as too low."
+                : $"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too low.");
             return false;
         }
 
-        if (state.High.HasValue && number >= state.High.Value)
+        if (!state.High.HasValue || number < state.High.Value)
         {
-            if (state.High == number)
-            {
-                Trace($"Answer not submitted. '{number}' was attempted and reported as too high.");
-            }
-            else
-            {
-                Trace($"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
-            }
-            return false;
+            return true;
         }
-        return true;
+        
+        Trace(state.High == number
+            ? $"Answer not submitted. '{number}' was attempted and reported as too high."
+            : $"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
+        return false;
     }
 
     protected virtual void InitializeDay(int day)
