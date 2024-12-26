@@ -97,6 +97,11 @@ public abstract class AutomatonBase
         foreach (var testData in _tests.Values)
         {
             var expected = testData.Answers[id - 1];
+            if (expected == null && !testData.VisualConfirm[id - 1])
+            {
+                // no expected value and no visual confirm, we skip
+                continue;
+            }
             var data = testData.Data;
             // gets a cached algorithm if any
             var testAlgo = factory.GetSolver(data, testData.Init);
