@@ -65,12 +65,12 @@ public class SolverFactory
     /// <returns>A <see cref="SolverFactory"/> instance.</returns>
     public static SolverFactory ForType(Type solverType)
     {
-        var constructorInfo = solverType.GetConstructor(new []{typeof(string)});
+        var constructorInfo = solverType.GetConstructor([typeof(string)]);
 
         if (constructorInfo != null)
         {
             return new SolverFactory(
-                (data) => constructorInfo.Invoke(new object[]{data}) as ISolver ??
+                data => constructorInfo.Invoke([data]) as ISolver ??
                        throw new Exception($"Can't build an instance of {solverType.Name}."));            
         }
         constructorInfo = solverType.GetConstructor(Type.EmptyTypes);
@@ -81,7 +81,7 @@ public class SolverFactory
         }
 
         return new SolverFactory(
-            (_) => constructorInfo.Invoke(null) as ISolver ??
+            _ => constructorInfo.Invoke(null) as ISolver ??
                   throw new Exception($"Can't build an instance of {solverType.Name}."));
     }
     

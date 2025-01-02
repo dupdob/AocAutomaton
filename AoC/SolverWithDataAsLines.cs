@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2023 Cyrille DUPUYDAUBY
+//  Copyright (c) 2024 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
-
 namespace AoC;
 
-public class TestData
+public abstract class SolverWithDataAsLines : SolverWithParser
 {
-    public TestData(string data, string init = null)
+    protected override void Parse(string data)
     {
-        Data = data;
-        Init = init;
-    }
-    
-    public string Data { get; }
-    
-    public string Init { get; }
-    
-    public object[] Answers { get; } = new object[2];
-
-    public bool[] VisualConfirm { get; } = new bool[2];
-    
-    public Action[] SetupActions { get; } = new Action[2];
-
-    public bool CanTest(int id) => Answers[id - 1] != null || VisualConfirm[id-1];
-
-    public TestData Answer1(object answer)
-    {
-        Answers[0] = answer;
-        return this;
-    }
-    
-    public TestData Answer2(object answer)
-    {
-        Answers[1] = answer;
-        return this;
+        var lines = data.Split('\n');
+        // we discard the last line if it is empty (trailing newline), but we keep any intermediate newlines
+        if (lines[^1].Length == 0)
+        {
+            lines = lines[..^1];
+        }
+        
+        ParseLines(lines);
     }
 
-    public TestData SetVisualConfirm(int question)
-    {
-        VisualConfirm[question-1] = true;
-        return this;
-    }
+    protected abstract void ParseLines(string[] lines);
 }

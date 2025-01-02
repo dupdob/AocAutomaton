@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2023 Cyrille DUPUYDAUBY
+//  Copyright (c) 2024 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
+using System.Collections.Generic;
 
 namespace AoC;
 
-public class TestData
+/// <summary>
+/// Solver parsing input data as a series of block of lines separated by empty lines.
+/// </summary>
+public abstract class SolverWithBlockParser : SolverWithDataAsLines
 {
-    public TestData(string data, string init = null)
+    protected abstract void ParseBlock(List<string> block, int blockIndex);
+    
+    protected override void ParseLines(string[] lines)
     {
-        Data = data;
-        Init = init;
-    }
-    
-    public string Data { get; }
-    
-    public string Init { get; }
-    
-    public object[] Answers { get; } = new object[2];
-
-    public bool[] VisualConfirm { get; } = new bool[2];
-    
-    public Action[] SetupActions { get; } = new Action[2];
-
-    public bool CanTest(int id) => Answers[id - 1] != null || VisualConfirm[id-1];
-
-    public TestData Answer1(object answer)
-    {
-        Answers[0] = answer;
-        return this;
-    }
-    
-    public TestData Answer2(object answer)
-    {
-        Answers[1] = answer;
-        return this;
-    }
-
-    public TestData SetVisualConfirm(int question)
-    {
-        VisualConfirm[question-1] = true;
-        return this;
+        var blockIndex = 0;
+        var nextBlock = new List<string>();
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrEmpty(line))
+            {
+                ParseBlock(nextBlock, blockIndex++);
+                nextBlock = [];
+            }
+            else
+            {
+                nextBlock.Add(line);
+            }
+        }
+        ParseBlock(nextBlock, blockIndex);
     }
 }

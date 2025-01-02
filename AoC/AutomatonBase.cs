@@ -97,9 +97,9 @@ public abstract class AutomatonBase
         foreach (var testData in _tests.Values)
         {
             var expected = testData.Answers[id - 1];
-            if (expected == null && !testData.VisualConfirm[id - 1])
+            if (expected == null && (id==2 || ResetBetweenQuestions ) && !testData.VisualConfirm[id - 1])
             {
-                // no expected value and no visual confirm, we skip
+                // no expected value, no visual confirm and no need for the result, we skip
                 continue;
             }
             var data = testData.Data;
@@ -115,7 +115,7 @@ public abstract class AutomatonBase
                 success = false;
             }
             // no expected answer provided, we request manual confirmation 
-            else if (expected == null)
+            else if (expected == null || testData.VisualConfirm[id-1])
             {
                 if (!testData.VisualConfirm[id - 1])
                 {
@@ -249,12 +249,17 @@ public abstract class AutomatonBase
             factory.GetSolver(string.Empty).SetupRun(this);
             if (Day == 0)
             {
-                ReportError("Please specify current day via the Day property");
-                return false;
+                if (DateTime.Now.Month != 12)
+                {
+                    ReportError($"Error: please specify target day using Day property.");
+                    return false;
+                }
+                Day = DateTime.Now.Day;
+                Trace($"Warning: Day not set, assuming day {Day} (use Day property to set day#).");
             }
-
+            
             InitializeDay(Day);
-            if (DayState?.First.Solved == true && DayState.Second.Solved)
+            if (DayState.First.Solved && DayState.Second.Solved)
             {
                 Trace($"Day {Day} has already been solved (first part:{DayState.First.Answer}, second part:{DayState.Second.Answer}). Nothing to do.");
                 Trace("Do you want to run it anyway?");

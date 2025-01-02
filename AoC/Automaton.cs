@@ -41,7 +41,7 @@ namespace AoC
         private static readonly Regex AnswerTooHigh= new(".*your answer is too high.*");
         private static readonly Regex AnswerTooLow= new(".*your answer is too low.*");
         private static readonly Regex AlreadyAnswered = new(".*You don't seem to be solving the right level\\..*");
-        private static readonly Regex TooSoon = new(".*You have (\\d*)m? ?(\\d*)s? left to wait\\..*");
+        private static readonly Regex TooSoon = new(@".*You have (\d*)m? ?(\d*)s? left to wait\..*");
         private readonly AoCClientBase _client;
         private readonly IFileSystem _fileSystem;
         private string _dataPathNameFormat = ".";
@@ -154,7 +154,7 @@ namespace AoC
         /// <returns>true if this is the good answer</returns>
         /// <remarks>
         ///     Posted answers are cached locally to avoid stressing the AoC website.
-        ///     The result of previous answers is stored as an html file. The filename depends on the question and the provided
+        ///     The result of previous answers is stored as a html file. The filename depends on the question and the provided
         ///     answer; it contains either
         ///     the answer itself, or its hash if the answer cannot be part of a filename.
         ///     You can examine the response file to get details and/or removes them to resubmit a previously send proposal.
@@ -319,17 +319,6 @@ namespace AoC
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
         protected override void InitializeDay(int day)
         {
-            if (day == 0)
-            {
-                if (DateTime.Now.Month != 12)
-                {
-                    Trace($"Error: please specify target day.");
-                    return;
-                }
-                day = DateTime.Now.Day;
-                Trace($"Warning: Day not set, assuming day {day}.");
-            }
-
             if (day == _client.Day)
             {
                 return;

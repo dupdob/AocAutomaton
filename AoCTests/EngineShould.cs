@@ -66,7 +66,7 @@ namespace AoC.AoCTests
             using var console = new CaptureConsole();
             var count = AutoFakeSolver.Count;
             engine.RunDay<AutoFakeSolver>();
-            // one instance should have been create
+            // one instance should have been created
             Check.That(AutoFakeSolver.Count).IsEqualTo(count + 2);
             // verify the day is properly set up
             Check.That(engine.Day).IsEqualTo(10);

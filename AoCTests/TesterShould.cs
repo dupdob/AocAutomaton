@@ -171,7 +171,7 @@ namespace AoC.AoCTests
             // it should request the first answer three times: two tests + actual data
             Check.That(algo.GetAnswer1Calls).IsEqualTo(3);
             // Second test fails
-            Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
+            Check.That(algo.GetAnswer2Calls).IsEqualTo(1);
 
             Check.That(console.Output).Contains("* Test question 2 *");
             Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
@@ -205,7 +205,7 @@ namespace AoC.AoCTests
             Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
             Check.That(console.Output).Contains("* Test question 2 *");
             Check.That(console.Output)
-                .Contains("Test failed: got a result but no expected answer provided. Please confirm result manually");
+                .Contains("but no expected answer provided. Please confirm result manually (y/n). Result below.");
             // it should have received the provided input data
             Check.That(algo.InputData).IsEqualTo(testInputData);
         }
