@@ -15,6 +15,9 @@ You need to override `ParseBlock(List<string> data, int blockIndex)` where _data
 _blockIndex_ is the 0 base index for this block (for Dat 15-2024, the map is block **0** and the instruction is a single
 as block **1**).
 
+### 3. SolverWithDataAsLines
+New solver template that exposes input data as a list of lines (`string`s). You need to override `ParseLines(string[] lines)`
+and parse the data appropriately. _Note: this is now the base class for all Solver templates._
 
 ## Implementation features
 - Assume Day is current (only during December month). Note that is still recommended to set the Day explicitly

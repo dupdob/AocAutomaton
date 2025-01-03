@@ -58,15 +58,9 @@ public abstract class AutomatonBase
         }
     }
 
-    protected static void Trace(string message)
-    {
-        Console.WriteLine(message);
-    }
+    protected static void Trace(string message) => Console.WriteLine(message);
 
-    protected static void ReportError(string message)
-    {
-        Console.Error.WriteLine(message);
-    }
+    protected static void ReportError(string message) => Console.Error.WriteLine(message);
 
     private static object GetAnswer(ISolver algorithm, int id, string data)
     {
@@ -342,10 +336,7 @@ public abstract class AutomatonBase
         return success;
     }
 
-    protected DayQuestion GetQuestionState(int id)
-    {
-        return id == 1 ? DayState.First : DayState.Second;
-    }
+    protected DayQuestion GetQuestionState(int id) => id == 1 ? DayState.First : DayState.Second;
 
     private static bool CheckRange(long number, DayQuestion state)
     {
