@@ -91,7 +91,8 @@ public abstract class AutomatonBase
         foreach (var testData in _tests.Values)
         {
             var expected = testData.Answers[id - 1];
-            if (expected == null && (id==2 || ResetBetweenQuestions ) && !testData.VisualConfirm[id - 1])
+            if (expected == null && (id==2 || ResetBetweenQuestions || (id == 1 && testData.Answers[1]!= null)) 
+                                 && !testData.VisualConfirm[id - 1])
             {
                 // no expected value, no visual confirm and no need for the result, we skip
                 continue;
