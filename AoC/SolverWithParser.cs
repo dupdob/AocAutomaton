@@ -28,6 +28,10 @@ namespace AoC
     {
         private string _data;
 
+        protected bool IsTest { get; private set; }
+
+        protected int[] ExtraParameters { get; private set; } = [];
+
         private string Data
         {
             set
@@ -42,7 +46,13 @@ namespace AoC
         {
             SetupRun((Automaton) automatonBase);    
         }
-        
+
+        public void InitRun(bool isTest, params int[] extraParameters)
+        {
+            IsTest = isTest;
+            ExtraParameters = extraParameters;
+        }
+
         public abstract void SetupRun(Automaton automatonBase);
 
         /// <summary>
@@ -55,6 +65,9 @@ namespace AoC
         ///     as it is declared abstract).
         /// </remarks>
         protected abstract void Parse(string data);
+
+        protected int GetParameter(int index, int value) => ExtraParameters.Length > index ? ExtraParameters[index] : value;
+
         public object GetAnswer1(string data)
         {
             Data = data;

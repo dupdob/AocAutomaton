@@ -99,8 +99,8 @@ public abstract class AutomatonBase
             }
             var data = testData.Data;
             // gets a cached algorithm if any
-            var testAlgo = factory.GetSolver(data, testData.Init);
-            testData.SetupActions[id - 1]?.Invoke();
+            var testAlgo = factory.GetSolver(data);
+            testAlgo.InitRun(true, testData.ExtraParameters);
             var answer = GetAnswer(testAlgo, id, data);
             // no answer provided
             if (answer == null)
@@ -182,9 +182,9 @@ public abstract class AutomatonBase
     /// <param name="init">initial data for this data</param>
     /// <returns>a <see cref="TestData"/> instance that must be enriched with expected results.</returns>
     /// <returns>The automation base instance for linked calls.</returns>
-    public TestData RegisterTest(string data, string init = null)
+    public TestData RegisterTest(string data)
     {
-        _last = new TestData(data, init);
+        _last = new TestData(data);
         return _tests[data] = _last;
     }
 
@@ -192,14 +192,20 @@ public abstract class AutomatonBase
     /// Registers test data so that they are used for validating the solver
     /// </summary>
     /// <param name="data">input data as a string.</param>
-    /// <param name="init">initial data for this data</param>
     /// <returns>The automation base instance for linked calls.</returns>
-    public AutomatonBase RegisterTestData(string data, string init = null)
+    public AutomatonBase RegisterTestData(string data)
     {
-        RegisterTest(data, init);
+        RegisterTest(data);
         return this;
     }
-    
+
+    /// <summary>
+    /// Add example data so that they are used for validating the solver
+    /// </summary>
+    /// <param name="data">input data as a string.</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    public TestData AddExample(string data) => RegisterTest(data);
+
     /// <summary>
     /// Register that the result should be manually confirmed during execution
     /// </summary>
@@ -284,7 +290,7 @@ public abstract class AutomatonBase
 
             if (Day == 25)
             {
-                Trace($"* Only one question on day {Day}. You're done*");
+                Trace($"* Only one question on day {Day}. You're done! *");
                 return true;
             }
             

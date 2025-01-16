@@ -26,7 +26,22 @@ namespace AoC
 {
     public interface ISolver
     {
+        /// <summary>
+        /// This method is called once by the automation logic.
+        /// It is supposed to provide exercise specific information, such as:
+        /// - day
+        /// - examples and associated expected results
+        /// </summary>
+        /// <param name="automatonBase"></param>
         void SetupRun(AutomatonBase automatonBase);
+
+        /// <summary>
+        /// This method is called by orchestration to pass any extra parameters.
+        /// </summary>
+        /// <param name="isTest">set to true if this is an example</param>
+        /// <param name="extraParameters">any extra parameters provided along test data.</param>
+        void InitRun(bool isTest, params int[] extraParameters);
+        
         object GetAnswer1(string data);
         object GetAnswer2(string data);
     }

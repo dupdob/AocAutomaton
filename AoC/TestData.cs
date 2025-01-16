@@ -22,29 +22,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
-
 namespace AoC;
 
 public class TestData
 {
-    public TestData(string data, string init = null)
+    public TestData(string data)
     {
         Data = data;
-        Init = init;
     }
     
     public string Data { get; }
     
-    public string Init { get; }
-    
     public object[] Answers { get; } = new object[2];
+
+    public int[] ExtraParameters { get; private set; } = [];
 
     public bool[] VisualConfirm { get; } = new bool[2];
     
-    public Action[] SetupActions { get; } = new Action[2];
-
     public bool CanTest(int id) => Answers[id - 1] != null || VisualConfirm[id-1];
+
+    public TestData WithParameters(params int[] parameters)
+    {
+        ExtraParameters = parameters;
+        return this;
+    }
 
     public TestData Answer1(object answer)
     {

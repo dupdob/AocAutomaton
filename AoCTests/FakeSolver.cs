@@ -56,6 +56,11 @@ namespace AoC.AoCTests
             _testDataBuilder?.Invoke(automatonBase);
         }
 
+        public void InitRun(bool isTest, params int[] extraParameters)
+        {
+            throw new NotImplementedException();
+        }
+
         public object GetAnswer1(string data)
         {
             InputData = data;
