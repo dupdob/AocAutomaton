@@ -36,15 +36,14 @@ namespace AoC
         private const string EnvVarName = "AOC_SESSION";
         private readonly HttpClient _client;
         private readonly HttpClientHandler _handler;
-        private readonly string _url;
+        private string Url =>$"https://adventofcode.com/{Year}/day/"; 
 
-        public AoCClient(int year) : base(year)
+        public AoCClient()
         {
             var sessionId = Environment.GetEnvironmentVariable(EnvVarName);
             if (string.IsNullOrEmpty(sessionId))
                 throw new InvalidOperationException(GetSetupDocumentation());
 
-            _url = $"https://adventofcode.com/{year}/day/";
             _handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
             _client = new HttpClient(_handler);
             // add our identifier to the request
@@ -56,12 +55,12 @@ namespace AoC
 
         public override Task<string> RequestPersonalInput()
         {
-            return _client.GetStringAsync($"{_url}{Day}/input");
+            return _client.GetStringAsync($"{Url}{Day}/input");
         }
 
         public override Task<string> PostAnswer(int question, string value)
         {
-            var url = $"{_url}{Day}/answer";
+            var url = $"{Url}{Day}/answer";
             var data = new Dictionary<string, string>
             {
                 ["answer"] = value,

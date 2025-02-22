@@ -33,10 +33,6 @@ namespace AoC.AoCTests
         private readonly Dictionary<int, Queue<string>> _responseFile = new();
         private string _inputData = string.Empty;
 
-        public AoCFakeClient(int year) : base(year)
-        {
-        }
-
         public int NbRequest { get; private set; }
 
         public int NbSubmissions;

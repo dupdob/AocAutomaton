@@ -28,11 +28,9 @@ namespace AoC
 {
     public abstract class AoCClientBase : IDisposable
     {
-        protected AoCClientBase(int year) => Year = year;
-
         public int Day { get; private set; }
       
-        public int Year { get; }
+        public int Year { get; set; }
 
         public abstract void Dispose();
 

@@ -22,12 +22,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
+
 namespace AoC;
 
 public class TestData
 {
-    public TestData(string data)
+    private readonly Automaton _automaton;
+
+    public TestData(string data, Automaton automaton)
     {
+        _automaton = automaton;
         Data = data;
     }
     
@@ -35,15 +40,31 @@ public class TestData
     
     public object[] Answers { get; } = new object[2];
 
-    public int[] ExtraParameters { get; private set; } = [];
+    public int[] ExtraParameters { get; private set; } = null;
+    
+    public string Extra { get; private set; }
 
     public bool[] VisualConfirm { get; } = new bool[2];
     
     public bool CanTest(int id) => Answers[id - 1] != null || VisualConfirm[id-1];
 
-    public TestData WithParameters(params int[] parameters)
+    public bool CanTest() => CanTest(1) || CanTest(2);
+
+    public TestData WithParameters(params int[] parameters) => WithParameters(string.Empty, parameters);
+
+    public TestData WithParameters(string text, params int[] parameters)
     {
+        if (ExtraParameters?.Length>0 || !string.IsNullOrEmpty(Extra))
+        {
+            if (!CanTest())
+            {
+                throw new InvalidOperationException("Must specify an expected result before declaring a new test case");
+            }
+
+            return _automaton.AddExample(this.Data).WithParameters(text, parameters);
+        }
         ExtraParameters = parameters;
+        Extra = text;
         return this;
     }
 

@@ -1,7 +1,32 @@
 # Changelog for AoC Automaton
 
-# V0.5
 
+# V 0.9
+## Overview
+New architecture which allows to select the interactive mode. Either http/automatic (existing), or console/manual (new), depending on your
+preference.
+
+The change of architecture resulted in the removal of some classes and some methods' signatures may have changed since
+earlier versions.
+This version is considered to be close to V1.0, hence APIs are considered as stable. As such, Aoc Automaton will
+adhere to semantic versioning (semver) for future versions.
+The handling of extra parameters have been redesigned. New solver bases classes are also available.
+
+## Behavior changes
+The automaton persist its cache, which stores question status (solved or not), past attempts and low/high mark when
+available. 
+The automaton automatically rejects any answer that:
+1) is null (assume no answer provided)
+2) is zero or negative
+3) has already been unsuccessfully attempted
+4) is higher than the high mark or lower than the low mark
+
+## New methods, classes
+### ConsoleUserInterface
+This class implements console based interaction. In short, it asks for console input for your exercise data and simply 
+display the computed result, for you to copy-paste into AoC website.
+
+# V0.5
 ## New methods, classes
 
 ### 1. Automaton
@@ -24,12 +49,9 @@ and parse the data appropriately. _Note: this is now the base class for all Solv
 - Automatically request visual confirmation when no expected result has been provided for part two and tests data are present
 - Skip part two for Day 25 as there is no part two.
 - When testing part two, skips part one when:
-    1. No expected result provided for part one
+  1. No expected result provided for part one
   2. The automaton must be reset between questions
   3. Visual confirm is not activated (for this data)
-
-
-## Fixes
 
 
 

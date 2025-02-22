@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2022 Cyrille DUPUYDAUBY
+//  Copyright (c) 2023 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,336 +23,585 @@
 // SOFTWARE.
 
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO.Abstractions;
-using System.Net.Http;
+using System.Linq;
 
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
+namespace AoC;
 
-namespace AoC
+public class Automaton
 {
-    public class Automaton : AutomatonBase, IDisposable
+    private readonly List<TestData> _tests = [];
+    private TestData _last;
+    private int _currentDay;
+    private readonly IFileSystem _fileSystem;
+
+    private DayState _dayState;
+
+    private string _defaultText;
+    private int[] _defaultParameters = [];
+    
+    private readonly IInteract _userInterface;
+    private readonly int _year;
+    private string _dataPathNameFormat = ".";
+    // user data (forced)
+    private string _data;
+    private readonly Func<DateTime> _now;
+
+    /// <summary>
+    /// Build an automation instance
+    /// </summary>
+    /// <param name="year">advent of code year. Current year if set to 0 (default value)</param>
+    /// <param name="userInterface">User interface component. Console interface if set to null (default value)</param>
+    /// <param name="fileSystem">Filesystem. For testing purposes.</param>
+    /// <param name="nowFunction">Function returning current time (</param>
+    public Automaton(int year = 0, IInteract userInterface = null, IFileSystem fileSystem = null, Func<DateTime> nowFunction = null)
     {
-        // default input cache name
-        // AoC answers RegEx
-        private static readonly Regex GoodAnswer = new(".*That's the right answer!.*");
-        private static readonly Regex AnswerTooHigh= new(".*your answer is too high.*");
-        private static readonly Regex AnswerTooLow= new(".*your answer is too low.*");
-        private static readonly Regex AlreadyAnswered = new(".*You don't seem to be solving the right level\\..*");
-        private static readonly Regex TooSoon = new(@".*You have (\d*)m? ?(\d*)s? left to wait\..*");
-        private readonly AoCClientBase _client;
-        private readonly IFileSystem _fileSystem;
-        private string _dataPathNameFormat = ".";
-        private string DataCacheFileName => $"InputAoc-{Day,2}-{_client.Year,4}.txt";
-        private string StateFileName => $"AoC-{Day,2}-{_client.Year,4}-state.json";
-
-        // default path
-        private string DataPath => string.Format(_dataPathNameFormat, Day, _client.Year);
-        private string DataCachePathName => string.IsNullOrEmpty(DataPath)
-            ? DataCacheFileName
-            : _fileSystem.Path.Combine(DataPath, DataCacheFileName);
-
-        private string StatePathName => string.IsNullOrEmpty(DataPath)
-            ? StateFileName
-            : _fileSystem.Path.Combine(DataPath, StateFileName);
-
-        private Task<string> _myData;
-        private Task _pendingWrite;
-        // settings
-
-        public Automaton(int year = 0, AoCClientBase client = null, IFileSystem fileSystem = null)
-        {
-            if (year == 0)
-            {
-                year = DateTime.Today.Year;
-            }
-            _client = client ?? new AoCClient(year);
-            _fileSystem = fileSystem ?? new FileSystem();
-        }
-
-        /// <summary>
-        ///  Cleanup data. Mainly ensure that ongoing writes are persisted, if any, and closes the HTTP session.
-        /// </summary>
-        public void Dispose()
-        {
-            _myData?.Dispose();
-            _pendingWrite?.Dispose();
-            _client?.Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Sets the path used by the engine to cache data (input and response).
-        /// You can provide a format pattern string, knowing that {0} will be replaced by
-        /// the exercise's day and {1} by the year.
-        /// </summary>
-        /// <param name="dataPath">path (or format string) used to store data.</param>
-        /// <returns>This instance.</returns>
-        /// <remarks>Relative paths are relative to the engine current directory.</remarks>
-        public Automaton SetDataPath(string dataPath)
-        {
-            _dataPathNameFormat = dataPath;
-            return this;
-        }
-
-        /// <summary>
-        ///     Runs a given day.
-        /// </summary>
-        /// <typeparam name="T"><see cref="ISolver" /> type for the day.</typeparam>
-        /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
-        public bool RunDay<T>() where T : ISolver => RunDay(SolverFactory.ForType<T>());
-
-        public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory((_) => builder()));
-
-        // ensure data are cached properly
-        protected override void CleanUpDay()
-        {
-            if (_pendingWrite == null)
-            {
-                return;
-            }
-            // wait for cache writing completion
-            if (!_pendingWrite.IsCompleted)
-                if (!_pendingWrite.Wait(500))
-                    Trace("Local caching of input may have failed!");
-            _fileSystem.File.WriteAllText(StatePathName, DayState.ToJson());
-            _pendingWrite = null;
-        }
-
-        protected override string GetPersonalInput()
-        {
-            string result;
-            try
-            {
-                result = _myData.Result;
-            }
-            catch (AggregateException e)
-            {
-                if (e.InnerExceptions[0] is HttpRequestException requestException)
-                {
-                    AnalyseInvalidAnswer(requestException.Message);
-                }
-                throw;
-            }
-            if (_fileSystem.File.Exists(DataCachePathName)) return result;
-
-            var directoryName = Path.GetDirectoryName(DataCachePathName);
-            if (!string.IsNullOrEmpty(directoryName) && !_fileSystem.Directory.Exists(directoryName))
-                _fileSystem.Directory.CreateDirectory(directoryName);
-            _pendingWrite = _fileSystem.File.WriteAllTextAsync(DataCachePathName, result);
-            _fileSystem.File.SetAttributes(DataCachePathName, FileAttributes.ReadOnly);
-            return result;
-        }
-
-        /// <summary>
-        ///     Posts an answer to the AoC website.
-        /// </summary>
-        /// <param name="question">question id (1 or 2)</param>
-        /// <param name="value">proposed answer (as a string)</param>
-        /// <returns>true if this is the good answer</returns>
-        /// <remarks>
-        ///     Posted answers are cached locally to avoid stressing the AoC website.
-        ///     The result of previous answers is stored as a html file. The filename depends on the question and the provided
-        ///     answer; it contains either
-        ///     the answer itself, or its hash if the answer cannot be part of a filename.
-        ///     You can examine the response file to get details and/or removes them to resubmit a previously send proposal.
-        /// </remarks>
-        protected override bool SubmitAnswer(int question, string value)
-        {
-            Console.WriteLine($"Day {Day}-{question}: {value} [{_client.Year}].");
-            var answerId = Helpers.AsAFileName(value);
-            var responseFilename = _fileSystem.Path.Combine(DataPath, $"Answer{question} for {answerId}.html");
-            string resultText;
-            while (true)
-            {
-                var responseText = PostAndRetrieve(question, value, responseFilename, out var responseTime);
-                // extract the response as plain text
-                (var isOk, resultText) = ExtractAnswerText(responseText);
-                OutputAoCMessage(resultText);
-                if (!isOk)
-                {
-                    // technical error, so we abort
-                    return false;
-                }
-                CacheResponse(responseFilename, responseText);
-                // did we answer it already
-                if (AlreadyAnswered.IsMatch(resultText))
-                {
-                    Trace("Question is already answered, so we skip it.");
-                    return true;
-                }
-                // is it too high?
-                if (AnswerTooHigh.IsMatch(resultText) && long.TryParse(value, out var number))
-                {
-                    Trace($"{number} is too high.");
-                    var questionState = GetQuestionState(question);
-                    questionState.High = questionState.High == null ? number : Math.Min(questionState.High.Value, number);
-                    return false;
-                }
-                // or too low?
-                if (AnswerTooLow.IsMatch(resultText) && long.TryParse(value, out number))
-                {
-                    Trace($"{number} is too low.");
-                    var questionState = GetQuestionState(question);
-                    questionState.Low = questionState.Low == null ? number : Math.Max(questionState.Low.Value, number);
-                    return false;
-                }
-                // did we answer too fast?
-                var match = TooSoon.Match(resultText);
-                if (!match.Success)
-                {
-                    // so it is either a success or an unsupported message
-                    break;
-                }
-                var secondsToWait = int.Parse(match.Groups[1].Value);
-                if (!string.IsNullOrWhiteSpace(match.Groups[2].Value))
-                {
-                    // if there is a second value, the first one is in minutes.
-                    secondsToWait *= 60;
-                    secondsToWait+= int.Parse(match.Groups[2].Value);
-                }
-                // we need to wait.
-                responseTime += TimeSpan.FromSeconds(secondsToWait);
-                Trace($"Waiting until {responseTime} to push answer.");
-                // wait until we can try again
-                do
-                {
-                    Thread.Sleep(100);
-                } while (responseTime >= DateTime.Now);
-
-                // delete any cached response to ensure we post again
-                _fileSystem.File.Delete(responseFilename);
-            }
-
-            // is it the correct answer ?
-            return GoodAnswer.IsMatch(resultText);
-        }
-
-        private void CacheResponse(string responseFilename, string responseText)
-        {
-            if (_pendingWrite is { IsCompleted: false })
-            {
-                // await the ongoing write
-                _pendingWrite.Wait();
-            }
-
-            _pendingWrite = _fileSystem.File.WriteAllTextAsync(responseFilename, responseText);
-        }
-
-        private static void OutputAoCMessage(string resultText)
-        {
-            Trace($"AoC site response: '{resultText}'");
-        }
-
-        private string PostAndRetrieve(int question, string value, string responseFilename, out DateTime responseTime)
-        {
-            string responseText;
-            // if we already have the response file...
-            if (_fileSystem.File.Exists(responseFilename))
-            {
-                Trace($"Response {value} as already been attempted.");
-                responseText = _fileSystem.File.ReadAllText(responseFilename);
-                responseTime = _fileSystem.File.GetLastWriteTime(responseFilename);
-            }
-            else
-            {
-                var response = _client.PostAnswer(question, value);
-                responseTime = DateTime.Now;
-                responseText = response.Result;
-            }
-
-            return responseText;
-        }
-
-        private string AnalyseInvalidAnswer(string response)
-        {
-            if (response.Contains("500 Internal Server Error"))
-            {
-                Trace("AoC: Internal Server Error. This is likely an indication of a corrupted AOC session token. See below for setup documentation.");
-                Trace(_client.GetSetupDocumentation());
-                return response;
-            }
-            if (response.Contains("400 Bad Request") || response.Contains("400 (Bad Request)") || response.Contains("To play, please identify yourself via one of these services:"))
-            {
-                Trace("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
-                Trace(_client.GetSetupDocumentation());
-                return response;
-            }            
-            if (response.Contains("404 Not Found"))
-            {
-                Trace("AoC: Not Found. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
-                Trace(_client.GetSetupDocumentation());
-                return response;
-            }
-            Trace("Failed to parse response.");
-            return response;           
-        }
+        _now = nowFunction ?? (()=>DateTime.Now);
         
-        private (bool isOk, string answer) ExtractAnswerText(string response)
+        if (year == 0)
         {
-            var start = response.IndexOf("<article>", StringComparison.InvariantCulture);
-            if (start == -1)
-            {
-                // no text tag, this is a technical error
-                return (false, AnalyseInvalidAnswer(response));
-            }
-
-            start += 9;
-            var end = response.IndexOf("</article>", start, StringComparison.InvariantCulture);
-            if (end == -1)
-            {
-                // no end tag, we got an incorrect response from server
-                Trace("Failed to parse response.");
-                return (false, response);
-            }   
-
-            response = response.Substring(start, end - start);
-            return (true, Regex.Replace(response, @"<(.|\n)*?>", string.Empty));
+            year = _now().Year;
         }
 
-        /// <summary>
-        /// Retrieves personal data (associated to the AoC session ID).
-        /// </summary>
-        /// <param name="day">day to fetch</param>
-        /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
-        protected override void InitializeDay(int day)
+        _year = year;
+        _fileSystem = fileSystem ?? new FileSystem();
+        _userInterface = userInterface ?? new ConsoleUserInterface();
+    }
+
+    /// <summary>
+    /// Builds an automaton interacting with Advent of code website.
+    /// </summary>
+    /// <param name="year">Target year</param>
+    /// <returns>An AoC automaton instance</returns>
+    public static Automaton WebsiteAutomaton(int year =0) => new(year, new HttpInterface());
+
+    private string StateFileName => $"AoC-{_year,4}-{Day,2}-state.json";
+    
+    private string StatePathName => string.IsNullOrEmpty(DataPath)
+        ? StateFileName
+        : _fileSystem.Path.Combine(DataPath, StateFileName);
+    
+    private string DataPath => string.Format(_dataPathNameFormat, Day, _year);
+    
+    /// <summary>
+    /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
+    /// </summary>
+    public bool ResetBetweenQuestions { get; set; }
+
+    /// <summary>
+    /// xGets/sets the current day
+    /// </summary>
+    public int Day
+    {
+        get => _currentDay;
+        set
         {
-            if (day == _client.Day)
+            if (_currentDay == value)
             {
                 return;
             }
-
-            _client.SetCurrentDay(day);
-            var fileName = DataCachePathName;
-            _myData = _fileSystem.File.Exists(fileName)
-                ? _fileSystem.File.ReadAllTextAsync(fileName)
-                : _client.RequestPersonalInput();
-
-            // deal with state
-            if (_fileSystem.File.Exists(StatePathName))
-            {
-                try
-                {
-                    DayState = DayState.FromJson(_fileSystem.File.ReadAllText(StatePathName));
-                    if (DayState.Day != day)
-                    {
-                        // the state looks corrupted
-                        DayState = null;
-                        Trace($"Warning: failed to restore state.");
-                    }
-                }
-                catch (Exception e)
-                {
-                    ReportError($"Failed to load the current state: {e}");
-                }
-            }
-
-            // if it failed for any reason
-            DayState ??= new DayState();
-            // we enforce the current day
-            DayState.Day = day;
+            _tests.Clear(); 
+            _currentDay = value;
         }
     }
+
+    /// <summary>
+    /// Sets the path used by the engine to cache data (input and response).
+    /// You can provide a format pattern string, knowing that {0} will be replaced by
+    /// the exercise's day and {1} by the year.
+    /// </summary>
+    /// <param name="dataPath">path (or format string) used to store data.</param>
+    /// <returns>This instance.</returns>
+    /// <remarks>Relative paths are relative to the engine current directory.</remarks>
+    public Automaton SetDataPath(string dataPath)
+    {
+        _dataPathNameFormat = dataPath;
+        return this;
+    }
+
+    /// <summary>
+    /// Set default values for extra parameters. These will be used for your actual input and any test for which
+    /// those parameters have not been overriden.
+    /// </summary>
+    /// <param name="defaultText">default text parameters.</param>
+    /// <param name="defaultParameters">default integer parameters</param>
+    /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
+    /// such as an iteration count or an initial text. </remarks>
+    public void SetDefault(string defaultText, params int[] defaultParameters)
+    {
+        _defaultText = defaultText;
+        _defaultParameters = defaultParameters;
+    }
+    
+    /// <summary>
+    /// Set default values for extra parameters. These will be used for your actual input and any test for which
+    /// those parameters have not been overriden.
+    /// </summary>
+    /// <param name="defaultParameters">default integer parameters</param>
+    /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
+    /// such as an iteration count or an initial text. </remarks>
+    public void SetDefault(params int[] defaultParameters) => SetDefault(null, defaultParameters);
+    
+    private void Trace(string message) => _userInterface.Trace(message);
+
+    private void ReportError(string message) => _userInterface.ReportError(message);
+
+    private object GetAnswer(ISolver algorithm, int id, string data)
+    {
+        var clock = new Stopwatch();
+        Trace($"Computing answer {id} ({_now:HH:mm:ss}).");
+        clock.Start();
+        var answer = id == 1 ? algorithm.GetAnswer1(data) : algorithm.GetAnswer2(data);
+        clock.Stop();
+        var message = clock.ElapsedMilliseconds < 2000 ? $"{clock.ElapsedMilliseconds} ms" : $"{clock.Elapsed:c}";
+        Trace($"Took {message}.");
+        return answer;
+    }
+
+    private bool RunTests(int id, SolverFactory factory)
+    {
+        var success = true;
+        if (_tests.Count == 0)
+        {
+            Trace($"* /!\\ no test for question {id}! *");
+            return true;
+        }
+        Trace($"* Test question {id} *");
+        // Is there any actual test?
+        if (!_tests.Any(t => t.CanTest(id)))
+        {
+            // we ensure at least one value is tested and request explicit confirmaiton
+            _tests.First().SetVisualConfirm(id);
+        }
+        
+        foreach (var testData in _tests)
+        {
+            var expected = testData.Answers[id - 1];
+            // we skip running the test if we are not interested in the result for any reason
+            if (expected == null && (id==2 || ResetBetweenQuestions) 
+                                 && !testData.VisualConfirm[id - 1])
+            {
+                continue;
+            }
+
+            // gets a cached algorithm if any
+            var testAlgo = factory.GetSolver(testData.Data, true, testData.Extra ?? _defaultText, testData.ExtraParameters ?? _defaultParameters);
+            success = CheckAnswer(id, GetAnswer(testAlgo, id, testData.Data), expected, testData) && success;
+        }
+
+        return success;
+    }
+
+    private bool CheckAnswer(int id, object answer, object expected, TestData testData)
+    {
+        // no answer provided
+        if (answer == null)
+        {
+            Trace($"Test failed: got no answer instead of {expected} using:");
+            Trace(testData.Data);
+            return false;
+        }
+        // no expected answer provided, we request manual confirmation 
+        if (expected == null)
+        {
+            if (!testData.VisualConfirm[id - 1])
+            {
+                return true;
+            }
+            Trace("Testing with:");
+            Trace(testData.Data);
+            Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+            Trace(answer.ToString());
+            if (!AskYesNo())
+            {
+                return false;
+            }
+        }
+        // not the expected answer
+        else if (!answer.ToString()!.Equals(expected.ToString()))
+        {
+            Trace($"Test failed: got {answer} instead of {expected} using:");
+            Trace(testData.Data);
+            return false;
+        }
+        else
+        {
+            Trace($"Test succeeded: got {answer} using:");
+            Trace(testData.Data);
+        }
+
+        return true;
+    }
+
+    internal static bool AskYesNo()
+    {
+        var assessment = Console.ReadLine()?.ToLower();
+        return !string.IsNullOrEmpty(assessment) && assessment[0] == 'y';
+    }
+
+    /// <summary>
+    /// Registers test data so that they are used for validating the solver
+    /// </summary>
+    /// <param name="data">input data as a string.</param>
+    /// <param name="expected">expected result (either string or a number).</param>
+    /// <param name="question">question id (1 or 2)</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    [Obsolete("Prefer AddExample instead.")]
+    public Automaton RegisterTestDataAndResult(string data, object expected, int question)
+    {
+        var set = _tests.FirstOrDefault(t => t.Data== data);
+        if (set == null)
+        {   
+            set = new TestData(data, this);
+            _tests.Add(set);
+        }
+        
+        if (question == 1)
+        {
+            set.Answer1(expected);
+        }
+        else
+        {
+            set.Answer2(expected);
+        }
+
+        _last = set;
+        return this;
+    }
+
+    /// <summary>
+    /// Register a new test.
+    /// </summary>
+    /// <param name="data">input data for this test</param>
+    /// <returns>a <see cref="TestData"/> instance that must be enriched with expected results.</returns>
+    /// <returns>The automation base instance for linked calls.</returns>
+    [Obsolete("Prefer AddExample instead.")]
+    public TestData RegisterTest(string data)
+    {
+        _last = new TestData(data, this);
+        _tests.Add(_last);
+        return _last;
+    }
+
+    /// <summary>
+    /// Registers test data so that they are used for validating the solver
+    /// </summary>
+    /// <param name="data">input data as a string.</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    [Obsolete("Prefer AddExample instead.")]
+    public Automaton RegisterTestData(string data)
+    {
+        RegisterTest(data);
+        return this;
+    }
+
+    /// <summary>
+    /// Add example data so that they are used for validating the solver
+    /// </summary>
+    /// <param name="data">input data as a string.</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    public TestData AddExample(string data) => RegisterTest(data);
+
+    /// <summary>
+    /// Register that the result should be manually confirmed during execution
+    /// </summary>
+    /// <param name="question">question's answer to be confirmed manually</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    public Automaton AskVisualConfirm(int question)
+    {
+        _last.SetVisualConfirm(question);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers test result so that they are used for validating the solver
+    /// </summary>
+    /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
+    /// <param name="expected">expected result (either string or a number).</param>
+    /// <param name="question">question id (1 or 2)</param>
+    /// <returns>The automation base instance for linked calls.</returns>
+    [Obsolete("Prefer AddExample instead.")]
+    public Automaton RegisterTestResult(object expected, int question = 1)
+    {
+        if (_last == null)
+        {
+            throw new ApplicationException("You must call RegisterTestData before calling this method.");
+        }
+        if (question == 1)
+        {
+            _last.Answer1(expected);
+        }
+        else
+        {
+            _last.Answer2(expected);
+        }
+        return this;
+    }
+    
+    /// <summary>
+    ///  Runs a given day.
+    /// </summary>
+    /// <typeparam name="T"><see cref="ISolver" /> type for the day.</typeparam>
+    /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
+    public bool RunDay<T>() where T : ISolver => RunDay(SolverFactory.ForType<T>());
+
+    public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory(builder));
+
+    /// <summary>
+    /// Loads user data from a file.
+    /// </summary>
+    /// <param name="pathName">path name of the user data.</param>
+    public void LoadUserData(string pathName) => _data = _fileSystem.File.ReadAllText(pathName);
+
+    private bool RunDay(SolverFactory factory)
+    {
+        try
+        {
+            ResetAutomaton();
+
+            // we ask the solver to set the exercise context up
+            factory.GetSolver(null, false, null, null).SetupRun(this);
+            if (!CheckSetup())
+            {
+                return false;
+            }
+            
+            InitializeDay(Day);
+            if (!CheckState())
+            {
+                return true;
+            }
+            
+            factory.CacheActive = !ResetBetweenQuestions;
+
+            // tests if data are provided
+            var testsSucceeded = RunTests(1, factory); 
+            
+            var data = GetPersonalInput();
+            if (!testsSucceeded)
+            {
+                return false;
+            }
+            
+            // perform the actual run
+            Trace("* Computing answer 1 from your input. *");
+            if (!CheckResponse(1, GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 1, data)))
+            {
+                return false;
+            }
+
+            if (Day == 25)
+            {
+                Trace($"* Only one question on day {Day}. You're done! *");
+                return true;
+            }
+            
+            if (!RunTests(2, factory))
+            {
+                return false;
+            }
+
+            Trace("* Computing answer 2 from your input. *");
+            return CheckResponse(2, GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 2, data));
+        }
+        finally
+        {
+            CleanUpDay();
+        }
+    }
+
+    private bool CheckState()
+    {
+        if (!_dayState.First.Solved || !_dayState.Second.Solved)
+        {
+            return true;
+        }
+        Trace($"Day {Day} has already been solved (first part:{_dayState.First.Answer}, second part:{_dayState.Second.Answer}). Nothing to do.");
+        Trace("Do you want to run it anyway?");
+        return AskYesNo();
+
+    }
+
+    private bool CheckSetup()
+    {
+        if (_tests.Count == 0)
+        {
+            Trace("Warning: no test case provided.");
+        }
+        if (Day != 0)
+        {
+            return true;
+        }
+
+        var now = _now();
+        if (now.Month != 12)
+        {
+            ReportError($"Error: please specify target day using Day property.");
+            return false;
+        }   
+        Day = now.Day;
+        Trace($"Warning: Day not set, assuming day {Day} (use Day property to set day#).");
+
+        return true;
+    }
+
+    private void ResetAutomaton()
+    {
+        Day = 0;
+        ResetBetweenQuestions = false;
+        _tests.Clear();
+    }
+
+    private bool CheckResponse(int id, object answer)
+    {
+        var answerText = answer?.ToString();
+        if (string.IsNullOrWhiteSpace(answerText))
+        {
+            Trace($"No answer provided! Please overload GetAnswer{id}() with your code.");
+            return false;
+        }
+
+        switch (answer)
+        {
+            case int integer:
+                if (!CheckForNegative(integer)) return false;
+                break;
+            
+            case long longInteger:
+                if (!CheckForNegative(longInteger)) return false;
+                break;
+        }
+
+        var state = id == 1 ? _dayState.First : _dayState.Second;
+
+        // new attempt
+        state.Attempts.Add(answerText);
+        bool success;
+        switch (answer)
+        {
+            case int number:
+                success = CheckAndUpdateRangedAnswer(id, number, state, answerText);
+                break;
+            case long lNumber:
+                success = CheckAndUpdateRangedAnswer(id, lNumber, state, answerText);
+                break;
+            default:
+                success = SubmitAnswer(id, answerText) == AnswerStatus.Good;
+                break;
+        }
+
+        if (success)
+        {
+            state.Answer = answerText;
+            state.Solved = true;
+        }
+        Trace($"Question {id} {(success ? "passed" : "failed")}!");
+        return success;
+
+        bool CheckForNegative(long numericAnswer)
+        {
+            switch (numericAnswer)
+            {
+                case 0:
+                    Trace("Answer cannot be zero.");
+                    return false;
+                case >= 0:
+                    return true;
+                default:
+                    Trace($"Answer cannot be negative, not submitted: {numericAnswer}");
+                    return false;
+            }
+        }
+    }
+
+    private bool CheckAndUpdateRangedAnswer(int id, long lNumber, DayQuestion state, string answerText)
+    {
+        bool success;
+        if (CheckRange(lNumber, state))
+        {
+            var result = SubmitAnswer(id, answerText);
+            switch (result)
+            {
+                case AnswerStatus.TooHigh:
+                    state.High = state.High.HasValue ? Math.Min(state.High.Value, lNumber) : lNumber;
+                    break;
+                case AnswerStatus.TooLow:
+                    state.Low = state.Low.HasValue ? Math.Max(state.Low.Value, lNumber) : lNumber;
+                    break;
+            }
+
+            success = result == AnswerStatus.Good;
+        }
+        else
+        {
+            success = false;
+        }
+
+        return success;
+    }
+
+    private bool CheckRange(long number, DayQuestion state)
+    {
+        if (state.Low.HasValue && number <= state.Low.Value)
+        {
+            Trace(state.Low == number
+                ? $"Answer not submitted. '{number}' was attempted and reported as too low."
+                : $"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too low.");
+            return false;
+        }
+
+        if (!state.High.HasValue || number < state.High.Value)
+        {
+            return true;
+        }
+        
+        Trace(state.High == number
+            ? $"Answer not submitted. '{number}' was attempted and reported as too high."
+            : $"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
+        return false;
+    }
+
+    private void InitializeDay(int day)
+    {
+        _dayState = null;
+        // deal with state
+        if (_fileSystem.File.Exists(StatePathName))
+        {
+            try
+            {
+                _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(StatePathName));
+                if (_dayState.Day != day)
+                {
+                    // the state looks corrupted
+                    Trace($"Warning: failed to restore state, day does not match expectation: {_dayState.Day} instead of {day}.");
+                    _dayState = null;
+                }
+
+            }
+            catch (Exception e)
+            {
+                ReportError($"Failed to load the current state: {e}");
+            }
+        }
+
+        // if it failed for any reason
+        _dayState ??= new DayState { Day = day };
+        _userInterface.InitializeDay(_year, Day, DataPath);
+    }
+
+    private void CleanUpDay()
+    {
+        if (_dayState != null)
+        {
+            _fileSystem.File.WriteAllText(StatePathName, _dayState.ToJson());
+        }
+       
+        _userInterface.CleanUpDay(); 
+    }
+
+    private AnswerStatus SubmitAnswer(int id, string answer) => _userInterface.SubmitAnswer(id, answer);
+
+    private string GetPersonalInput() => string.IsNullOrEmpty(_data) ? _userInterface.GetPersonalInput() : _data;
 }

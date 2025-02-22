@@ -31,18 +31,31 @@ namespace AoC
         /// It is supposed to provide exercise specific information, such as:
         /// - day
         /// - examples and associated expected results
+        /// - any extra parameters (sometimes used for more advanced problems)
         /// </summary>
-        /// <param name="automatonBase"></param>
-        void SetupRun(AutomatonBase automatonBase);
+        /// <param name="automaton"></param>
+        void SetupRun(Automaton automaton);
 
         /// <summary>
         /// This method is called by orchestration to pass any extra parameters.
         /// </summary>
         /// <param name="isTest">set to true if this is an example</param>
+        /// <param name="extraText">supplemental text</param>
         /// <param name="extraParameters">any extra parameters provided along test data.</param>
-        void InitRun(bool isTest, params int[] extraParameters);
+        void InitRun(bool isTest, string extraText, params int[] extraParameters);
         
+        /// <summary>
+        /// This method is called to get the answer to the first part of the problem
+        /// </summary>
+        /// <param name="data">input data provided by AoC</param>
+        /// <returns>the computed answer, often an int or a long, can also be a string</returns>
         object GetAnswer1(string data);
+        
+        /// <summary>
+        /// This method is called to get the answer to second first part of the problem
+        /// </summary>
+        /// <param name="data">input data provided by AoC</param>
+        /// <returns>the computed answer, often an int or a long, can also be a string</returns>
         object GetAnswer2(string data);
     }
 }

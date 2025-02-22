@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace AoC;
 /// <summary>
@@ -33,13 +34,13 @@ namespace AoC;
 public class SolverFactory
 {
     private readonly Dictionary<string, Dictionary<string, ISolver>> _solvers = new();
-    private readonly Func<string, ISolver> _builder;
+    private readonly Func<ISolver> _builder;
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="builder">lambda returning an ISolver implementation</param>
-    public SolverFactory(Func<string, ISolver> builder)
+    public SolverFactory(Func<ISolver> builder)
     {
         _builder = builder;
     }
@@ -65,15 +66,7 @@ public class SolverFactory
     /// <returns>A <see cref="SolverFactory"/> instance.</returns>
     public static SolverFactory ForType(Type solverType)
     {
-        var constructorInfo = solverType.GetConstructor([typeof(string)]);
-
-        if (constructorInfo != null)
-        {
-            return new SolverFactory(
-                data => constructorInfo.Invoke([data]) as ISolver ??
-                       throw new Exception($"Can't build an instance of {solverType.Name}."));            
-        }
-        constructorInfo = solverType.GetConstructor(Type.EmptyTypes);
+        var constructorInfo = solverType.GetConstructor(Type.EmptyTypes);
         
         if (constructorInfo == null)
         {
@@ -81,8 +74,8 @@ public class SolverFactory
         }
 
         return new SolverFactory(
-            _ => constructorInfo.Invoke(null) as ISolver ??
-                  throw new Exception($"Can't build an instance of {solverType.Name}."));
+            () => constructorInfo.Invoke(null) as ISolver ??
+                   throw new Exception($"Can't build an instance of {solverType.Name}."));
     }
     
     /// <summary>
@@ -94,30 +87,55 @@ public class SolverFactory
     /// Returns an <see cref="ISolver"/> implementation for the provided input data.
     /// </summary>
     /// <param name="data">input data to be used by the solver.</param>
-    /// <param name="init">initial data for the solver (optional)</param>
+    /// <param name="forTest">true if it is for test purposes</param>
+    /// <param name="extraText">extra text string</param>
+    /// <param name="extraParameters">initial data for the solver (optional)</param>
     /// <returns>the appropriate <see cref="ISolver"/> implementation.</returns>
-    /// <remarks>build a new instance or return a previously build instance associated with the same data (if <see cref="CacheActive"/> is true).</remarks>
-    public ISolver GetSolver(string data, string init = null)
+    /// <remarks>build a new instance or return a previously built instance associated with the same data (if <see cref="CacheActive"/> is true).</remarks>
+    public ISolver GetSolver(string data, bool forTest, string extraText, int[] extraParameters)
     {
-        init ??= string.Empty;
-        if (!CacheActive)
+        // is this for general setup?
+        if (data == null)
         {
-            return _builder(init);
+            return _builder();
         }
         
+        var builder = new StringBuilder();
+        if (!string.IsNullOrEmpty(extraText))
+        {
+            builder.Append(extraText);
+        }
+
+        if (extraParameters != null)
+        {
+            if (builder.Length > 0)
+            {
+                builder.Append(',');
+            }
+
+            builder.AppendJoin(',', extraParameters);
+        }
+        
+        var init =  builder.ToString();
+
         if (!_solvers.TryGetValue(init, out var solvers))
         {
             solvers = new Dictionary<string, ISolver>();
-            _solvers[init] = solvers;
+            if (CacheActive)
+            {
+                _solvers[init] = solvers;
+            }
         }
-
-        if (solvers.TryGetValue(data, out var solver))
+        
+        if (solvers!.TryGetValue(data, out var solver))
         {
             return solver;
         }
-        solver = _builder(init);
+
+        // we need to build a new solver
+        solver = _builder();
         solvers[data] = solver;
-        
+        solver.InitRun(forTest, extraText, extraParameters);
         return solver;
     }
 }

@@ -28,16 +28,16 @@ namespace AoC.AoCTests
 {
     public class AutoFakeSolver : SolverWithLineParser
     {
-        public static int Count { get; set; }
+        public static int Count { get; private set; }
 
         public AutoFakeSolver()
         {
-            Count = Count + 1;
+            Count += 1;
         }
 
-        public override void SetupRun(Automaton automatonBase)
+        public override void SetupRun(Automaton httpAutomatonBase)
         {
-            automatonBase.Day = 10;
+            httpAutomatonBase.Day = 10;
         }
 
         public override object GetAnswer1() => 1L;

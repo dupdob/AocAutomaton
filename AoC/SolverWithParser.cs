@@ -32,6 +32,8 @@ namespace AoC
 
         protected int[] ExtraParameters { get; private set; } = [];
 
+        protected string Extra { get; private set; }
+
         private string Data
         {
             set
@@ -42,18 +44,14 @@ namespace AoC
             }
         }
 
-        public void SetupRun(AutomatonBase automatonBase)
-        {
-            SetupRun((Automaton) automatonBase);    
-        }
-
-        public void InitRun(bool isTest, params int[] extraParameters)
+        public void InitRun(bool isTest, string extra, params int[] extraParameters)
         {
             IsTest = isTest;
+            Extra = extra;
             ExtraParameters = extraParameters;
         }
 
-        public abstract void SetupRun(Automaton automatonBase);
+        public abstract void SetupRun(Automaton automaton);
 
         /// <summary>
         ///     Parse the exercise data.
@@ -67,7 +65,7 @@ namespace AoC
         protected abstract void Parse(string data);
 
         protected int GetParameter(int index, int value) => ExtraParameters.Length > index ? ExtraParameters[index] : value;
-
+        
         public object GetAnswer1(string data)
         {
             Data = data;

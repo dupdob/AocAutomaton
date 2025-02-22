@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2023 Cyrille DUPUYDAUBY
+//  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,30 +22,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace AoC.AoCTests;
+namespace AoC;
 
-public class AutoFakeSolverWithParam : SolverWithParser
+public enum AnswerStatus
 {
-    public string GetExtra() => Extra;
- 
-    
-    public int[] GetExtraParameters() => ExtraParameters;
-    
-    public string Data { get; private set; }
+    Wrong,
+    Good,
+    TooHigh,
+    TooLow
+};
 
-    public int Day { get; init; } = 10;
-
-    public override void SetupRun(Automaton httpAutomatonBase)
-    {
-        httpAutomatonBase.Day = Day;
-    }
-
-    protected override void Parse(string data)
-    {
-        Data = data;
-    }
-
-    public override object GetAnswer1() => 1L;
-
-    public override object GetAnswer2() => "2";
+public interface IInteract
+{
+    void InitializeDay(int year, int day, string dataPath);
+    void CleanUpDay();  
+    AnswerStatus SubmitAnswer(int id, string answer);
+    string GetPersonalInput();
+    void Trace(string message);
+    void ReportError(string message);
 }
