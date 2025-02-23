@@ -140,7 +140,7 @@ namespace AoC
         /// <summary>
         ///     Posts an answer to the AoC website.
         /// </summary>
-        /// <param name="question">question id (1 or 2)</param>
+        /// <param name="part">question id (1 or 2)</param>
         /// <param name="value">proposed answer (as a string)</param>
         /// <returns>true if this is the good answer</returns>
         /// <remarks>
@@ -150,15 +150,15 @@ namespace AoC
         ///     the answer itself, or its hash if the answer cannot be part of a filename.
         ///     You can examine the response file to get details and/or removes them to resubmit a previously send proposal.
         /// </remarks>
-        public AnswerStatus SubmitAnswer(int question, string value)
+        public AnswerStatus SubmitAnswer(int part, string value)
         {
-            Console.WriteLine($"Day {_day}-{question}: {value} [{_client.Year}].");
+            Console.WriteLine($"Day {_day}-{part}: {value} [{_client.Year}].");
             var answerId = Helpers.AsAFileName(value);
-            var responseFilename = _fileSystem.Path.Combine(_dataPath, $"Answer{question} for {answerId}.html");
+            var responseFilename = _fileSystem.Path.Combine(_dataPath, $"Answer{part} for {answerId}.html");
             string resultText;
             while (true)
             {
-                var responseText = PostAndRetrieve(question, value, responseFilename, out var responseTime);
+                var responseText = PostAndRetrieve(part, value, responseFilename, out var responseTime);
                 // extract the response as plain text
                 (var isOk, resultText) = ExtractAnswerText(responseText);
                 OutputAoCMessage(resultText);

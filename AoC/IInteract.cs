@@ -24,20 +24,66 @@
 
 namespace AoC;
 
+/// <summary>
+/// Advent Of code response status
+/// </summary>
 public enum AnswerStatus
 {
+    /// <summary>
+    /// Wrong answer
+    /// </summary>
     Wrong,
+    /// <summary>
+    /// Good Answer
+    /// </summary>
     Good,
+    /// <summary>
+    /// Answer is higher than solution
+    /// </summary>
     TooHigh,
+    /// <summary>
+    /// Answer is lower than solution
+    /// </summary>
     TooLow
 };
 
+/// <summary>
+/// Interface for automaton UI implementations
+/// </summary>
 public interface IInteract
 {
+    /// <summary>
+    /// Called by automation to initialize interface (if needed)
+    /// </summary>
+    /// <param name="year">exercise year (event)</param>
+    /// <param name="day">specific day</param>
+    /// <param name="dataPath">path to cache</param>
     void InitializeDay(int year, int day, string dataPath);
-    void CleanUpDay();  
-    AnswerStatus SubmitAnswer(int id, string answer);
+    /// <summary>
+    /// Called at the end of the exercise to allow for clean up.
+    /// </summary>
+    void CleanUpDay();
+    /// <summary>
+    /// Called by automation to submit an answer
+    /// </summary>
+    /// <param name="part">part, 1 or 2</param>
+    /// <param name="answer">answer</param>
+    /// <returns>the answer status</returns>
+    AnswerStatus SubmitAnswer(int part, string answer);
+    /// <summary>
+    /// Called by automation to retrieve exercise's personal input
+    /// </summary>
+    /// <returns>The personal as a string.</returns>
     string GetPersonalInput();
+    /// <summary>
+    /// Called by automation to trace events
+    /// </summary>
+    /// <param name="message">message to log/output</param>
     void Trace(string message);
+    /// <summary>
+    /// Called by automation to report a significant error.
+    /// Usually ends the test process.
+    /// </summary>
+    /// <param name="message"></param>
     void ReportError(string message);
 }

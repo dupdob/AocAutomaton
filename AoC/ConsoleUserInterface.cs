@@ -44,9 +44,9 @@ public class ConsoleUserInterface : IInteract
         // nothing to do   
     }
 
-    public AnswerStatus SubmitAnswer(int id, string answer)
+    public AnswerStatus SubmitAnswer(int part, string answer)
     {
-        Console.WriteLine("Answer for part {0} is :", id);
+        Console.WriteLine("Answer for part {0} is :", part);
         Console.WriteLine(answer??"<null>");
         if (answer == null)
         {
