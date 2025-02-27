@@ -38,11 +38,11 @@ namespace AoC
         {
             set
             {
-                if (value == _data) return;
                 if (value[^1] == '\n')
                 {
                     value = value.Remove(value.Length - 1);
                 }
+                if (value == _data) return;
                 _data = value;
                 Parse(value);
             }
