@@ -68,17 +68,21 @@ public class TestData
         return this;
     }
 
-    public TestData Answer1(object answer)
+    public TestData Answer1(object answer) => RegisterAnswer(0, answer);
+
+    public TestData Answer2(object answer) => RegisterAnswer(1, answer);
+
+    private TestData RegisterAnswer(int index, object answer)
     {
-        Answers[0] = answer;
+        if (answer == null)
+        {
+            VisualConfirm[index] = true;
+        }
+
+        Answers[index] = answer;
         return this;
     }
-    
-    public TestData Answer2(object answer)
-    {
-        Answers[1] = answer;
-        return this;
-    }
+
 
     public TestData SetVisualConfirm(int question)
     {

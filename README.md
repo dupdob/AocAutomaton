@@ -20,7 +20,9 @@ It will:
 - it does the same for the second part of the question
 
 The `Automaton` caches data to prevent any useless hammering of the AoC
-site. Also, it **automatically deals with response delay and submit the answer** as soon as possible.
+site. Also, it **automatically deals with response delay and submit the answer** as soon as possible. It will also
+avoid submitting known wrong answers, such as null, zero or negatives values, previously tried answers or answers that
+are outside the known range (when you got answer is too low or too high results).
 ---- 
 ## Philosophy
 **AocAutomaton** is designed to be used within your IDE of choice, focusing on **reducing friction when solving AoC puzzles**. Friction appears as the need to copy/paste your input data between the site and

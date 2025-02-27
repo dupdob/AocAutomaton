@@ -80,6 +80,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void ReportFailureIfDayNotSet()
     {
+        // this does not trigger in December
         var sut = new Automaton(fileSystem: new MockFileSystem(), nowFunction: () => new DateTime(2025,3,4));
         var solver = new AutoFakeSolverWithParam
         {

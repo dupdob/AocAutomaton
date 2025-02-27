@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Reflection;
 
 namespace AoC;
 
@@ -48,7 +49,7 @@ public class Automaton
     // user data (forced)
     private string _data;
     private readonly Func<DateTime> _now;
-
+ 
     /// <summary>
     /// Build an automation instance
     /// </summary>
@@ -106,7 +107,7 @@ public class Automaton
             _currentDay = value;
         }
     }
-
+    
     /// <summary>
     /// Sets the path used by the engine to cache data (input and response).
     /// You can provide a format pattern string, knowing that {0} will be replaced by
@@ -151,7 +152,7 @@ public class Automaton
     private object GetAnswer(ISolver algorithm, int id, string data)
     {
         var clock = new Stopwatch();
-        Trace($"Computing answer {id} ({_now:HH:mm:ss}).");
+        Trace($"Computing answer {id} ({_now():HH:mm:ss}).");
         clock.Start();
         var answer = id == 1 ? algorithm.GetAnswer1(data) : algorithm.GetAnswer2(data);
         clock.Stop();
@@ -280,8 +281,7 @@ public class Automaton
     [Obsolete("Prefer AddExample instead.")]
     public TestData RegisterTest(string data)
     {
-        _last = new TestData(data, this);
-        _tests.Add(_last);
+        _last = AddExample(data);
         return _last;
     }
 
@@ -301,14 +301,31 @@ public class Automaton
     /// Add example data so that they are used for validating the solver
     /// </summary>
     /// <param name="data">input data as a string.</param>
+    /// <param name="force">force adding the example</param>
     /// <returns>The automation base instance for linked calls.</returns>
-    public TestData AddExample(string data) => RegisterTest(data);
-
+    /// <remarks>if <paramref name="force"/> is false, it will return test data for provided example if any has been added</remarks>
+    public TestData AddExample(string data, bool force = true)
+    {
+        if (!force)
+        {
+            var found = _tests.FirstOrDefault(d => d.Data == data);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+        _tests.Add(new TestData(data, this));
+        return _tests[^1];
+    }
+    
+    public ICollection<TestData> GetExamples() => _tests;
+    
     /// <summary>
     /// Register that the result should be manually confirmed during execution
     /// </summary>
     /// <param name="question">question's answer to be confirmed manually</param>
     /// <returns>The automation base instance for linked calls.</returns>
+    [Obsolete("Prefer AddExample instead.")]
     public Automaton AskVisualConfirm(int question)
     {
         _last.SetVisualConfirm(question);
@@ -362,12 +379,9 @@ public class Automaton
             ResetAutomaton();
 
             // we ask the solver to set the exercise context up
-            factory.GetSolver(null, false, null, null).SetupRun(this);
-            if (!CheckSetup())
-            {
+            if (!InitializeSolver(factory))
                 return false;
-            }
-            
+
             InitializeDay(Day);
             if (!CheckState())
             {
@@ -409,6 +423,44 @@ public class Automaton
         finally
         {
             CleanUpDay();
+        }
+    }
+
+    private bool InitializeSolver(SolverFactory factory)
+    {
+        var solver = factory.GetSolver(null, false, null, null);
+        // use attributes
+        ParseAttributes(solver);
+
+        solver.SetupRun(this);
+        if (!CheckSetup())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ParseAttributes(ISolver solver)
+    {
+        var dayAttribute = (DayAttribute)solver.GetType().GetCustomAttributes(typeof(DayAttribute), false).FirstOrDefault();
+        if (dayAttribute != null)
+        {
+            Day = dayAttribute.Day;
+        }
+        // see if there are example attributes
+        var methodInfos = solver.GetType().GetMethods(BindingFlags.Instance|BindingFlags.Public);
+        var samples = methodInfos.Where( m => m.Name == "GetAnswer1").SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
+            .Cast<ExampleAttribute>().ToList() ?? [];
+        foreach (var sample in samples)
+        {
+            AddExample(sample.Input, false).Answer1(sample.Expected).WithParameters(sample.TextParameter, sample.Parameters);
+        }
+        samples = methodInfos.Where( m => m.Name == "GetAnswer2").SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
+            .Cast<ExampleAttribute>().ToList() ?? [];
+        foreach (var sample in samples)
+        {
+            AddExample(sample.Input, false).Answer2(sample.Expected).WithParameters(sample.TextParameter, sample.Parameters);;
         }
     }
 

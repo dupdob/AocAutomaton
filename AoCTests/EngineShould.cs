@@ -56,6 +56,25 @@ namespace AoC.AoCTests
         }
         
         [Test]
+        public void SetUpEverythingProperlyWhenSolverUsesAttributes()
+        {
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            var fakeClient = new AoCFakeClient();
+
+            const string testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            var inputInterface = new HttpInterface(fakeClient, mockFileSystem);
+            var engine = new Automaton(2015, inputInterface, mockFileSystem);
+            var algo = new SolverWithAttribute();
+            using var console = new CaptureConsole();
+            engine.RunDay(() => algo);
+            // verify the day is properly set up
+            Check.That(engine.Day).IsEqualTo(13);
+            
+            Check.That(engine.GetExamples()).CountIs(2);
+        }
+        
+        [Test]
         public void BeAbleToUseFileAsAnInput()
         {
             var fileSystem = new MockFileSystem();

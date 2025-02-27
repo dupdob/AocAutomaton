@@ -12,6 +12,13 @@ This version is considered to be close to V1.0, hence APIs are considered as sta
 adhere to semantic versioning (semver) for future versions.
 The handling of extra parameters have been redesigned. New solver bases classes are also available.
 
+## New attributes
+AoC automaton now allows you to use attributes to specify core information about your solver, which is simpler
+and more elegant than the previous approach via a dedicated setup. 
+You use `[Day(x)]` (where x is the exercise's day you are solving) on your solver class, and you can use 
+`[Example(input, expected)]` on the `GetAnswer1()` and `GetAnswer2()` methods to provide test values.
+
+
 ## Behavior changes
 The automaton persist its cache, which stores question status (solved or not), past attempts and low/high mark when
 available. 
@@ -20,6 +27,10 @@ The automaton automatically rejects any answer that:
 2) is zero or negative
 3) has already been unsuccessfully attempted
 4) is higher than the high mark or lower than the low mark
+
+### SolverWithParser
+This is the base implementation for every solver. Now it removes the trailing newline symbol from the input. As such
+single line input data are easier to process.
 
 ## New methods, classes
 ### ConsoleUserInterface
@@ -33,8 +44,7 @@ display the computed result, for you to copy-paste into AoC website.
    - Allow to request visual confirmation for tests via `AskVisualConfirm(...)` method.
 
 ### 2. SolverWithBlockParser
-   
-New solver template (the one you can inherit from to solve some AoC exercise). It exposes input data
+   New solver template (the one you can inherit from to solve some AoC exercise). It exposes input data
 as a series of empty line separated block (such as for [Day 15-2024](https://adventofcode.com/2024/day/15)).
 You need to override `ParseBlock(List<string> data, int blockIndex)` where _data_ is the block as a list of strings and
 _blockIndex_ is the 0 base index for this block (for Dat 15-2024, the map is block **0** and the instruction is a single
