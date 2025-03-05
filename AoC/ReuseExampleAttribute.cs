@@ -26,53 +26,27 @@ using System;
 
 namespace AoC;
 
-[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class ExampleAttribute : Attribute
+[AttributeUsage(AttributeTargets.Method)]
+public class ReuseExampleAttribute : Attribute
 {
     public int Id { get; }
-
-    public string Input { get; }
-    public object Expected { get; }
-    public string TextParameter { get; }
-    public int[] Parameters { get; }
-
-    public ExampleAttribute(string input)
-    {
-        Input = input;
-        Expected = null;
-    }
-
-    public ExampleAttribute(string input, long expected, string textParameter = null, params int[] parameters)
-    {
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    }
-
-    public ExampleAttribute(string input, string expected, string textParameter = null, params int[] parameters)
-    {
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    }     
     
-    public ExampleAttribute(int id, string input, long expected, string textParameter = null, params int[] parameters)
+    public object Expected { get; }
+    
+    public ReuseExampleAttribute(int id)
     {
         Id = id;
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
     }
 
-    public ExampleAttribute(int id, string input, string expected, string textParameter = null, params int[] parameters)
+    public ReuseExampleAttribute(int id, long expected)
     {
         Id = id;
-        Input = input;
         Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    } 
+    }
+
+    public ReuseExampleAttribute(int id, string expected)
+    {
+        Id = id;
+        Expected = expected;
+    }
 }

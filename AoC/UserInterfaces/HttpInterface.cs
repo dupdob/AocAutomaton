@@ -38,7 +38,6 @@ namespace AoC
     /// </summary>
     public class HttpInterface : IInteract, IDisposable
     {
-        // default input cache name
         // AoC answers RegEx
         private static readonly Regex GoodAnswer = new(".*That's the right answer!.*");
         private static readonly Regex AnswerTooHigh= new(".*your answer is too high.*");
@@ -48,19 +47,20 @@ namespace AoC
         private readonly AoCClientBase _client;
         private readonly IFileSystem _fileSystem;
         
+        // default input cache name
         private string DataCacheFileName => $"InputAoc-{_day,2}-{_client.Year,4}.txt";
 
-        // default path
         private int _day;
         private string _dataPath;
         
+        // default path
         private string DataCachePathName => string.IsNullOrEmpty(_dataPath)
             ? DataCacheFileName
             : _fileSystem.Path.Combine(_dataPath, DataCacheFileName);
 
+        // internal state
         private Task<string> _myData;
         private Task _pendingWrite;
-        // settings
 
         /// <summary>
         /// Build a new automaton.
@@ -131,7 +131,6 @@ namespace AoC
             _fileSystem.File.SetAttributes(DataCachePathName, FileAttributes.ReadOnly);
             return result;
         }
-
 
         public void Trace(string message) => Console.WriteLine(message);
 

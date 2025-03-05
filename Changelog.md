@@ -17,6 +17,8 @@ AoC automaton now allows you to use attributes to specify core information about
 and more elegant than the previous approach via a dedicated setup. 
 You use `[Day(x)]` (where x is the exercise's day you are solving) on your solver class, and you can use 
 `[Example(input, expected)]` on the `GetAnswer1()` and `GetAnswer2()` methods to provide test values.
+You can also use `[Example(id, input, expected)]` on `GetAnswer1()` and 
+`[PreviousExample(id, expected)]` on `GetAnswer2()` to reuse an input value from part 1.
 
 
 ## Behavior changes

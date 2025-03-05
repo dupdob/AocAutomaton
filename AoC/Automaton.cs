@@ -35,8 +35,8 @@ public class Automaton
 {
     private readonly List<TestData> _tests = [];
     private TestData _last;
-    private int _currentDay;
     private readonly IFileSystem _fileSystem;
+    private readonly Func<DateTime> _now;
 
     private DayState _dayState;
 
@@ -45,10 +45,11 @@ public class Automaton
     
     private readonly IInteract _userInterface;
     private readonly int _year;
+    private int _currentDay;
+
     private string _dataPathNameFormat = ".";
     // user data (forced)
     private string _data;
-    private readonly Func<DateTime> _now;
  
     /// <summary>
     /// Build an automation instance
@@ -92,7 +93,7 @@ public class Automaton
     public bool ResetBetweenQuestions { get; set; }
 
     /// <summary>
-    /// xGets/sets the current day
+    /// Gets/sets the current day
     /// </summary>
     public int Day
     {
@@ -433,12 +434,7 @@ public class Automaton
         ParseAttributes(solver);
 
         solver.SetupRun(this);
-        if (!CheckSetup())
-        {
-            return false;
-        }
-
-        return true;
+        return CheckSetup();
     }
 
     private void ParseAttributes(ISolver solver)
@@ -450,17 +446,41 @@ public class Automaton
         }
         // see if there are example attributes
         var methodInfos = solver.GetType().GetMethods(BindingFlags.Instance|BindingFlags.Public);
+        // get samples declared on GetAnswser1
         var samples = methodInfos.Where( m => m.Name == "GetAnswer1").SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
             .Cast<ExampleAttribute>().ToList() ?? [];
+        var sharedExamples = new Dictionary<int, ExampleAttribute>();
         foreach (var sample in samples)
         {
+            if (sample.Id != 0)
+            {
+                // it has an id so it can be reused for part 2
+                sharedExamples[sample.Id] = sample;
+            }
             AddExample(sample.Input, false).Answer1(sample.Expected).WithParameters(sample.TextParameter, sample.Parameters);
         }
-        samples = methodInfos.Where( m => m.Name == "GetAnswer2").SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
-            .Cast<ExampleAttribute>().ToList() ?? [];
+        // get samples for part 2
+        samples = methodInfos.Where( m => m.Name == "GetAnswer2").
+            SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
+            .Cast<ExampleAttribute>().ToList();
         foreach (var sample in samples)
         {
-            AddExample(sample.Input, false).Answer2(sample.Expected).WithParameters(sample.TextParameter, sample.Parameters);;
+            AddExample(sample.Input, false).Answer2(sample.Expected)
+                .WithParameters(sample.TextParameter, sample.Parameters);
+        }
+        var sharedSamples = methodInfos.Where( m => m.Name == "GetAnswer2").
+            SelectMany(m =>m.GetCustomAttributes(typeof(ReuseExampleAttribute), false))
+            .Cast<ReuseExampleAttribute>().ToList();
+        foreach (var sharedSample in sharedSamples)
+        {
+            if (!sharedExamples.TryGetValue(sharedSample.Id, out var actual))
+            {
+                ReportError($"SharedExample id {sharedSample.Id} was not defined on GetAnswer1. Skipping it.");
+                continue;
+            }
+
+            AddExample(actual.Input, false).Answer2(sharedSample.Expected)
+                .WithParameters(actual.TextParameter, actual.Parameters); 
         }
     }
 

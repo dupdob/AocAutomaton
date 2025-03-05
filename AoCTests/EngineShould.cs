@@ -75,6 +75,23 @@ namespace AoC.AoCTests
         }
         
         [Test]
+        public void SetUpEverythingProperlyWhenSolverUsesSharedExamples()
+        {
+            var mockFileSystem = TestHelpers.GetFileSystem();
+            var fakeClient = new AoCFakeClient();
+
+            const string testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            var inputInterface = new HttpInterface(fakeClient, mockFileSystem);
+            var engine = new Automaton(2015, inputInterface, mockFileSystem);
+            var algo = new SolverWithSharedExamples();
+            using var console = new CaptureConsole();
+            engine.RunDay(() => algo);
+            // verify the day is properly set up
+            Check.That(engine.GetExamples()).CountIs(1);
+        }
+        
+        [Test]
         public void BeAbleToUseFileAsAnInput()
         {
             var fileSystem = new MockFileSystem();
