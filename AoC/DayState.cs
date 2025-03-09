@@ -27,28 +27,34 @@ using System.Text.Json;
 
 namespace AoC;
 
-public class DayQuestion
+/// <summary>
+/// Stores a question part state
+/// </summary>
+public record DayQuestion
 {
     public bool Solved { get; set; }
     
     public string Answer { get; set; }
 
-    public List<string> Attempts { get; set; } = new();
+    public List<string> Attempts { get; set; } = [];
 
     public long? Low { get; set; }
     
     public long? High { get; set; }
 }
 
+/// <summary>
+/// Stores the  day state
+/// </summary>
 public class DayState
 {
     public string SchemaVersion { get; set; } = "1";
     
     public int Day { get; set; }
 
-    public DayQuestion First { get; set; } = new DayQuestion();
+    public DayQuestion First { get; set; } = new();
 
-    public DayQuestion Second { get; set; } = new DayQuestion();
+    public DayQuestion Second { get; set; } = new();
 
     public string ToJson()
     {

@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2022 Cyrille DUPUYDAUBY
+//  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,28 +24,16 @@
 
 using System;
 
-namespace AoC.AoCTests
+namespace AoC;
+
+/// <summary>
+/// Use to define a unit test on any method
+/// </summary>
+/// <param name="expected"></param>
+/// <param name="parameters"></param>
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class UnitTestAttribute(object expected, params object[] parameters) : Attribute
 {
-    public class AutoFakeSolver : SolverWithLineParser
-    {
-        public static int Count { get; private set; }
-
-        public AutoFakeSolver()
-        {
-            Count += 1;
-        }
-
-        public override void SetupRun(Automaton httpAutomatonBase)
-        {
-            httpAutomatonBase.Day = 10;
-        }
-
-        public override object GetAnswer1() => 1L;
-
-        public override object GetAnswer2() => "theResponse";
-
-        protected override void ParseLine(string line, int index, int lineCount)
-        {
-        }
-    }
+    public object Expected { get; } = expected;
+    public object[] Parameters { get; } = parameters;
 }

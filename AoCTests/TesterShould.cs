@@ -33,17 +33,10 @@ using NUnit.Framework;
 
 namespace AoC.AoCTests;
 
-internal class MockInterface : IInteract
+internal class MockInterface(string data) : IInteract
 {
-    private readonly string _data;
-
     public AnswerStatus Status1 { get; set; } = AnswerStatus.Good;
     public AnswerStatus Status2 { get; set; } = AnswerStatus.Good;
-
-    public MockInterface(string data)
-    {
-        _data = data;
-    }
 
     public void InitializeDay(int year, int day, string dataPath)
     { }
@@ -56,7 +49,7 @@ internal class MockInterface : IInteract
         return id == 1 ? Status1 : Status2;
     }
 
-    public string GetPersonalInput() => _data;
+    public string GetPersonalInput() => data;
 
     public void Trace(string message)
     {
@@ -210,6 +203,21 @@ public class TesterShould
         Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
+    }
+    
+    [Test]
+    public void RejectNegativeAnswer()
+    {
+        var mockFileSystem = GetFileSystem();
+        var testInputData = "Silly input data";
+        var fakeClient = new MockInterface(testInputData);
+        var engine = new Automaton(2015, fakeClient, mockFileSystem);
+        var algo = new FakeSolver(10, -1, 2, _ => {});
+        using var console = new CaptureConsole();
+        engine.RunDay(() => algo);
+        // it should request the first answer once, for the test
+        // it should say that no answer was provided
+        Check.That(console.Output).Contains("Answer cannot be negative, not submitted: -1");
     }
 
     [Test]
@@ -387,6 +395,24 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
             .Contains("but no expected answer provided. Please confirm result manually (y/n). Result below.");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
+    }
+
+    [Test]
+    public void Test2PartWhenFirstPartIsOk()
+    {
+        var mockFileSystem = GetFileSystem();
+        var testInputData = "Silly input data";
+        var fakeClient = new MockInterface(testInputData);
+        fakeClient.Status1 = AnswerStatus.Good;
+        fakeClient.Status2 = AnswerStatus.Wrong;
+        var engine = new Automaton(2015, fakeClient, mockFileSystem);
+        var algo = new AutoFakeSolver();
+        using var console = new CaptureConsole();
+        engine.RunDay(() => algo);
+        // it should request the first answer three times: two tests + actual data
+        // and only two times for second test (as the second test is not confirmed manually)
+        Check.That(console.Output)
+            .Contains("Question 1 passed!");
     }
 
     [Test]

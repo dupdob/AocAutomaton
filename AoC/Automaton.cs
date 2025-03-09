@@ -28,6 +28,7 @@ using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace AoC;
 
@@ -37,9 +38,7 @@ public class Automaton
     private TestData _last;
     private readonly IFileSystem _fileSystem;
     private readonly Func<DateTime> _now;
-
     private DayState _dayState;
-
     private string _defaultText;
     private int[] _defaultParameters = [];
     
@@ -50,7 +49,8 @@ public class Automaton
     private string _dataPathNameFormat = ".";
     // user data (forced)
     private string _data;
- 
+    private string _rootPath=string.Empty;
+
     /// <summary>
     /// Build an automation instance
     /// </summary>
@@ -80,12 +80,13 @@ public class Automaton
     public static Automaton WebsiteAutomaton(int year =0) => new(year, new HttpInterface());
 
     private string StateFileName => $"AoC-{_year,4}-{Day,2}-state.json";
+    private const string IgnoreFilter = "Aoc-*-state.json";
     
     private string StatePathName => string.IsNullOrEmpty(DataPath)
         ? StateFileName
         : _fileSystem.Path.Combine(DataPath, StateFileName);
     
-    private string DataPath => string.Format(_dataPathNameFormat, Day, _year);
+    private string DataPath => _fileSystem.Path.Combine(_rootPath, string.Format(_dataPathNameFormat, Day, _year));
     
     /// <summary>
     /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
@@ -120,6 +121,12 @@ public class Automaton
     public Automaton SetDataPath(string dataPath)
     {
         _dataPathNameFormat = dataPath;
+        return this;
+    }
+
+    public Automaton SetRootPath(string path)
+    {
+        _rootPath = path;
         return this;
     }
 
@@ -319,6 +326,7 @@ public class Automaton
         return _tests[^1];
     }
     
+        
     public ICollection<TestData> GetExamples() => _tests;
     
     /// <summary>
@@ -363,8 +371,14 @@ public class Automaton
     /// </summary>
     /// <typeparam name="T"><see cref="ISolver" /> type for the day.</typeparam>
     /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
+    /// <returns>true if problem was solved (both parts)</returns>
     public bool RunDay<T>() where T : ISolver => RunDay(SolverFactory.ForType<T>());
 
+    /// <summary>
+    /// Runs a given day
+    /// </summary>
+    /// <param name="builder">delegate that must return s a solver</param>
+    /// <returns>true if problem was solved (both parts)</returns>
     public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory(builder));
 
     /// <summary>
@@ -389,8 +403,9 @@ public class Automaton
                 return true;
             }
             
+            
             factory.CacheActive = !ResetBetweenQuestions;
-
+            
             // tests if data are provided
             var testsSucceeded = RunTests(1, factory); 
             
@@ -432,23 +447,30 @@ public class Automaton
         var solver = factory.GetSolver(null, false, null, null);
         // use attributes
         ParseAttributes(solver);
-
         solver.SetupRun(this);
-        return CheckSetup();
+        if (!CheckSetup())
+        {
+            return false;
+        }
+
+        return RunUniTest(solver);
     }
 
     private void ParseAttributes(ISolver solver)
     {
+        // get class attribute (target day)
         var dayAttribute = (DayAttribute)solver.GetType().GetCustomAttributes(typeof(DayAttribute), false).FirstOrDefault();
         if (dayAttribute != null)
         {
             Day = dayAttribute.Day;
         }
+        // get examples data
         // see if there are example attributes
         var methodInfos = solver.GetType().GetMethods(BindingFlags.Instance|BindingFlags.Public);
         // get samples declared on GetAnswser1
-        var samples = methodInfos.Where( m => m.Name == "GetAnswer1").SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
-            .Cast<ExampleAttribute>().ToList() ?? [];
+        var samples = methodInfos.Where( m => m.Name == "GetAnswer1")
+            .SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
+            .Cast<ExampleAttribute>().ToList();
         var sharedExamples = new Dictionary<int, ExampleAttribute>();
         foreach (var sample in samples)
         {
@@ -484,6 +506,55 @@ public class Automaton
         }
     }
 
+    private bool RunUniTest(ISolver solver)
+    {
+        // search for test if any
+        var methodInfos = solver.GetType().GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static);
+        foreach (var info in methodInfos)
+        {
+            var tests=info.GetCustomAttributes(typeof(UnitTestAttribute), false).Cast<UnitTestAttribute>();
+            foreach (var test in tests)
+            {
+                // invoke the method
+                var builder = new StringBuilder();
+                
+                var result = info.Invoke(null, test.Parameters);
+                if (result?.Equals(test.Expected) == true)
+                {
+                    // test success
+                    // generate proper message
+                    builder.AppendFormat("Unit Test succeeded. {0}", GenerateUnitTestResultLog(info.Name, result, test.Parameters));
+                    Trace(builder.ToString());
+                    continue;
+                }
+                // test failed
+                // generate proper message
+                builder.AppendFormat("Unit Test failed. {0} instead of {1}", 
+                    GenerateUnitTestResultLog(info.Name, result, test.Parameters), 
+                    ValueToString(test.Expected));
+                Trace(builder.ToString());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static string GenerateUnitTestResultLog(string method, object result, params object[] parameters)
+    {
+        var builder = new StringBuilder();
+        builder.AppendFormat("{0}({1})", method, string.Join(',', parameters.Select(ValueToString)));
+        builder.AppendFormat("= {0}",ValueToString(result));
+        return builder.ToString();
+    }
+
+    private static string ValueToString(object value) =>
+        value switch
+        {
+            null => null,
+            string asString => $"\"{asString}\"",
+            _ => value.ToString()
+        };
+
     private bool CheckState()
     {
         if (!_dayState.First.Solved || !_dayState.Second.Solved)
@@ -493,7 +564,6 @@ public class Automaton
         Trace($"Day {Day} has already been solved (first part:{_dayState.First.Answer}, second part:{_dayState.Second.Answer}). Nothing to do.");
         Trace("Do you want to run it anyway?");
         return AskYesNo();
-
     }
 
     private bool CheckSetup()
@@ -524,6 +594,8 @@ public class Automaton
         Day = 0;
         ResetBetweenQuestions = false;
         _tests.Clear();
+        var gitIgnore = new SimpleGitIgnoreManager(_fileSystem);
+        gitIgnore.AddFilter(IgnoreFilter, _rootPath);
     }
 
     private bool CheckResponse(int id, object answer)
@@ -535,40 +607,41 @@ public class Automaton
             return false;
         }
 
-        switch (answer)
+        long numericalValue;
+        try
         {
-            case int integer:
-                if (!CheckForNegative(integer)) return false;
-                break;
-            
-            case long longInteger:
-                if (!CheckForNegative(longInteger)) return false;
-                break;
+            numericalValue = Convert.ToInt64(answer);
+            if (!CheckForNegative(numericalValue))
+            {
+                return false;
+            }
         }
-
+        catch (Exception e)
+        {
+            numericalValue = 0;
+        }
+        
         var state = id == 1 ? _dayState.First : _dayState.Second;
 
         // new attempt
         state.Attempts.Add(answerText);
         bool success;
-        switch (answer)
+        if (numericalValue != 0)
         {
-            case int number:
-                success = CheckAndUpdateRangedAnswer(id, number, state, answerText);
-                break;
-            case long lNumber:
-                success = CheckAndUpdateRangedAnswer(id, lNumber, state, answerText);
-                break;
-            default:
-                success = SubmitAnswer(id, answerText) == AnswerStatus.Good;
-                break;
+            success = CheckAndUpdateRangedAnswer(id, numericalValue, state, answerText);
+        }
+        else
+        {
+            success = SubmitAnswer(id, answerText) == AnswerStatus.Good;
         }
 
         if (success)
         {
+            // capture success
             state.Answer = answerText;
             state.Solved = true;
         }
+        
         Trace($"Question {id} {(success ? "passed" : "failed")}!");
         return success;
 

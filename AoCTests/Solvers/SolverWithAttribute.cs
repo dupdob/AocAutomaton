@@ -43,6 +43,12 @@ public class SolverWithAttribute : ISolver
         return null;
     }
 
+    [UnitTest("result", 1)]
+    public string SomeMethod(int param)
+    {
+        return "result";
+    }
+
     [Example("test", "response")]
     [Example("Othertest", 3)]
     public object GetAnswer2(string data)

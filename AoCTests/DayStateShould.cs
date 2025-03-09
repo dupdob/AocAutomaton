@@ -40,7 +40,7 @@ public class DayStateShould
           First =
           {
             Answer = "goodAnswer",
-            Attempts = new List<string>() { "Wrong", "False", "goodAnswer" },
+            Attempts = ["Wrong", "False", "goodAnswer"],
             Solved = true
           }
         };

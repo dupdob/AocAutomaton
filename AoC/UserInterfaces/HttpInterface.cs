@@ -49,6 +49,10 @@ namespace AoC
         
         // default input cache name
         private string DataCacheFileName => $"InputAoc-{_day,2}-{_client.Year,4}.txt";
+        // filter to add to gitignore to ensure cached input is not comitted
+        // As per AoC website rules, see _Can I copy/redistribute part of Advent of Code?_
+        // at https://adventofcode.com/2024/about
+        private const string DataCacheFilter = $"InputAoc-*.txt";
 
         private int _day;
         private string _dataPath;
@@ -317,6 +321,9 @@ namespace AoC
             _client.Year = year;
             _client.SetCurrentDay(day);
             var fileName = DataCachePathName;
+            var gitIgnore = new SimpleGitIgnoreManager(_fileSystem);
+            gitIgnore.AddFilter(DataCacheFilter, _dataPath);
+
             _myData = _fileSystem.File.Exists(fileName)
                 ? _fileSystem.File.ReadAllTextAsync(fileName)
                 : _client.RequestPersonalInput();
