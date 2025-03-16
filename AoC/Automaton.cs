@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2023 Cyrille DUPUYDAUBY
+//  Copyright (c) 2023-25 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -403,7 +403,6 @@ public class Automaton
                 return true;
             }
             
-            
             factory.CacheActive = !ResetBetweenQuestions;
             
             // tests if data are provided
@@ -616,7 +615,7 @@ public class Automaton
                 return false;
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
             numericalValue = 0;
         }

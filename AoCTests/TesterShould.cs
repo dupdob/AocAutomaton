@@ -221,6 +221,21 @@ public class TesterShould
     }
 
     [Test]
+    public void RejectZeroAnswer()
+    {
+        var mockFileSystem = GetFileSystem();
+        var testInputData = "Silly input data";
+        var fakeClient = new MockInterface(testInputData);
+        var engine = new Automaton(2015, fakeClient, mockFileSystem);
+        var algo = new FakeSolver(10, 0, 2, _ => {});
+        using var console = new CaptureConsole();
+        engine.RunDay(() => algo);
+        // it should request the first answer once, for the test
+        // it should say that no answer was provided
+        Check.That(console.Output).Contains("Answer cannot be zero, not submitted: -1");
+    }
+
+    [Test]
     public void SupportDefaultExtraParametersWithText()
     {
         var mockFileSystem = GetFileSystem();
