@@ -174,7 +174,7 @@ namespace AoC
                 // did we answer it already
                 if (AlreadyAnswered.IsMatch(resultText))
                 {
-                    Trace("Question is already answered, so we skip it.");
+                    Trace("Question was already answered.");
                     return AnswerStatus.Good;
                 }
                 // is it too high?
