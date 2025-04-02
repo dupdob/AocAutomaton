@@ -24,6 +24,7 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -70,7 +71,7 @@ namespace AoC.AoCTests
             engine.RunDay(() => algo);
             // verify the day is properly set up
             Check.That(engine.Day).IsEqualTo(13);
-            
+                    
             Check.That(engine.GetExamples()).CountIs(2);
         }
         
@@ -398,7 +399,7 @@ namespace AoC.AoCTests
         }
 
         [Test]
-        public void HandlerWrongAnswerToQuestion2()
+        public void HandleWrongAnswerToQuestion2()
         {
             var fakeClient = new AoCFakeClient();
             using var console = new CaptureConsole();
@@ -423,11 +424,33 @@ namespace AoC.AoCTests
         }
 
         [Test]
+        public void HandleDay25()
+        {
+            var fakeClient = new AoCFakeClient();
+            using var console = new CaptureConsole();
+            var mockFileSystem = TestHelpers.GetFileSystem();
+
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            var inputInterface = new HttpInterface(fakeClient, mockFileSystem);
+            var engine = new Automaton(2015, inputInterface, mockFileSystem);
+            var algo = new FakeSolver(25, 12, 13);
+            engine.RunDay(() => algo);
+
+            Check.That(algo.GetAnswer1Calls).IsEqualTo(1);
+            Check.That(console.Output).Contains("AoC site response");
+            Check.That(console.Output).Contains("Day 25-1:");
+            Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
+            Check.That(mockFileSystem.AllFiles.Any(p => Regex.IsMatch(p, "Answer1.*\\.html")));
+            Check.That(console.Output).Contains("Question 1 passed!");
+        }
+
+        [Test]
         public void HandlerGoodAnswerToQuestion2()
         {
             var fakeClient = new AoCFakeClient();
             using var console = new CaptureConsole();
             var mockFileSystem = TestHelpers.GetFileSystem();
+            mockFileSystem.Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
 
             fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             fakeClient.SetAnswerResponseFilename(2, TestHelpers.GoodAnswerFile);

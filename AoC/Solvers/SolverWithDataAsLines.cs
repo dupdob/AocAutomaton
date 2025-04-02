@@ -26,17 +26,7 @@ namespace AoC;
 
 public abstract class SolverWithDataAsLines : SolverWithParser
 {
-    protected override void Parse(string data)
-    {
-        var lines = data.Split('\n');
-        // we discard the last line if it is empty (trailing newline), but we keep any intermediate newlines
-        if (lines[^1].Length == 0)
-        {
-            lines = lines[..^1];
-        }
-        
-        ParseLines(lines);
-    }
+    protected override void Parse(string data) => ParseLines(data.SplitLines());
 
     protected abstract void ParseLines(string[] lines);
 }

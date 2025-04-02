@@ -32,8 +32,14 @@ public class SimpleGitIgnoreManager(IFileSystem fileSystem = null)
 {
     private readonly IFileSystem _fileSystem = fileSystem ?? new FileSystem();
 
-    public bool AddFilter(string filter, string gitIgnorePath = "")
+    public bool AddFilter(string filter, string gitIgnorePath = ".")
     {
+        if (string.IsNullOrWhiteSpace(gitIgnorePath))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(gitIgnorePath));
+        if (!string.IsNullOrEmpty(gitIgnorePath) && !_fileSystem.Directory.Exists(gitIgnorePath))
+        {
+            _fileSystem.Directory.CreateDirectory(gitIgnorePath);
+        }
         var filePath = _fileSystem.Path.Combine(gitIgnorePath, ".gitignore");
         string current;
         if (_fileSystem.File.Exists(filePath))

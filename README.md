@@ -1,9 +1,9 @@
 # AocAutomaton
 ## TLDR;
 AoCAutomaton provides skeleton classes and interfaces that
-makes [Advent of Code][1] even more enjoyable by 
+makes [Advent of Code][1] more enjoyable by 
 simplifying mundane tasks, so you can concentrate on solving the puzzle.
-It is available as a Nuget package, named **AOC**.
+It is available as a Nuget package, named **AOC2**.
 
 ## Details
 AoCAutomaton implements an overall logic as well as some helpers.
@@ -25,17 +25,22 @@ avoid submitting known wrong answers, such as null, zero or negatives values, pr
 are outside the known range (when you got answer is too low or too high results).
 ---- 
 ## Philosophy
-**AocAutomaton** is designed to be used within your IDE of choice, focusing on **reducing friction when solving AoC puzzles**. Friction appears as the need to copy/paste your input data between the site and
-your code (either in-line or as dedicated data files), but also when copy/pasting the answer or inputting it manually, which leads to the occasional typo error. 
-One can also add dealing with provided examples to use as test/validation input.
+**AocAutomaton** is designed to be used within your IDE of choice, focusing on **reducing friction when solving AoC puzzles**. 
+Friction appears as the need to copy/paste your input data between the site and
+your code (either in-line or as dedicated data files), but also when copy/pasting the answer or inputting it manually, 
+which leads to the occasional typo error. AocAutomaton also helps you verify that your solution works against the
+provided examples; and it also provides a minimal unit test logic so you can check methods in isolation
 
-**It does not try to provide** you with standard **algorithms** and/or helpers to simplify the **solving of the puzzle**. I consider this could spoil the fun for most users.
-That being said, there is nothing wrong with building your own set of helper functions on top
-of this library; I may publish one as well at a later date.
-The important point is that **this is a separate concern** and will not be part of this library.
+**It does provide** standard **algorithms** and/or helpers to simplify the **solving of the puzzles**.
+I think this would spoil the fun. Of course, you are free to use any package you find suitable to help you
+find the solution if you are so inclinded
 
-AocAutomation provides you an integration class that will implements interaction between your solver and the AoC site.
+**AocAutomation** provides you an integration class that implements interaction between your solver and the AoC site.
 You just need to provide a class that contains the solving logic and implements a simple interface with only three methods.
+
+**AocAutomation** use several **Attributes** for you to provide needed specifications. This is different from alpha
+versions that required you to implement the abstract `SetUp` method in order to provide these specifications via method 
+calls.
 
 Other abstract classes are provided to offer alternative interaction approaches, so you can pick the
 design matching the puzzle characteristics and/or your preferences; and of course, you can even use your own design.
@@ -148,7 +153,7 @@ Provides input data for testing the solver. By default this test data will be us
 You can register as much test data as you wish (memory permitting, of course). 
 
 Note that test data and test results must be registered in the same order, 
-otherwise there will be mix ups.
+otherwise there will be mix-ups.
 
 #### RegisterTestResult
 `public Automaton RegisterTestResult(object expected, int question = 1)`

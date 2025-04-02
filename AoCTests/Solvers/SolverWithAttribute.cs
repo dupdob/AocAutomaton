@@ -29,14 +29,12 @@ public class SolverWithAttribute : ISolver
 {
     public void SetupRun(Automaton automaton)
     {
-        return;
     }
 
     public void InitRun(bool isTest, string extraText, params int[] extraParameters)
     {
-        return;
     }
-
+ 
     [Example("test", 2)]
     public object GetAnswer1(string data)
     {
@@ -44,13 +42,19 @@ public class SolverWithAttribute : ISolver
     }
 
     [UnitTest("result", 1)]
-    public string SomeMethod(int param)
+    public static string SomeMethod(int param)
+    {
+        return "result";
+    }
+
+    [UnitTest("other", 2)]
+    public string SomeOtherMethod(int param)
     {
         return "result";
     }
 
     [Example("test", "response")]
-    [Example("Othertest", 3)]
+    [Example("OtherTest", 3)]
     public object GetAnswer2(string data)
     {
         return null;

@@ -232,7 +232,7 @@ public class TesterShould
         engine.RunDay(() => algo);
         // it should request the first answer once, for the test
         // it should say that no answer was provided
-        Check.That(console.Output).Contains("Answer cannot be zero, not submitted: -1");
+        Check.That(console.Output).Contains("Answer cannot be zero.");
     }
 
     [Test]

@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2024 Cyrille DUPUYDAUBY
+//  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,24 +23,32 @@
 // SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AoC;
 
-/// <summary>
-/// Solver parsing input data as a series of block of lines separated by empty lines.
-/// </summary>
-public abstract class SolverWithBlockParser : SolverWithParser
+public static class InputHelpers
 {
-    protected abstract void ParseBlock(List<string> block, int blockIndex);
-    
-    protected override void Parse(string input)
+    public static string[] SplitLines(this string input)
     {
-        
-        var blockIndex = 0;
-        foreach (var block in input.SplitLineBlocks())
+        var lines = input.Split('\n');
+        // we discard the last line if it is empty (trailing newline), but we keep any intermediate newlines
+        return lines[^1].Length == 0 ? lines[..^1] : lines;
+    }
+
+    public static List<string[]> SplitLineBlocks(this string input)
+    {
+        var blockStart = 0;
+        List<string[]> result = [];
+        var splittedLines = SplitLines(input);
+        for (var index = 0; index < splittedLines.Length; index++)
         {
-            ParseBlock(block.ToList(), blockIndex++);
+            var line = splittedLines[index];
+            if (!string.IsNullOrEmpty(line)) continue;
+            result.Add(splittedLines[blockStart..index]);
+            blockStart = ++index;
         }
+        // add the last block
+        result.Add(splittedLines[blockStart..]);
+        return result;
     }
 }

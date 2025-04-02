@@ -49,7 +49,7 @@ public class Automaton
     private string _dataPathNameFormat = ".";
     // user data (forced)
     private string _data;
-    private string _rootPath=string.Empty;
+    private string _rootPath= ".";
 
     /// <summary>
     /// Build an automation instance
@@ -416,7 +416,9 @@ public class Automaton
             
             // perform the actual run
             Trace("* Computing answer 1 from your input. *");
-            if (!CheckResponse(1, GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 1, data)))
+            var answer = GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 1, data);
+            Trace($"* Attempting {answer ?? "null"} *");
+            if (!CheckResponse(1, answer))
             {
                 return false;
             }
@@ -433,7 +435,8 @@ public class Automaton
             }
 
             Trace("* Computing answer 2 from your input. *");
-            return CheckResponse(2, GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 2, data));
+            answer = GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 2, data);
+            return CheckResponse(2, answer);
         }
         finally
         {
@@ -508,21 +511,29 @@ public class Automaton
     private bool RunUniTest(ISolver solver)
     {
         // search for test if any
-        var methodInfos = solver.GetType().GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static);
+        var methodInfos = solver.GetType().GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static|BindingFlags.Instance);
         foreach (var info in methodInfos)
         {
-            var tests=info.GetCustomAttributes(typeof(UnitTestAttribute), false).Cast<UnitTestAttribute>();
+            var tests= info.GetCustomAttributes(typeof(UnitTestAttribute), false).Cast<UnitTestAttribute>().ToList();
+            if (tests.Count == 0)
+            {
+                continue;
+            }
+            if (!info.IsStatic)
+            {
+                Trace($"Warning: Trace method '{info.Name}' is not static, tests results may be impacted by lack of isolation.");
+            }
+
             foreach (var test in tests)
             {
                 // invoke the method
                 var builder = new StringBuilder();
-                
-                var result = info.Invoke(null, test.Parameters);
+                var result = info.Invoke(solver, test.Parameters);
                 if (result?.Equals(test.Expected) == true)
                 {
                     // test success
                     // generate proper message
-                    builder.AppendFormat("Unit Test succeeded. {0}", GenerateUnitTestResultLog(info.Name, result, test.Parameters));
+                    builder.Append($"Unit Test succeeded. {GenerateUnitTestResultLog(info.Name, result, test.Parameters)}");
                     Trace(builder.ToString());
                     continue;
                 }

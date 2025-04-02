@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2024 Cyrille DUPUYDAUBY
+//  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Generic;
-using System.Linq;
+using NFluent;
+using NUnit.Framework;
 
-namespace AoC;
+namespace AoC.AoCTests;
 
-/// <summary>
-/// Solver parsing input data as a series of block of lines separated by empty lines.
-/// </summary>
-public abstract class SolverWithBlockParser : SolverWithParser
+[TestFixture]
+public class InputHelperShould
 {
-    protected abstract void ParseBlock(List<string> block, int blockIndex);
-    
-    protected override void Parse(string input)
+    [Test]
+    public void ShouldSplitLines()
     {
-        
-        var blockIndex = 0;
-        foreach (var block in input.SplitLineBlocks())
-        {
-            ParseBlock(block.ToList(), blockIndex++);
-        }
+        const string input = "first line\nsecond line";
+        Check.That(input.SplitLines()).ContainsExactly("first line", "second line");
+    }
+
+    [Test]
+    public void ShouldSplitBlocks()
+    {
+        const string input = "first line\nsecond line\n\nsecond block\n";
+        Check.That(input.SplitLineBlocks()).ContainsExactly(["first line", "second line"], ["second block"]);
     }
 }

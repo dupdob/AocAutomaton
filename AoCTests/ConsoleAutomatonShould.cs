@@ -39,7 +39,7 @@ public class ConsoleAutomatonShould
         var sut = new Automaton(fileSystem: new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
-        console.InputLine("testData");
+        console.InputLine("testData\n");
         console.InputLine("");
         console.InputLine("");
         sut.RunDay(() => solver);
