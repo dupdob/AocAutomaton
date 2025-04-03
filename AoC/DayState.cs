@@ -48,21 +48,15 @@ public record DayQuestion
 /// </summary>
 public class DayState
 {
-    public string SchemaVersion { get; set; } = "1";
+    public string SchemaVersion { get; init; } = "1";
     
-    public int Day { get; set; }
+    public int Day { get; init; }
 
-    public DayQuestion First { get; set; } = new();
+    public DayQuestion First { get; init; } = new();
 
-    public DayQuestion Second { get; set; } = new();
+    public DayQuestion Second { get; init; } = new();
 
-    public string ToJson()
-    {
-        return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-    }
+    public string ToJson() => JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
 
-    public static DayState FromJson(string text)
-    {
-        return JsonSerializer.Deserialize<DayState>(text);
-    }
+    public static DayState FromJson(string text) => JsonSerializer.Deserialize<DayState>(text);
 }   
