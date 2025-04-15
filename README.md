@@ -11,7 +11,7 @@ The overall workflow is implemented by the `Automaton` class.
 It will:
 - create an instance of your solving logic
 - fetch your specific input data (and cache them)
-- tests your logic against sample/test data you may have provided (usually by copy pasting from the day's puzzle)
+- tests your logic against sample/test data you may have provided (usually by copy-pasting from the day's puzzle)
 - if tests are not ok, it will stop. Otherwise
 - runs your solving logic against your private input
 - submit the answer to the AoC site
@@ -33,7 +33,7 @@ provided examples; and it also provides a minimal unit test logic so you can che
 
 **It does provide** standard **algorithms** and/or helpers to simplify the **solving of the puzzles**.
 I think this would spoil the fun. Of course, you are free to use any package you find suitable to help you
-find the solution if you are so inclinded
+find the solution if you are so inclined.
 
 **AocAutomation** provides you an integration class that implements interaction between your solver and the AoC site.
 You just need to provide a class that contains the solving logic and implements a simple interface with only three methods.
@@ -49,10 +49,20 @@ design matching the puzzle characteristics and/or your preferences; and of cours
 ### Prerequisite
 In order to interact with the AoC site, AoCAutomaton requires your AoC
 session id. It is stored as an hexadecimal value in a `session` cookie;
-you must get this value (via your browser of choice) and store it in an environment variable named 
-`AOC_SESSION`. Bear in mind that these tokens have a lifetime of roughly a month so expect to have to refresh it through the website. As of now, there is limited error handling, so you will get some exception if the token is invalid
+you must get this value (via your browser of choice).
+Then you have two options:
+1. Safest: store it in an environment variable named `AOC_SESSION`.
+2. Input it when prompted by the automaton. 
+This is not recommended as it will be visible in the console and may be stored in your IDE history.
+The token will be stored in a json file but AoCAutomaton will add a gitignore entry to prevent it from being committed to a repo.
 
-_Note: early versions allowed to pass the session id as a set up parameter. I reverted that design due to the risk of having session ids with public visibility on GitHub (or elsewhere). It is more difficult to leak an environment variable.
+ 
+Bear in mind that these tokens have a lifetime of roughly a month so expect to have to refresh it through the website.
+As of now, there is limited error handling, so you will get some exception if the token is invalid or expired.
+
+_Note_: early versions allowed to pass the session id as a setup parameter. 
+I reverted that design due to the risk of having session ids with public visibility on GitHub (or elsewhere). 
+It is more difficult to leak an environment variable.
 
 ## Starting point
 Just add AocAutomaton to the project you (plan to) use for AdventOfCode.
