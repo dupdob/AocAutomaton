@@ -7,7 +7,7 @@
         <Authors>Cyrille DUPUYDAUBY</Authors>
         <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.
 This supersedes the previous package that I can no longer update.</Description>
-        <TargetFrameworks>net7.0;net9.0;netstandard2.1</TargetFrameworks>
+        <TargetFrameworks>net7.0;net9.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageProjectUrl>https://github.com/dupdob/AocAutomaton</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>

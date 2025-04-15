@@ -120,13 +120,23 @@ public class Automaton
     /// <remarks>Relative paths are relative to the engine current directory.</remarks>
     public Automaton SetDataPath(string dataPath)
     {
+        // scan the path to identify the common root
+        var rootPath = dataPath;
+        var curPath = dataPath;
+        while(!string.IsNullOrEmpty(curPath))
+        {
+            var thisLevel = _fileSystem.Path.GetFileName(curPath);
+            curPath = _fileSystem.Path.GetDirectoryName(curPath);
+            if (thisLevel.Contains('{'))
+            {
+                // this is a variable part, cannot be part of the root path
+                rootPath = curPath;
+            }
+        }
+        _rootPath = rootPath;
+       
         _dataPathNameFormat = dataPath;
-        return this;
-    }
-
-    public Automaton SetRootPath(string path)
-    {
-        _rootPath = path;
+        
         return this;
     }
 
@@ -743,7 +753,7 @@ public class Automaton
 
         // if it failed for any reason
         _dayState ??= new DayState { Day = day };
-        _userInterface.InitializeDay(_year, Day, DataPath);
+        _userInterface.InitializeDay(_year, Day, _rootPath, DataPath);
     }
 
     private void CleanUpDay()

@@ -57,8 +57,10 @@ public interface IInteract
     /// </summary>
     /// <param name="year">exercise year (event)</param>
     /// <param name="day">specific day</param>
-    /// <param name="dataPath">path to cache</param>
-    void InitializeDay(int year, int day, string dataPath);
+    /// <param name="rootPath">rootPath to store data</param>
+    /// <param name="dayPath">path to cache</param>
+    void InitializeDay(int year, int day, string rootPath, string dayPath);
+    
     /// <summary>
     /// Called at the end of the exercise to allow for clean up.
     /// </summary>

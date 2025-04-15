@@ -34,7 +34,7 @@ namespace AoC;
 /// </summary>
 public class ConsoleUserInterface : IInteract
 {
-    public void InitializeDay(int year, int day, string dataPath)
+    public void InitializeDay(int year, int day, string rootPath, string dayPath)
     {
         // nothing to do        
     }

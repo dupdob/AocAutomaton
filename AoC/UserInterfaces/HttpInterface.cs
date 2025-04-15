@@ -21,7 +21,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
 using System;
 using System.IO;
 using System.IO.Abstractions;
@@ -34,7 +33,7 @@ using System.Threading.Tasks;
 namespace AoC
 {
     /// <summary>
-    /// This class is an AoC automaton handling interactions with the AoC web site
+    /// This class is an AoC automaton handling interactions with the AoC website
     /// </summary>
     public class HttpInterface : IInteract, IDisposable
     {
@@ -49,10 +48,12 @@ namespace AoC
         
         // default input cache name
         private string DataCacheFileName => $"InputAoc-{_day,2}-{_client.Year,4}.txt";
-        // filter to add to gitignore to ensure cached input is not comitted
+        // filter to add to gitignore to ensure cached input is not committed
         // As per AoC website rules, see _Can I copy/redistribute part of Advent of Code?_
         // at https://adventofcode.com/2024/about
         private const string DataCacheFilter = $"InputAoc-*.txt";
+        private const string EnvVarName = "AOC_SESSION";
+        private const string SessionTokenFileName = "SessionToken.json";
 
         private int _day;
         private string _dataPath;
@@ -65,6 +66,7 @@ namespace AoC
         // internal state
         private Task<string> _myData;
         private Task _pendingWrite;
+        private string _rootPath;
 
         /// <summary>
         /// Build a new automaton.
@@ -96,12 +98,9 @@ namespace AoC
                 return;
             }
             // wait for cache writing completion
-            if (!_pendingWrite.IsCompleted)
+            if (!_pendingWrite.IsCompleted && !_pendingWrite.Wait(500))
             {
-                if (!_pendingWrite.Wait(500))
-                {
-                    Trace("Local caching of input may have failed!");
-                }
+                Trace("Local caching of input may have failed!");
             }
             _pendingWrite = null;
         }
@@ -117,10 +116,21 @@ namespace AoC
             {
                 if (e.InnerExceptions[0] is HttpRequestException requestException)
                 {
-                    AnalyseInvalidAnswer(requestException.Message);
+                    var answer = AnalyseInvalidAnswer(requestException.Message);
+                    if (answer.InvalidCookie && answer.CanBeRetried && RequestCookie())
+                    {
+                        // perform a sync request
+                        result = _client.RequestPersonalInput().Result;
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
-                throw;
+                else
+                    throw;
             }
+            
             if (_fileSystem.File.Exists(DataCachePathName))
             {
                 return result;
@@ -142,7 +152,7 @@ namespace AoC
 
         /// <summary>
         ///     Posts an answer to the AoC website.
-        /// </summary>
+        /// </summary> 
         /// <param name="part">question id (1 or 2)</param>
         /// <param name="value">proposed answer (as a string)</param>
         /// <returns>true if this is the good answer</returns>
@@ -158,66 +168,86 @@ namespace AoC
             Console.WriteLine($"Day {_day}-{part}: {value} [{_client.Year}].");
             var answerId = Helpers.AsAFileName(value);
             var responseFilename = _fileSystem.Path.Combine(_dataPath, $"Answer{part} for {answerId}.html");
-            string resultText;
             while (true)
             {
                 var responseText = PostAndRetrieve(part, value, responseFilename, out var responseTime);
                 // extract the response as plain text
-                (var isOk, resultText) = ExtractAnswerText(responseText);
-                OutputAoCMessage(resultText);
-                if (!isOk)
+                var answer = ExtractAnswerText(responseText);
+                OutputAoCMessage(answer.Message);
+                if (!answer.IsOk)
                 {
+                    if (answer.InvalidCookie && answer.CanBeRetried && RequestCookie())
+                    {
+                        continue;
+                    }
                     // technical error, so we abort
                     return AnswerStatus.Wrong;
                 }
                 CacheResponse(responseFilename, responseText);
                 // did we answer it already
-                if (AlreadyAnswered.IsMatch(resultText))
+                if (AlreadyAnswered.IsMatch(answer.Message))
                 {
                     Trace("Question was already answered.");
                     return AnswerStatus.Good;
                 }
                 // is it too high?
-                if (AnswerTooHigh.IsMatch(resultText) && long.TryParse(value, out var number))
+                if (AnswerTooHigh.IsMatch(answer.Message) && long.TryParse(value, out var number))
                 {
                     Trace($"{number} is too high.");
                     return AnswerStatus.TooHigh;
                 }
                 // or too low?
-                if (AnswerTooLow.IsMatch(resultText) && long.TryParse(value, out number))
+                if (AnswerTooLow.IsMatch(answer.Message) && long.TryParse(value, out number))
                 {
                     Trace($"{number} is too low.");
                     return AnswerStatus.TooLow;
                 }
                 // did we answer too fast?
-                var match = TooSoon.Match(resultText);
+                var match = TooSoon.Match(answer.Message);
                 if (!match.Success)
                 {
                     // so it is either a success or an unsupported message
-                    break;
+                    return GoodAnswer.IsMatch(answer.Message) ? AnswerStatus.Good : AnswerStatus.Wrong;
                 }
-                var secondsToWait = int.Parse(match.Groups[1].Value);
-                if (!string.IsNullOrWhiteSpace(match.Groups[2].Value))
-                {
-                    // if there is a second value, the first one is in minutes.
-                    secondsToWait *= 60;
-                    secondsToWait+= int.Parse(match.Groups[2].Value);
-                }
-                // we need to wait.
-                responseTime += TimeSpan.FromSeconds(secondsToWait);
-                Trace($"Waiting until {responseTime} to push answer.");
-                // wait until we can try again
-                do
-                {
-                    Thread.Sleep(100);
-                } while (responseTime >= DateTime.Now);
+                WaitAppropriateTime(match, responseTime);
 
                 // delete any cached response to ensure we post again
                 _fileSystem.File.Delete(responseFilename);
             }
+        }
 
-            // is it the correct answer ?
-            return GoodAnswer.IsMatch(resultText) ? AnswerStatus.Good : AnswerStatus.Wrong;
+        private void WaitAppropriateTime(Match match, DateTime responseTime)
+        {
+            var secondsToWait = int.Parse(match.Groups[1].Value);
+            if (!string.IsNullOrWhiteSpace(match.Groups[2].Value))
+            {
+                // if there is a second value, the first one is in minutes.
+                secondsToWait *= 60;
+                secondsToWait+= int.Parse(match.Groups[2].Value);
+            }
+            // we need to wait.
+            responseTime += TimeSpan.FromSeconds(secondsToWait);
+            Trace($"Waiting until {responseTime} to push answer.");
+            // wait until we can try again
+            do
+            {
+                Thread.Sleep(100);
+            } while (responseTime >= DateTime.Now);
+        }
+
+        private bool RequestCookie()
+        {
+            Console.WriteLine("Please provide the session cookie (empty line to abort)");
+            var newCookie = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(newCookie)) return false;
+            // we need to set the cookie
+            _client.SetSessionCookie(newCookie);
+            // save it to a file but add it to gitignore as a precaution
+            var gitIgnore = new SimpleGitIgnoreManager(_fileSystem);
+            gitIgnore.AddFilter(SessionTokenFileName, _rootPath);
+            _fileSystem.File.WriteAllText(SessionFilename, new SessionJSon(){Token = newCookie}.ToJson());
+            
+            return true;
         }
 
         private void CacheResponse(string responseFilename, string responseText)
@@ -256,37 +286,39 @@ namespace AoC
             return responseText;
         }
 
-        private string AnalyseInvalidAnswer(string response)
+        private AoCAnswer AnalyseInvalidAnswer(string response)
         {
             if (response.Contains("500 Internal Server Error"))
             {
                 Trace("AoC: Internal Server Error. This is likely an indication of a corrupted AOC session token. See below for setup documentation.");
-                Trace(_client.GetSetupDocumentation());
-                return response;
+                Trace(GetSetupDocumentation());
+                return new(false, response, true, true);
             }
             if (response.Contains("400 Bad Request") || response.Contains("400 (Bad Request)") || response.Contains("To play, please identify yourself via one of these services:"))
             {
                 Trace("AoC: Bad Request. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
-                Trace(_client.GetSetupDocumentation());
-                return response;
+                Trace(GetSetupDocumentation());
+                return new(false, response, true, true);
             }            
             if (response.Contains("404 Not Found"))
             {
                 Trace("AoC: Not Found. This is likely due to an expired AOC session token. You need to get a fresh session token. See below for setup documentation.");
-                Trace(_client.GetSetupDocumentation());
-                return response;
+                Trace(GetSetupDocumentation());
+                return new(false, response, true, true);
             }
             Trace("Failed to parse response.");
-            return response;           
+            return new AoCAnswer(false, response);           
         }
+
+        private record AoCAnswer(bool IsOk, string Message, bool CanBeRetried = false, bool InvalidCookie = false);
         
-        private (bool isOk, string answer) ExtractAnswerText(string response)
+        private AoCAnswer ExtractAnswerText(string response)
         {
             var start = response.IndexOf("<article>", StringComparison.InvariantCulture);
             if (start == -1)
             {
                 // no text tag, this is a technical error
-                return (false, AnalyseInvalidAnswer(response));
+                return AnalyseInvalidAnswer(response);
             }
 
             start += 9;
@@ -295,38 +327,83 @@ namespace AoC
             {
                 // no end tag, we got an incorrect response from server
                 Trace("Failed to parse response.");
-                return (false, response);
+                return new (false, response);
             }   
 
             response = response.Substring(start, end - start);
-            return (true, Regex.Replace(response, @"<(.|\n)*?>", string.Empty));
+            return new (true, Regex.Replace(response, @"<(.|\n)*?>", string.Empty));
         }
+
+        private string GetSetupDocumentation() =>
+            @$"Define an environment variable named {EnvVarName} which value is the Advent of Code session id.
+The session id is stored in a cookie, named 'session', valid for '.adventofcode.com'.
+To get a valid value, you must log through AoC site first.";
 
         /// <summary>
         /// Retrieves personal data (associated to the AoC session ID).
         /// </summary>
         /// <param name="year">target year (AoC event)</param>
         /// <param name="day">day to fetch</param>
-        /// <param name="datapath">path to cache storage</param>
+        /// <param name="rootPath"></param>
+        /// <param name="dayPath">path to cache storage</param>
         /// <remarks>Input retrieval is done asynchronously, so it can happen in parallel with testing.</remarks>
-        public  void InitializeDay(int year, int day, string datapath)
+        public void InitializeDay(int year, int day, string rootPath, string dayPath)
         {
             if (day == _client.Day)
             {
                 return;
             }
 
-            _dataPath = datapath;
+            _rootPath = rootPath;
+            _dataPath = dayPath;
             _day = day;
             _client.Year = year;
             _client.SetCurrentDay(day);
             var fileName = DataCachePathName;
             var gitIgnore = new SimpleGitIgnoreManager(_fileSystem);
             gitIgnore.AddFilter(DataCacheFilter, _dataPath);
+            GetSessionId();
 
             _myData = _fileSystem.File.Exists(fileName)
                 ? _fileSystem.File.ReadAllTextAsync(fileName)
                 : _client.RequestPersonalInput();
         }
+
+        private void GetSessionId()
+        {
+            var filename = SessionFilename;
+            // get the token from the environment variable
+            var sessionId = Environment.GetEnvironmentVariable(EnvVarName);
+            // if we have a file, we will use it instead
+            if (_fileSystem.File.Exists(filename))
+            {
+                try
+                {
+                    var sessionJson = SessionJSon.FromJson(_fileSystem.File.ReadAllText(filename));
+                    if (!string.IsNullOrWhiteSpace(sessionJson.Token))
+                    {
+                        // we got a valid session id
+                        sessionId = sessionJson.Token;
+                    }
+                }
+                catch (Exception e)
+                {
+                    ReportError($"Failed to load the session token: {e}");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                _client.SetSessionCookie(sessionId);
+                return;
+            }
+
+            if (!RequestCookie())
+            {
+                throw new InvalidOperationException(GetSetupDocumentation());
+            }
+        }
+
+        private string SessionFilename => _fileSystem.Path.Combine(_rootPath, SessionTokenFileName);
     }
 }

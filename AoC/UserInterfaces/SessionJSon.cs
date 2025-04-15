@@ -1,7 +1,8 @@
+// MIT License
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2022 Cyrille DUPUYDAUBY
+//  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -15,31 +16,22 @@
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
-using System.Threading.Tasks;
+using System.Text.Json;
 
-namespace AoC
+namespace AoC;
+
+public class SessionJSon
 {
-    public abstract class AoCClientBase : IDisposable
-    {
-        public int Day { get; private set; }
-      
-        public int Year { get; set; }
+    public string Token { get; set; }
 
-        public abstract void Dispose();
+    public string ToJson() => JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
 
-        public void SetCurrentDay(int day) => Day = day;
+    public static SessionJSon FromJson(string text) => JsonSerializer.Deserialize<SessionJSon>(text);
 
-        public abstract Task<string> RequestPersonalInput();
-        
-        public abstract Task<string> PostAnswer(int question, string value);
-
-        public abstract void SetSessionCookie(string value);
-    }
 }

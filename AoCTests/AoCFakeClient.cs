@@ -36,6 +36,7 @@ namespace AoC.AoCTests
         public int NbRequest { get; private set; }
 
         public int NbSubmissions;
+        public string Cookie;
 
         public void SetInputData(string data)
         {
@@ -63,7 +64,10 @@ namespace AoC.AoCTests
             return File.ReadAllTextAsync(_responseFile[id].Dequeue());
         }
 
-        public override string GetSetupDocumentation() => "Nothing to setup for the fake client.";
+        public override void SetSessionCookie(string value)
+        {
+            Cookie = value;
+        }
 
         public override void Dispose()
         {

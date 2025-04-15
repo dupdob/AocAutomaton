@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -31,28 +32,37 @@ using System.Threading.Tasks;
 
 namespace AoC
 {
-    public sealed class AoCClient : AoCClientBase
+    public sealed class AoCClient: AoCClientBase
     {
-        private const string EnvVarName = "AOC_SESSION";
         private readonly HttpClient _client;
         private readonly HttpClientHandler _handler;
         private string Url =>$"https://adventofcode.com/{Year}/day/"; 
 
         public AoCClient()
         {
-            var sessionId = Environment.GetEnvironmentVariable(EnvVarName);
-            if (string.IsNullOrEmpty(sessionId))
-                throw new InvalidOperationException(GetSetupDocumentation());
 
             _handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
             _client = new HttpClient(_handler);
             // add our identifier to the request
-            _handler.CookieContainer.Add(new Cookie("session",
-                sessionId, "/", ".adventofcode.com"));
+
             _client.DefaultRequestHeaders.UserAgent.Add( new ProductInfoHeaderValue("AocAutomaton", this.GetType().Assembly.GetName().Version?.ToString()??"1.0"));
             _client.DefaultRequestHeaders.UserAgent.Add( new ProductInfoHeaderValue(@"(https://github.com/dupdob/AocAutomaton)"));
         }
 
+        public override void SetSessionCookie(string value)
+        {
+            var cookie = _handler.CookieContainer.GetAllCookies().FirstOrDefault(c => c.Name == "session");
+            if (cookie == null)
+            {
+                _handler.CookieContainer.Add(new Cookie("session",
+                    value, "/", ".adventofcode.com"));
+            }
+            else
+            {
+                cookie.Value = value;
+            }
+        }
+        
         public override Task<string> RequestPersonalInput()
         {
             return _client.GetStringAsync($"{Url}{Day}/input");
@@ -69,12 +79,7 @@ namespace AoC
 
             return _client.PostAsync(url, new FormUrlEncodedContent(data)).Result.Content.ReadAsStringAsync();
         }
-
-        public override string GetSetupDocumentation() =>
-            @$"Define an environment variable named {EnvVarName} which value is the Advent of Code session id.
-The session id is stored in a cookie, named 'session', valid for '.adventofcode.com'.
-To get a valid value, you must log through AoC site first.";
-
+        
         public override void Dispose()
         {
             _client.Dispose();

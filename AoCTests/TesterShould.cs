@@ -38,7 +38,7 @@ internal class MockInterface(string data) : IInteract
     public AnswerStatus Status1 { get; set; } = AnswerStatus.Good;
     public AnswerStatus Status2 { get; set; } = AnswerStatus.Good;
 
-    public void InitializeDay(int year, int day, string dataPath)
+    public void InitializeDay(int year, int day, string rootpath, string dataPath)
     { }
 
     public void CleanUpDay()
@@ -120,8 +120,10 @@ public class TesterShould
     {
         var mockFileSystem = GetFileSystem();
         var testInputData = "Silly input data";
-        var fakeClient = new MockInterface(testInputData);
-        fakeClient.Status2 = AnswerStatus.Wrong;
+        var fakeClient = new MockInterface(testInputData)
+        {
+            Status2 = AnswerStatus.Wrong
+        };
         var engine = new Automaton(2015, fakeClient, mockFileSystem);
         var algo = new FakeSolver(10, 1, 2,
             x => x.RegisterTestDataAndResult(testInputData, 1, 1).RegisterTestResult(2, 2));
