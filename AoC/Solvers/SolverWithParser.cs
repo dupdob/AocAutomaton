@@ -68,7 +68,7 @@ namespace AoC
         /// </remarks>
         protected abstract void Parse(string data);
 
-        protected int GetParameter(int index, int value) => ExtraParameters.Length > index ? ExtraParameters[index] : value;
+        protected int GetParameter(int index, int defaultValue) => ExtraParameters.Length > index ? ExtraParameters[index] : defaultValue;
         
         public object GetAnswer1(string data)
         {

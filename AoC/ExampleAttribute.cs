@@ -27,52 +27,31 @@ using System;
 namespace AoC;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class ExampleAttribute : Attribute
+public class ExampleAttribute(
+    int id,
+    string input,
+    object expected,
+    string textParameter,
+    params int[] parameters)
+    : Attribute
 {
-    public int Id { get; }
+    public int Id { get; } = id;
+    public string Input { get; } = input;
+    public object Expected { get; } = expected;
+    public string TextParameter { get; } = textParameter;
+    public int[] Parameters { get; } = parameters;
 
-    public string Input { get; }
-    public object Expected { get; }
-    public string TextParameter { get; }
-    public int[] Parameters { get; }
+    public ExampleAttribute(string input): this(0, input){}
 
-    public ExampleAttribute(string input)
-    {
-        Input = input;
-        Expected = null;
-    }
-
-    public ExampleAttribute(string input, long expected, string textParameter = null, params int[] parameters)
-    {
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    }
-
-    public ExampleAttribute(string input, string expected, string textParameter = null, params int[] parameters)
-    {
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    }     
+    public ExampleAttribute(int id, string input) : this(0, input, null, null, null)
+    {}
     
-    public ExampleAttribute(int id, string input, long expected, string textParameter = null, params int[] parameters)
-    {
-        Id = id;
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    }
+    public ExampleAttribute(string input, object expected, params int[] parameters): this(input, expected, null, parameters){}
 
-    public ExampleAttribute(int id, string input, string expected, string textParameter = null, params int[] parameters)
+    public ExampleAttribute(int id, string input, object expected, params int[] parameters) : this(id, input, expected, string.Empty, parameters)
+    {}
+    
+    public ExampleAttribute(string input, object expected, string textParameter, params int[] parameters) : this(0, input, expected, textParameter, parameters)
     {
-        Id = id;
-        Input = input;
-        Expected = expected;
-        TextParameter = textParameter;
-        Parameters = parameters;
-    } 
+    }
 }

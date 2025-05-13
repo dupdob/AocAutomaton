@@ -1,6 +1,6 @@
 // MIT License
 // 
-//  AdventOfCode
+//  AocAutomaton
 // 
 //  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
@@ -23,8 +23,42 @@
 // SOFTWARE.
 
 using System;
+using System.IO;
+using System.IO.Abstractions;
+using System.IO.Abstractions.TestingHelpers;
 
-namespace AoC;
+namespace AoC.AoCTests;
 
-[Obsolete("Please use Automaton.WebsiteAutomaton instead.")]
-public class HttpAutomaton(int year = 0) : MetaAutomaton(year, new HttpInterface());
+internal class MockMeta: IMetaAutomaton
+{
+    public MockMeta(DateTime? referenceDate = null)
+    {
+        ReferenceDate = referenceDate;
+        //FileSystem.Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
+        FileSystem.Directory.CreateDirectory(FileSystem.Directory.GetCurrentDirectory());
+    }
+
+    public string RootPath { get; set; } = "./";
+
+    public int Year => Now().Year;
+    public string DataPathNameFormat { get; } = ".";
+
+    public MockFileSystem FileSystem { get; } = TestHelpers.GetFileSystem();
+    
+    public DateTime? ReferenceDate { get; set; }
+        
+    public DateTime Now()
+    {
+        return ReferenceDate ?? DateTime.Now;
+    }
+
+    public void Trace(string message)
+    {
+        Console.WriteLine(message);
+    }
+
+    public void ReportError(string message)
+    {
+        Console.WriteLine(message);
+    }
+}

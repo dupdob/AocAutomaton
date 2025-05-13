@@ -1,8 +1,8 @@
 # AocAutomaton
 ## TLDR;
 AoCAutomaton provides skeleton classes and interfaces that
-makes [Advent of Code][1] more enjoyable by 
-simplifying mundane tasks, so you can concentrate on solving the puzzle.
+makes [Advent of Code][1] even more enjoyable by 
+simplifying mundane tasks, so you can concentrate on solving the puzzles.
 It is available as a Nuget package, named **AOC2**.
 
 ## Details
@@ -12,17 +12,17 @@ It will:
 - create an instance of your solving logic
 - fetch your specific input data (and cache them)
 - tests your logic against sample/test data you may have provided (usually by copy-pasting from the day's puzzle)
-- if tests are not ok, it will stop. Otherwise
-- runs your solving logic against your private input
-- submit the answer to the AoC site
-- get the result (and cache it) and provides you with the main message
+- if tests are not ok, it will stop there allowing you to fix your code.
+- otherwise it runs your solving logic against your specific input
+- submits the answer to the AoC site
+- gets the result (and cache it) and provides you with the main message (success or failure kind)
 - if this is not the good answer, it will stop. Otherwise
 - it does the same for the second part of the question
 
-The `Automaton` caches data to prevent any useless hammering of the AoC
+The `Automaton` caches data to prevent unnecessary hammering of the AoC
 site. Also, it **automatically deals with response delay and submit the answer** as soon as possible. It will also
 avoid submitting known wrong answers, such as null, zero or negatives values, previously tried answers or answers that
-are outside the known range (when you got answer is too low or too high results).
+are outside the known range (when you got 'answer is too low' or 'too high' results).
 ---- 
 ## Philosophy
 **AocAutomaton** is designed to be used within your IDE of choice, focusing on **reducing friction when solving AoC puzzles**. 

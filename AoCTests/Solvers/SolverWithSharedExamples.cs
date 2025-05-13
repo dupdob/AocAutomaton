@@ -47,3 +47,27 @@ public class SolverWithSharedExamples: ISolver
         return null;
     }
 }
+
+[Day(13)]
+public class SolverWithSharedExampleWithWrongId: ISolver
+{
+    public void SetupRun(Automaton automaton)
+    {
+    }
+
+    public void InitRun(bool isTest, string extraText, params int[] extraParameters)
+    {
+    }
+    
+    [Example("Shared example", 1)]
+    public object GetAnswer1(string data)
+    {
+        return null;
+    }
+
+    [ReuseExample(1, 1)]
+    public object GetAnswer2(string data)
+    {
+        return null;
+    }
+}

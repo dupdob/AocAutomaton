@@ -36,49 +36,36 @@ public class Automaton
 {
     private readonly List<TestData> _tests = [];
     private TestData _last;
-    private readonly IFileSystem _fileSystem;
-    private readonly Func<DateTime> _now;
     private DayState _dayState;
     private string _defaultText;
     private int[] _defaultParameters = [];
-    
-    private readonly IInteract _userInterface;
-    private readonly int _year;
     private int _currentDay;
 
-    private string _dataPathNameFormat = ".";
     // user data (forced)
     private string _data;
-    private string _rootPath= ".";
+    private readonly int _year;
+    private readonly IMetaAutomaton _metaAutomaton;
+    private readonly IFileSystem _fileSystem;
+    private readonly IInteract _userInterface;
+    private readonly string _dataPathNameFormat;
+    private readonly string _dataRootPath;
 
     /// <summary>
     /// Build an automation instance
     /// </summary>
-    /// <param name="year">advent of code year. Current year if set to 0 (default value)</param>
     /// <param name="userInterface">User interface component. Console interface if set to null (default value)</param>
+    /// <param name="meta">Meta orchestrator</param>
     /// <param name="fileSystem">Filesystem. For testing purposes.</param>
-    /// <param name="nowFunction">Function returning current time (</param>
-    public Automaton(int year = 0, IInteract userInterface = null, IFileSystem fileSystem = null, Func<DateTime> nowFunction = null)
+    public Automaton(IMetaAutomaton meta, IFileSystem fileSystem, IInteract userInterface)
     {
-        _now = nowFunction ?? (()=>DateTime.Now);
-        
-        if (year == 0)
-        {
-            year = _now().Year;
-        }
-
-        _year = year;
-        _fileSystem = fileSystem ?? new FileSystem();
-        _userInterface = userInterface ?? new ConsoleUserInterface();
+        _year = meta.Year;
+        _metaAutomaton = meta;
+        _fileSystem = fileSystem;
+        _userInterface = userInterface;
+        _dataPathNameFormat = _metaAutomaton.DataPathNameFormat;
+        _dataRootPath = _metaAutomaton.RootPath;
     }
-
-    /// <summary>
-    /// Builds an automaton interacting with Advent of code website.
-    /// </summary>
-    /// <param name="year">Target year</param>
-    /// <returns>An AoC automaton instance</returns>
-    public static Automaton WebsiteAutomaton(int year =0) => new(year, new HttpInterface());
-
+    
     private string StateFileName => $"AoC-{_year,4}-{Day,2}-state.json";
     private const string IgnoreFilter = "Aoc-*-state.json";
     
@@ -86,7 +73,7 @@ public class Automaton
         ? StateFileName
         : _fileSystem.Path.Combine(DataPath, StateFileName);
     
-    private string DataPath => _fileSystem.Path.Combine(_rootPath, string.Format(_dataPathNameFormat, Day, _year));
+    private string DataPath => string.Format(_dataPathNameFormat, Day, _year);
     
     /// <summary>
     /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
@@ -105,39 +92,20 @@ public class Automaton
             {
                 return;
             }
-            _tests.Clear(); 
-            _currentDay = value;
+
+            ClearState(value);
         }
     }
-    
-    /// <summary>
-    /// Sets the path used by the engine to cache data (input and response).
-    /// You can provide a format pattern string, knowing that {0} will be replaced by
-    /// the exercise's day and {1} by the year.
-    /// </summary>
-    /// <param name="dataPath">path (or format string) used to store data.</param>
-    /// <returns>This instance.</returns>
-    /// <remarks>Relative paths are relative to the engine current directory.</remarks>
-    public Automaton SetDataPath(string dataPath)
+
+    private void ClearState(int value)
     {
-        // scan the path to identify the common root
-        var rootPath = dataPath;
-        var curPath = dataPath;
-        while(!string.IsNullOrEmpty(curPath))
-        {
-            var thisLevel = _fileSystem.Path.GetFileName(curPath);
-            curPath = _fileSystem.Path.GetDirectoryName(curPath);
-            if (thisLevel.Contains('{'))
-            {
-                // this is a variable part, cannot be part of the root path
-                rootPath = curPath;
-            }
-        }
-        _rootPath = rootPath;
-       
-        _dataPathNameFormat = dataPath;
-        
-        return this;
+        _tests.Clear();
+        _last = null;
+        _dayState = null;
+        _currentDay = value;
+        _defaultText = null;
+        _defaultParameters = null;
+        ResetBetweenQuestions = false;
     }
 
     /// <summary>
@@ -162,20 +130,16 @@ public class Automaton
     /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
     /// such as an iteration count or an initial text. </remarks>
     public void SetDefault(params int[] defaultParameters) => SetDefault(null, defaultParameters);
-    
-    private void Trace(string message) => _userInterface.Trace(message);
-
-    private void ReportError(string message) => _userInterface.ReportError(message);
 
     private object GetAnswer(ISolver algorithm, int id, string data)
     {
         var clock = new Stopwatch();
-        Trace($"Computing answer {id} ({_now():HH:mm:ss}).");
+        _metaAutomaton.Trace($"Computing answer {id} ({_metaAutomaton.Now():HH:mm:ss}).");
         clock.Start();
         var answer = id == 1 ? algorithm.GetAnswer1(data) : algorithm.GetAnswer2(data);
         clock.Stop();
         var message = clock.ElapsedMilliseconds < 2000 ? $"{clock.ElapsedMilliseconds} ms" : $"{clock.Elapsed:c}";
-        Trace($"Took {message}.");
+        _metaAutomaton.Trace($"Took {message}.");
         return answer;
     }
 
@@ -184,10 +148,11 @@ public class Automaton
         var success = true;
         if (_tests.Count == 0)
         {
-            Trace($"* /!\\ no test for question {id}! *");
+            _metaAutomaton.Trace($"* /!\\ no test for question {id}! *");
             return true;
         }
-        Trace($"* Test question {id} *");
+
+        _metaAutomaton.Trace($"* Test question {id} *");
         // Is there any actual test?
         if (!_tests.Any(t => t.CanTest(id)))
         {
@@ -218,8 +183,8 @@ public class Automaton
         // no answer provided
         if (answer == null)
         {
-            Trace($"Test failed: got no answer instead of {expected} using:");
-            Trace(testData.Data);
+            _metaAutomaton.Trace($"Test failed: got no answer instead of {expected} using:");
+            _metaAutomaton.Trace(testData.Data);
             return false;
         }
         // no expected answer provided, we request manual confirmation 
@@ -229,11 +194,12 @@ public class Automaton
             {
                 return true;
             }
-            Trace("Testing with:");
-            Trace(testData.Data);
-            Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
-            Trace(answer.ToString());
-            if (!AskYesNo())
+
+            _metaAutomaton.Trace("Testing with:");
+            _metaAutomaton.Trace(testData.Data);
+            _metaAutomaton.Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+            _metaAutomaton.Trace(answer.ToString());
+            if (!MetaAutomaton.AskYesNo())
             {
                 return false;
             }
@@ -241,23 +207,17 @@ public class Automaton
         // not the expected answer
         else if (!answer.ToString()!.Equals(expected.ToString()))
         {
-            Trace($"Test failed: got {answer} instead of {expected} using:");
-            Trace(testData.Data);
+            _metaAutomaton.Trace($"Test failed: got {answer} instead of {expected} using:");
+            _metaAutomaton.Trace(testData.Data);
             return false;
         }
         else
         {
-            Trace($"Test succeeded: got {answer} using:");
-            Trace(testData.Data);
+            _metaAutomaton.Trace($"Test succeeded: got {answer} using:");
+            _metaAutomaton.Trace(testData.Data);
         }
 
         return true;
-    }
-
-    internal static bool AskYesNo()
-    {
-        var assessment = Console.ReadLine()?.ToLower();
-        return !string.IsNullOrEmpty(assessment) && assessment[0] == 'y';
     }
 
     /// <summary>
@@ -267,7 +227,7 @@ public class Automaton
     /// <param name="expected">expected result (either string or a number).</param>
     /// <param name="question">question id (1 or 2)</param>
     /// <returns>The automation base instance for linked calls.</returns>
-    [Obsolete("Prefer AddExample instead.")]
+    [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
     public Automaton RegisterTestDataAndResult(string data, object expected, int question)
     {
         var set = _tests.FirstOrDefault(t => t.Data== data);
@@ -296,7 +256,7 @@ public class Automaton
     /// <param name="data">input data for this test</param>
     /// <returns>a <see cref="TestData"/> instance that must be enriched with expected results.</returns>
     /// <returns>The automation base instance for linked calls.</returns>
-    [Obsolete("Prefer AddExample instead.")]
+    [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
     public TestData RegisterTest(string data)
     {
         _last = AddExample(data);
@@ -335,7 +295,6 @@ public class Automaton
         _tests.Add(new TestData(data, this));
         return _tests[^1];
     }
-    
         
     public ICollection<TestData> GetExamples() => _tests;
     
@@ -344,7 +303,7 @@ public class Automaton
     /// </summary>
     /// <param name="question">question's answer to be confirmed manually</param>
     /// <returns>The automation base instance for linked calls.</returns>
-    [Obsolete("Prefer AddExample instead.")]
+    [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
     public Automaton AskVisualConfirm(int question)
     {
         _last.SetVisualConfirm(question);
@@ -358,7 +317,7 @@ public class Automaton
     /// <param name="expected">expected result (either string or a number).</param>
     /// <param name="question">question id (1 or 2)</param>
     /// <returns>The automation base instance for linked calls.</returns>
-    [Obsolete("Prefer AddExample instead.")]
+    [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
     public Automaton RegisterTestResult(object expected, int question = 1)
     {
         if (_last == null)
@@ -375,21 +334,6 @@ public class Automaton
         }
         return this;
     }
-    
-    /// <summary>
-    ///  Runs a given day.
-    /// </summary>
-    /// <typeparam name="T"><see cref="ISolver" /> type for the day.</typeparam>
-    /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
-    /// <returns>true if problem was solved (both parts)</returns>
-    public bool RunDay<T>() where T : ISolver => RunDay(SolverFactory.ForType<T>());
-
-    /// <summary>
-    /// Runs a given day
-    /// </summary>
-    /// <param name="builder">delegate that must return s a solver</param>
-    /// <returns>true if problem was solved (both parts)</returns>
-    public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory(builder));
 
     /// <summary>
     /// Loads user data from a file.
@@ -397,7 +341,9 @@ public class Automaton
     /// <param name="pathName">path name of the user data.</param>
     public void LoadUserData(string pathName) => _data = _fileSystem.File.ReadAllText(pathName);
 
-    private bool RunDay(SolverFactory factory)
+    public bool RunDay(Func<ISolver> builder) => RunDay(new SolverFactory(builder));
+
+    public bool RunDay(SolverFactory factory)
     {
         try
         {
@@ -425,9 +371,9 @@ public class Automaton
             }
             
             // perform the actual run
-            Trace("* Computing answer 1 from your input. *");
+            _metaAutomaton.Trace("* Computing answer 1 from your input. *");
             var answer = GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 1, data);
-            Trace($"* Attempting {answer ?? "null"} *");
+            _metaAutomaton.Trace($"* Attempting {answer ?? "null"} *");
             if (!CheckResponse(1, answer))
             {
                 return false;
@@ -435,7 +381,7 @@ public class Automaton
 
             if (Day == 25)
             {
-                Trace($"* Only one question on day {Day}. You're done! *");
+                _metaAutomaton.Trace($"* Only one question on day {Day}. You're done! *");
                 return true;
             }
             
@@ -444,7 +390,7 @@ public class Automaton
                 return false;
             }
 
-            Trace("* Computing answer 2 from your input. *");
+            _metaAutomaton.Trace("* Computing answer 2 from your input. *");
             answer = GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 2, data);
             return CheckResponse(2, answer);
         }
@@ -478,7 +424,7 @@ public class Automaton
         }
         // get examples data
         // see if there are example attributes
-        var methodInfos = solver.GetType().GetMethods(BindingFlags.Instance|BindingFlags.Public);
+        var methodInfos = solver.GetType().GetMethods(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic);
         // get samples declared on GetAnswser1
         var samples = methodInfos.Where( m => m.Name == "GetAnswer1")
             .SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
@@ -509,7 +455,7 @@ public class Automaton
         {
             if (!sharedExamples.TryGetValue(sharedSample.Id, out var actual))
             {
-                ReportError($"SharedExample id {sharedSample.Id} was not defined on GetAnswer1. Skipping it.");
+                _metaAutomaton.ReportError($"SharedExample id {sharedSample.Id} was not defined on GetAnswer1. Skipping it.");
                 continue;
             }
 
@@ -531,7 +477,7 @@ public class Automaton
             }
             if (!info.IsStatic)
             {
-                Trace($"Warning: Trace method '{info.Name}' is not static, tests results may be impacted by lack of isolation.");
+                _metaAutomaton.Trace($"Warning: Trace method '{info.Name}' is not static, tests results may be impacted by lack of isolation.");
             }
 
             foreach (var test in tests)
@@ -544,7 +490,7 @@ public class Automaton
                     // test success
                     // generate proper message
                     builder.Append($"Unit Test succeeded. {GenerateUnitTestResultLog(info.Name, result, test.Parameters)}");
-                    Trace(builder.ToString());
+                    _metaAutomaton.Trace(builder.ToString());
                     continue;
                 }
                 // test failed
@@ -552,7 +498,7 @@ public class Automaton
                 builder.AppendFormat("Unit Test failed. {0} instead of {1}", 
                     GenerateUnitTestResultLog(info.Name, result, test.Parameters), 
                     ValueToString(test.Expected));
-                Trace(builder.ToString());
+                _metaAutomaton.Trace(builder.ToString());
                 return false;
             }
         }
@@ -581,30 +527,31 @@ public class Automaton
         {
             return true;
         }
-        Trace($"Day {Day} has already been solved (first part:{_dayState.First.Answer}, second part:{_dayState.Second.Answer}). Nothing to do.");
-        Trace("Do you want to run it anyway?");
-        return AskYesNo();
+
+        _metaAutomaton.Trace($"Day {Day} has already been solved (first part:{_dayState.First.Answer}, second part:{_dayState.Second.Answer}). Nothing to do.");
+        _metaAutomaton.Trace("Do you want to run it anyway?");
+        return MetaAutomaton.AskYesNo();
     }
 
     private bool CheckSetup()
     {
         if (_tests.Count == 0)
         {
-            Trace("Warning: no test case provided.");
+            _metaAutomaton.Trace("Warning: no test case provided.");
         }
         if (Day != 0)
         {
             return true;
         }
 
-        var now = _now();
+        var now = _metaAutomaton.Now();
         if (now.Month != 12)
         {
-            ReportError($"Error: please specify target day using Day property.");
+            _metaAutomaton.ReportError($"Error: please specify target day using Day property.");
             return false;
         }   
         Day = now.Day;
-        Trace($"Warning: Day not set, assuming day {Day} (use Day property to set day#).");
+        _metaAutomaton.Trace($"Warning: Day not set, assuming day {Day} (use Day property to set day#).");
 
         return true;
     }
@@ -615,7 +562,7 @@ public class Automaton
         ResetBetweenQuestions = false;
         _tests.Clear();
         var gitIgnore = new SimpleGitIgnoreManager(_fileSystem);
-        gitIgnore.AddFilter(IgnoreFilter, _rootPath);
+        gitIgnore.AddFilter(IgnoreFilter, _dataRootPath);
     }
 
     private bool CheckResponse(int id, object answer)
@@ -623,7 +570,7 @@ public class Automaton
         var answerText = answer?.ToString();
         if (string.IsNullOrWhiteSpace(answerText))
         {
-            Trace($"No answer provided! Please overload GetAnswer{id}() with your code.");
+            _metaAutomaton.Trace($"No answer provided! Please overload GetAnswer{id}() with your code.");
             return false;
         }
 
@@ -661,8 +608,8 @@ public class Automaton
             state.Answer = answerText;
             state.Solved = true;
         }
-        
-        Trace($"Question {id} {(success ? "passed" : "failed")}!");
+
+        _metaAutomaton.Trace($"Question {id} {(success ? "passed" : "failed")}!");
         return success;
 
         bool CheckForNegative(long numericAnswer)
@@ -670,12 +617,12 @@ public class Automaton
             switch (numericAnswer)
             {
                 case 0:
-                    Trace("Answer cannot be zero.");
+                    _metaAutomaton.Trace("Answer cannot be zero.");
                     return false;
                 case >= 0:
                     return true;
                 default:
-                    Trace($"Answer cannot be negative, not submitted: {numericAnswer}");
+                    _metaAutomaton.Trace($"Answer cannot be negative, not submitted: {numericAnswer}");
                     return false;
             }
         }
@@ -711,7 +658,7 @@ public class Automaton
     {
         if (state.Low.HasValue && number <= state.Low.Value)
         {
-            Trace(state.Low == number
+            _metaAutomaton.Trace(state.Low == number
                 ? $"Answer not submitted. '{number}' was attempted and reported as too low."
                 : $"Answer not submitted. Previous attempt '{state.Low.Value}' was reported as too low and {number} is also too low.");
             return false;
@@ -721,8 +668,8 @@ public class Automaton
         {
             return true;
         }
-        
-        Trace(state.High == number
+
+        _metaAutomaton.Trace(state.High == number
             ? $"Answer not submitted. '{number}' was attempted and reported as too high."
             : $"Answer not submitted. Previous attempt '{state.High.Value}' was reported as too high and {number} is also too high.");
         return false;
@@ -732,28 +679,29 @@ public class Automaton
     {
         _dayState = null;
         // deal with state
-        if (_fileSystem.File.Exists(StatePathName))
+        var fullPath = _fileSystem.Path.GetFullPath(StatePathName);
+        if (_fileSystem.File.Exists(fullPath))
         {
             try
             {
-                _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(StatePathName));
+                _dayState = DayState.FromJson(_fileSystem.File.ReadAllText(fullPath));
                 if (_dayState.Day != day)
                 {
                     // the state looks corrupted
-                    Trace($"Warning: failed to restore state, day does not match expectation: {_dayState.Day} instead of {day}.");
+                    _metaAutomaton.Trace($"Warning: failed to restore state, day does not match expectation: {_dayState.Day} instead of {day}.");
                     _dayState = null;
                 }
 
             }
             catch (Exception e)
             {
-                ReportError($"Failed to load the current state: {e}");
+                _metaAutomaton.ReportError($"Failed to load the current state: {e}");
             }
         }
 
         // if it failed for any reason
         _dayState ??= new DayState { Day = day };
-        _userInterface.InitializeDay(_year, Day, _rootPath, DataPath);
+        _userInterface.InitializeDay(_year, Day, _dataRootPath, DataPath);
     }
 
     private void CleanUpDay()
@@ -762,7 +710,7 @@ public class Automaton
         {
             _fileSystem.File.WriteAllText(StatePathName, _dayState.ToJson());
         }
-       
+
         _userInterface.CleanUpDay(); 
     }
 

@@ -22,22 +22,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
+
 namespace AoC.AoCTests;
 
 public class AutoFakeSolverWithParam : SolverWithParser
 {
     public string GetExtra() => Extra;
  
-    
     public int[] GetExtraParameters() => ExtraParameters;
     
     public string Data { get; private set; }
 
     public int Day { get; init; } = 10;
+    
+    public Action SetUpDay { get; set; }
 
     public override void SetupRun(Automaton httpAutomatonBase)
     {
         httpAutomatonBase.Day = Day;
+        SetUpDay?.Invoke();
     }
 
     protected override void Parse(string data)

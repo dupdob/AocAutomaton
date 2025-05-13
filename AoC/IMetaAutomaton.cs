@@ -1,6 +1,6 @@
 // MIT License
 // 
-//  AdventOfCode
+//  AocAutomaton
 // 
 //  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
@@ -26,5 +26,12 @@ using System;
 
 namespace AoC;
 
-[Obsolete("Please use Automaton.WebsiteAutomaton instead.")]
-public class HttpAutomaton(int year = 0) : MetaAutomaton(year, new HttpInterface());
+public interface IMetaAutomaton
+{
+    string RootPath { get; }
+    int Year { get; }
+    string DataPathNameFormat { get; }
+    DateTime Now();
+    void Trace(string message);
+    void ReportError(string message);
+}

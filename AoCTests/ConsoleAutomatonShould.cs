@@ -36,7 +36,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void AskForUserInput()
     {
-        var sut = new Automaton(fileSystem: new MockFileSystem());
+        var sut = new MetaAutomaton(0, new ConsoleUserInterface(), new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
         console.InputLine("testData\n");
@@ -50,7 +50,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void AskForConfirmationPerQuestion()
     {
-        var sut = new Automaton(fileSystem: new MockFileSystem());
+        var sut = new MetaAutomaton(0, new ConsoleUserInterface(), new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
         console.InputLine("testData");
@@ -65,7 +65,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void ReportFailureIfNoValidation()
     {
-        var sut = new Automaton(fileSystem: new MockFileSystem());
+        var sut = new MetaAutomaton(0, new ConsoleUserInterface(), new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
         console.InputLine("testData");
@@ -76,12 +76,14 @@ public class ConsoleAutomatonShould
         var result = sut.RunDay(() => solver);
         Check.That(result).IsFalse();
     }
-
+    
     [Test]
     public void ReportFailureIfDayNotSet()
     {
         // this does not trigger in December
-        var sut = new Automaton(fileSystem: new MockFileSystem(), nowFunction: () => new DateTime(2025,3,4));
+        var meta = new MockMeta(new DateTime(2025, 3, 4));
+        var sut = new Automaton(meta, meta.FileSystem, new ConsoleUserInterface());
+        
         var solver = new AutoFakeSolverWithParam
         {
             Day = 0
@@ -90,7 +92,7 @@ public class ConsoleAutomatonShould
         console.InputLine("testData");
         console.InputLine("");
         console.InputLine("");
-        var result = sut.RunDay(() => solver);
+        var result = sut.RunDay(new SolverFactory(() => solver));
         Check.That(result).IsFalse();
         // NFluent captured console does not track error output.
         Check.That(sut.Day).IsEqualTo(0);
@@ -98,7 +100,10 @@ public class ConsoleAutomatonShould
 
     [Test] public void DefaultToCurrentDayInDecember()
     {
-        var sut = new Automaton(fileSystem: new MockFileSystem(), nowFunction: () => new DateTime(2024,12,4));
+        var dateTime = new DateTime(2025, 12, 4);
+        var meta = new MockMeta(new DateTime(2025, 12, 4));
+        var sut = new Automaton(meta, meta.FileSystem, new ConsoleUserInterface());
+        // this does not trigger in December
         var solver = new AutoFakeSolverWithParam
         {
             Day = 0
@@ -107,8 +112,7 @@ public class ConsoleAutomatonShould
         console.InputLine("testData");
         console.InputLine("");
         console.InputLine("");
-        sut.RunDay(() => solver);
+        var result = sut.RunDay(new SolverFactory(() => solver));
         Check.That(sut.Day).IsEqualTo(4);
     }
-    
 }

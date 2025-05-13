@@ -53,7 +53,7 @@ public class SolverFactory
     public static SolverFactory ForType<T>() where T:ISolver => ForType(typeof(T));
 
     /// <summary>
-    /// Returns a <see cref="SolverFactory"/> instance that provide solver of the same type than the instance provided..
+    /// Returns a <see cref="SolverFactory"/> instance that provide a solver of the same type as the instance provided.
     /// </summary>
     /// <param name="instance">A <see cref="ISolver"/> implementation.</param>
     /// <returns>A <see cref="SolverFactory"/> instance.</returns>
