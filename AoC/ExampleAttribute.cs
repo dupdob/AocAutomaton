@@ -41,11 +41,6 @@ public class ExampleAttribute(
     public string TextParameter { get; } = textParameter;
     public int[] Parameters { get; } = parameters;
 
-    public ExampleAttribute(string input): this(0, input){}
-
-    public ExampleAttribute(int id, string input) : this(0, input, null, null, null)
-    {}
-    
     public ExampleAttribute(string input, object expected, params int[] parameters): this(input, expected, null, parameters){}
 
     public ExampleAttribute(int id, string input, object expected, params int[] parameters) : this(id, input, expected, string.Empty, parameters)

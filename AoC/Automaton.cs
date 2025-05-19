@@ -445,8 +445,7 @@ public class Automaton
             .Cast<ExampleAttribute>().ToList();
         foreach (var sample in samples)
         {
-            AddExample(sample.Input, false).Answer2(sample.Expected)
-                .WithParameters(sample.TextParameter, sample.Parameters);
+            AddExample(sample.Input, false).WithParameters(sample.TextParameter, sample.Parameters).Answer2(sample.Expected);
         }
         var sharedSamples = methodInfos.Where( m => m.Name == "GetAnswer2").
             SelectMany(m =>m.GetCustomAttributes(typeof(ReuseExampleAttribute), false))
@@ -459,8 +458,7 @@ public class Automaton
                 continue;
             }
 
-            AddExample(actual.Input, false).Answer2(sharedSample.Expected)
-                .WithParameters(actual.TextParameter, actual.Parameters); 
+            AddExample(actual.Input, false).Answer2(sharedSample.Expected);
         }
     }
 

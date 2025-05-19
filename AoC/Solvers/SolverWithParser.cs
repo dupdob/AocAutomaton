@@ -22,6 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
+
 namespace AoC
 {
     public abstract class SolverWithParser : ISolver
@@ -52,7 +54,7 @@ namespace AoC
         {
             IsTest = isTest;
             Extra = extra;
-            ExtraParameters = extraParameters;
+            ExtraParameters = extraParameters ?? ExtraParameters;
         }
 
         public abstract void SetupRun(Automaton automaton);
@@ -69,6 +71,27 @@ namespace AoC
         protected abstract void Parse(string data);
 
         protected int GetParameter(int index, int defaultValue) => ExtraParameters.Length > index ? ExtraParameters[index] : defaultValue;
+
+        protected int[] GetParameters(int[] defaultValues)
+        {
+            if (ExtraParameters.Length == 0)
+            {
+                return defaultValues;
+            }
+            if (ExtraParameters.Length == defaultValues.Length)
+            {
+                return ExtraParameters;
+            }
+            // we need to complete with default values
+            var result = new int[defaultValues.Length];
+            Array.Copy(ExtraParameters, result, ExtraParameters.Length);
+            for(var i = ExtraParameters.Length; i < defaultValues.Length; i++)
+            {
+                result[i] = defaultValues[i];
+            }
+
+            return result;
+        }
         
         public object GetAnswer1(string data)
         {
