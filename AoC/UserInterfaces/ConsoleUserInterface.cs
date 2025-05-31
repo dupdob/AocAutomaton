@@ -53,7 +53,7 @@ public class ConsoleUserInterface : IInteract
             return AnswerStatus.Wrong;
         }
         Console.WriteLine("Is this answer valid ? (y/n");
-        return MetaAutomaton.AskYesNo() ? AnswerStatus.Good : AnswerStatus.Wrong;
+        return Automaton.AskYesNo() ? AnswerStatus.Good : AnswerStatus.Wrong;
     }
 
     public string GetPersonalInput()

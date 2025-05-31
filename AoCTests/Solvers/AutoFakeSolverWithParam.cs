@@ -38,7 +38,7 @@ public class AutoFakeSolverWithParam : SolverWithParser
     
     public Action SetUpDay { get; set; }
 
-    public override void SetupRun(Automaton httpAutomatonBase)
+    public override void SetupRun(DayAutomaton httpAutomatonBase)
     {
         httpAutomatonBase.Day = Day;
         SetUpDay?.Invoke();

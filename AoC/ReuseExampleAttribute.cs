@@ -26,27 +26,15 @@ using System;
 
 namespace AoC;
 
-[AttributeUsage(AttributeTargets.Method)]
-public class ReuseExampleAttribute : Attribute
+/// <summary>
+/// Declare an example reusing a previously defined example.
+/// </summary>
+/// <param name="id">id of the example to reuse. Must have been declared via a <see cref="ExampleAttribute"/> on <see cref="ISolver.GetAnswer1"/> method.</param>
+/// <param name="expected">expected answer for this value</param>
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class ReuseExampleAttribute(int id, object expected = null) : Attribute
 {
-    public int Id { get; }
-    
-    public object Expected { get; }
-    
-    public ReuseExampleAttribute(int id)
-    {
-        Id = id;
-    }
+    public int Id { get; } = id;
 
-    public ReuseExampleAttribute(int id, long expected)
-    {
-        Id = id;
-        Expected = expected;
-    }
-   
-    public ReuseExampleAttribute(int id, string expected)
-    {
-        Id = id;
-        Expected = expected;
-    }
+    public object Expected { get; } = expected;
 }

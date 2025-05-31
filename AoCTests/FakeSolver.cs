@@ -32,9 +32,9 @@ namespace AoC.AoCTests
         private readonly object _answer1;
         private readonly object _answer2;
         private readonly int _day;
-        private readonly Action<Automaton> _testDataBuilder;
+        private readonly Action<DayAutomaton> _testDataBuilder;
 
-        public FakeSolver(int day, object answer1, object answer2, Action<Automaton> testBuilder = null)
+        public FakeSolver(int day, object answer1, object answer2, Action<DayAutomaton> testBuilder = null)
         {
             _day = day;
             _answer1 = answer1;
@@ -53,7 +53,7 @@ namespace AoC.AoCTests
         public int[] _extraParameters;
         public string _extra;
 
-        public void SetupRun(Automaton automaton)
+        public void SetupRun(DayAutomaton automaton)
         {
             automaton.Day = _day;
             _testDataBuilder?.Invoke(automaton);

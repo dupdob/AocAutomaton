@@ -24,14 +24,33 @@
 
 using System;
 
-namespace AoC;
+namespace AoC.AoCTests;
 
-public interface IMetaAutomaton
+internal class MockInterface(string data) : IInteract
 {
-    string RootPath { get; }
-    int Year { get; }
-    string DataPathNameFormat { get; }
-    DateTime Now();
-    void Trace(string message);
-    void ReportError(string message);
+    public AnswerStatus Status1 { get; set; } = AnswerStatus.Good;
+    public AnswerStatus Status2 { get; set; } = AnswerStatus.Good;
+
+    public void InitializeDay(int year, int day, string rootpath, string dataPath)
+    { }
+
+    public void CleanUpDay()
+    { }
+
+    public AnswerStatus SubmitAnswer(int id, string answer)
+    {
+        return id == 1 ? Status1 : Status2;
+    }
+
+    public string GetPersonalInput() => data;
+
+    public void Trace(string message)
+    {
+        Console.WriteLine(message);
+    }
+
+    public void ReportError(string message)
+    {
+        Console.Error.WriteLine(message);
+    }
 }

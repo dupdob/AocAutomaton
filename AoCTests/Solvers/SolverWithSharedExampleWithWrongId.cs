@@ -1,6 +1,6 @@
 // MIT License
 // 
-//  AdventOfCode
+//  AocAutomaton
 // 
 //  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
@@ -22,9 +22,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
+namespace AoC.AoCTests;
 
-namespace AoC;
+[Day(13)]
+internal class SolverWithSharedExampleWithWrongId: ISolver
+{
+    public void SetupRun(DayAutomaton automaton)
+    {
+    }
 
-[Obsolete("Please use Automaton.WebsiteAutomaton instead.")]
-public class HttpAutomaton(int year = 0) : Automaton(year, new HttpInterface());
+    public void InitRun(bool isTest, string extraText, params int[] extraParameters)
+    {
+    }
+    
+    [Example("Shared example", 1)]
+    public object GetAnswer1(string data)
+    {
+        return null;
+    }
+
+    [ReuseExample(1, 1)]
+    public object GetAnswer2(string data)
+    {
+        return null;
+    }
+}

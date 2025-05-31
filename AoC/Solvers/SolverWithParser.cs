@@ -57,7 +57,7 @@ namespace AoC
             ExtraParameters = extraParameters ?? ExtraParameters;
         }
 
-        public abstract void SetupRun(Automaton automaton);
+        public virtual void SetupRun(DayAutomaton dayAutomaton){}
 
         /// <summary>
         ///     Parse the exercise data.

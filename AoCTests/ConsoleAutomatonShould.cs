@@ -36,7 +36,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void AskForUserInput()
     {
-        var sut = new MetaAutomaton(0, new ConsoleUserInterface(), new MockFileSystem());
+        var sut = new Automaton(0, new ConsoleUserInterface(), new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
         console.InputLine("testData\n");
@@ -50,7 +50,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void AskForConfirmationPerQuestion()
     {
-        var sut = new MetaAutomaton(0, new ConsoleUserInterface(), new MockFileSystem());
+        var sut = new Automaton(0, new ConsoleUserInterface(), new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
         console.InputLine("testData");
@@ -65,7 +65,7 @@ public class ConsoleAutomatonShould
     [Test]
     public void ReportFailureIfNoValidation()
     {
-        var sut = new MetaAutomaton(0, new ConsoleUserInterface(), new MockFileSystem());
+        var sut = new Automaton(0, new ConsoleUserInterface(), new MockFileSystem());
         var solver = new AutoFakeSolverWithParam();
         using var console = new CaptureConsole();
         console.InputLine("testData");
@@ -82,7 +82,7 @@ public class ConsoleAutomatonShould
     {
         // this does not trigger in December
         var meta = new MockMeta(new DateTime(2025, 3, 4));
-        var sut = new Automaton(meta, meta.FileSystem, new ConsoleUserInterface());
+        var sut = new DayAutomaton(meta, meta.FileSystem, new ConsoleUserInterface());
         
         var solver = new AutoFakeSolverWithParam
         {
@@ -102,7 +102,7 @@ public class ConsoleAutomatonShould
     {
         var dateTime = new DateTime(2025, 12, 4);
         var meta = new MockMeta(new DateTime(2025, 12, 4));
-        var sut = new Automaton(meta, meta.FileSystem, new ConsoleUserInterface());
+        var sut = new DayAutomaton(meta, meta.FileSystem, new ConsoleUserInterface());
         // this does not trigger in December
         var solver = new AutoFakeSolverWithParam
         {

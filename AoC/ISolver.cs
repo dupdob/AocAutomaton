@@ -33,8 +33,8 @@ namespace AoC
         /// - examples and associated expected results
         /// - any extra parameters (sometimes used for more advanced problems)
         /// </summary>
-        /// <param name="automaton"></param>
-        void SetupRun(Automaton automaton);
+        /// <param name="dayAutomaton"></param>
+        void SetupRun(DayAutomaton dayAutomaton);
 
         /// <summary>
         /// This method is called by orchestration to pass any extra parameters.

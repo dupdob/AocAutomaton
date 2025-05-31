@@ -35,7 +35,7 @@ namespace AoC.AoCTests
             Count += 1;
         }
 
-        public override void SetupRun(Automaton httpAutomatonBase)
+        public override void SetupRun(DayAutomaton httpAutomatonBase)
         {
             httpAutomatonBase.Day = 10;
         }

@@ -1,6 +1,6 @@
 // MIT License
 // 
-//  AdventOfCode
+//  AocAutomaton
 // 
 //  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
@@ -26,5 +26,11 @@ using System;
 
 namespace AoC;
 
-[Obsolete("Please use Automaton.WebsiteAutomaton instead.")]
-public class HttpAutomaton(int year = 0) : Automaton(year, new HttpInterface());
+
+/// <summary>
+/// Declare the answer is a visual result.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class VisualResultAttribute : Attribute
+{
+}

@@ -27,7 +27,7 @@ namespace AoC.AoCTests;
 [Day(13)]
 public class SolverWithAttribute : ISolver
 {
-    public void SetupRun(Automaton automaton)
+    public void SetupRun(DayAutomaton automaton)
     {
     }
 
@@ -55,6 +55,32 @@ public class SolverWithAttribute : ISolver
 
     [Example("test", "response")]
     [Example("OtherTest", 3)]
+    public object GetAnswer2(string data)
+    {
+        return null;
+    }
+}
+
+[Day(13)]
+public class SolverWithVisualAttribute: ISolver
+{
+    public const string VisualResult = "this is a visual result";
+
+    public void SetupRun(DayAutomaton dayAutomaton)
+    {
+        
+    }
+
+    public void InitRun(bool isTest, string extraText, params int[] extraParameters)
+    {
+    }
+
+    [VisualResult]
+    public object GetAnswer1(string data)
+    {
+        return VisualResult;
+    }
+
     public object GetAnswer2(string data)
     {
         return null;

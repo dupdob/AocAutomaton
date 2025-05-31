@@ -29,7 +29,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace AoC.AoCTests;
 
-internal class MockMeta: IMetaAutomaton
+internal class MockMeta: IAutomaton
 {
     public MockMeta(DateTime? referenceDate = null)
     {

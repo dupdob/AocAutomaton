@@ -33,35 +33,6 @@ using NUnit.Framework;
 
 namespace AoC.AoCTests;
 
-internal class MockInterface(string data) : IInteract
-{
-    public AnswerStatus Status1 { get; set; } = AnswerStatus.Good;
-    public AnswerStatus Status2 { get; set; } = AnswerStatus.Good;
-
-    public void InitializeDay(int year, int day, string rootpath, string dataPath)
-    { }
-
-    public void CleanUpDay()
-    { }
-
-    public AnswerStatus SubmitAnswer(int id, string answer)
-    {
-        return id == 1 ? Status1 : Status2;
-    }
-
-    public string GetPersonalInput() => data;
-
-    public void Trace(string message)
-    {
-        Console.WriteLine(message);
-    }
-
-    public void ReportError(string message)
-    {
-        Console.Error.WriteLine(message);
-    }
-}
-    
 public class TesterShould
 {
 
@@ -79,7 +50,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient);
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient);
         var algo = new FakeSolver(10, 1, 2, x => x.RegisterTestDataAndResult(testInputData, 2, 1));
         using var console = new CaptureConsole();
         engine.RunDay(() => algo);
@@ -100,7 +71,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient);
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient);
         var algo = new FakeSolver(10, null, 2, x => x.RegisterTestDataAndResult(testInputData, 2, 1));
         using var console = new CaptureConsole();
         engine.RunDay(() => algo);
@@ -124,7 +95,7 @@ public class TesterShould
             Status2 = AnswerStatus.Wrong
         };
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient);
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient);
         var algo = new FakeSolver(10, 1, 2,
             x => x.RegisterTestDataAndResult(testInputData, 1, 1).RegisterTestResult(2, 2));
         using var console = new CaptureConsole();
@@ -147,7 +118,7 @@ public class TesterShould
         var fakeClient = new MockInterface(testInputData);
         fakeClient.Status2 = AnswerStatus.Wrong;
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var solver = new FakeSolver(10, 1, 2,
             x => x.RegisterTestResult(1,2));
         using var console = new CaptureConsole();
@@ -160,7 +131,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2,
             x =>
             {
@@ -187,7 +158,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
             x.RegisterTestData(testInputData);
@@ -213,7 +184,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, -1, 2, _ => {});
         using var console = new CaptureConsole();
         engine.RunDay(() => algo);
@@ -228,7 +199,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 0, 2, _ => {});
         using var console = new CaptureConsole();
         engine.RunDay(() => algo);
@@ -243,7 +214,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
         var list = new List<AutoFakeSolverWithParam>();
         engine.AddExample("Test").Answer1(1);
@@ -268,7 +239,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
         var list = new List<AutoFakeSolverWithParam>();
         engine.AddExample("Test").Answer1(1);
@@ -293,7 +264,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
         var list = new List<AutoFakeSolverWithParam>();
         engine.AddExample("Test").WithParameters("Test").Answer1(1);
@@ -320,7 +291,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
             x.RegisterTestDataAndResult("random data", 1, 2);
@@ -346,7 +317,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
             x.RegisterTestDataAndResult("random data", 2, 2);
@@ -373,7 +344,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
             x.RegisterTestDataAndResult("random data", 2, 2);
@@ -398,7 +369,7 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
             x.RegisterTestDataAndResult(testInputData, 1, 1);
@@ -422,7 +393,7 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
         fakeClient.Status1 = AnswerStatus.Good;
         fakeClient.Status2 = AnswerStatus.Wrong;
         var meta = new MockMeta();
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new AutoFakeSolver();
         using var console = new CaptureConsole();
         engine.RunDay(() => algo);
@@ -438,7 +409,7 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
         const string testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta(new DateTime(2015, 12, 10));
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
             x.RegisterTestDataAndResult(testInputData, 1, 1);
@@ -479,7 +450,7 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
         meta.FileSystem.File.WriteAllText("AoC-2015-10-state.json", test.ToJson());
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
-        var engine = new Automaton(meta, meta.FileSystem, fakeClient); 
+        var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
 
         var algo = new FakeSolver(10, 1, 2, x =>
         {

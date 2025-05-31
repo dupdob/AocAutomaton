@@ -28,11 +28,11 @@ namespace AoC;
 
 public class TestData
 {
-    private readonly Automaton _automaton;
+    private readonly DayAutomaton _dayAutomaton;
 
-    public TestData(string data, Automaton automaton)
+    public TestData(string data, DayAutomaton dayAutomaton)
     {
-        _automaton = automaton;
+        _dayAutomaton = dayAutomaton;
         Data = data;
     }
     
@@ -61,7 +61,7 @@ public class TestData
                 throw new InvalidOperationException("Must specify an expected result before declaring a new test case");
             }
 
-            return _automaton.AddExample(this.Data).WithParameters(text, parameters);
+            return _dayAutomaton.AddExample(this.Data).WithParameters(text, parameters);
         }
         ExtraParameters = parameters;
         Extra = text;
@@ -72,7 +72,7 @@ public class TestData
 
     public TestData Answer2(object answer) => RegisterAnswer(1, answer);
 
-    private TestData RegisterAnswer(int index, object answer)
+    public TestData RegisterAnswer(int index, object answer)
     {
         if (answer == null)
         {
