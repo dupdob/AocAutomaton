@@ -47,8 +47,8 @@ design matching the puzzle characteristics and/or your preferences; and of cours
 ---- 
 ## How to use it
 ### Prerequisite
-In order to interact with the AoC site, AoCAutomaton requires your AoC
-session id. It is stored as a hexadecimal value in a `session` cookie;
+In order to interact with the AoC site, AoCAutomaton requires **your AoC
+session id**. It is stored as a hexadecimal value in a `session` cookie;
 you must get this value (via your browser of choice).
 Then you have two options:
 1. Safest: store it in an environment variable named `AOC_SESSION`.
@@ -67,8 +67,16 @@ I reverted that design due to the risk of having session ids with public visibil
 Just add AoC2 package to the project you (plan to) use for AdventOfCode.
 In the `main` method of your program, create an instance of the `Automaton` class, such as.
 `var automaton = Automaton.WebsiteAutomaton(2025);`
-Write an `ISolver` implementation for the day puzzle you plan to solve and 
-use the `Automaton.RunDay` method that will:
+
+Create a class that inherits from `SolverWithParser` class, such as `MySolverDay1`. You will have to override the following methods:
+- `Parse(string data)` to parse the input data and store it in fields/properties as you see fit.
+- `GetAnswer1()` to compute the answer to the first part of the question.
+- `GetAnswer2()` to compute the answer to the second part of the question.
+
+Then call the `RunDay` method of the `Automaton` instance, passing your solver class as a type parameter.
+`automaton.RunDay<MySolverDay1>();`
+
+When you run your program, the automaton will take care of everything:
 1. Fetch your data input from the AoC website
 2. Run your solver against every test data you have provided, if any
 3. Run your solver for question 1 (if tests are successful)
@@ -77,7 +85,10 @@ use the `Automaton.RunDay` method that will:
 6. Repeat with question 2  (test and submission) if question 1 was successful.
 
 ## Sample code
-Here is a simple example of a program that uses the automaton to solve a puzzle.
+Here is a simple example of a program that uses the automaton to solve the Day 1 puzzle of the 2019 Advent of Code.
+Warning: Minor Spoilers ahead. This is not the actual solution, but a sample code
+with a slightly different formula from the actual exercise to illustrate how to use the automaton.
+
 ```[csharp]
 internal class Program
 {
@@ -94,112 +105,103 @@ internal class Program
 ...
 // Your need to write a class to write your solving logic
 // Specify the day number via the DayAttribute
-[Day(12)]
-internal class TheSolver : SolverWithParser
+[Day(1)]
+public class TheSolver: SolverWithParser
 {
-  public void Parse(string data)
-  {
-    // parse the input data
-    // and store it in fields/properties as you see fit
-    ...
-  }
-    
-  // compute the answer to the first part
-  // provide example data via the example attribute (as many as you want)
-  [Example("test data", 12)]
-  [Example(1, "other test data", 25)] // this example can be used for both questions
-  public override object GetAnswer1()
-  {
-    // compute the answer
-    ...
-    return answer;
-  }
-  
-  // compute the answer to the second part
-  // reuse the example data via the ReuseExample attribute
-  [ReuseExample(1, 123)]
-  public override object GetAnswer2()
-  {
-    // compute the answer
-    ...
-    return answer;
-  }
+    private int[] _masses;
+
+    protected override void Parse(string data) 
+        => _masses = data.SplitLines().Select(int.Parse).ToArray();
+
+    [Example("1969", 654)]
+    [Example(1, "100756", 33583)]
+    public override object GetAnswer1() 
+        => _masses.Aggregate<int, long>(0, (current, mass) => current + ComputeFuelForMass(mass));
+
+    [ReuseExample(1, 50346)]
+    public override object GetAnswer2() 
+        => _masses.Aggregate<int, long>(0, (current, mass) => current + ComputeFuelForMass(mass, true));
+
+    private static long ComputeFuelForMass(int mass, bool withFuel = false)
+    {
+        if (mass <= 14)
+        {
+            return 0;
+        }
+
+        var fuel = mass / 7 - 2;
+        return withFuel ? fuel + ComputeFuelForMass(fuel, true) : fuel;
+    }
 }
 ```
-## Available command for the automation engine
-### Behavioral
-The following methods or properties can be used to modify the automaton behavior.
-These methods or properties should be used during the setup phase, i.e. within your `ISolver.SetupRun` method implementation. Using them at some other time is not documented
-and may lead to surprising results
-#### Day
-`int Day {get;set}`
 
-Sets the day number. This is mandatory for interaction with the AoC website (if not set, an exception will stop the program).
-#### ResetBetweenQuestions
-`void ResetBetweenQuestions()`
+Let's break down the code:
+### Solver class definition
+```[csharp]
+[Day(1)]
+public class TheSolver: SolverWithParser...
+```
+We define a class that solves the puzzle for day 1. 
+We provide the day number via the `DayAttribute`. This is required so the automaton 
+where to get input data and post your answer.
 
-When called, the automation engine will use separate (solver) instances for question 1 and 2. This can be helpful 
-when the solver alter its initialization data.
-Note that it implies that data will be (automatically) parsed again.
+### Parsing the input data
+```[csharp]
+protected override void Parse(string data) 
+    => _masses = data.SplitLines().Select(int.Parse).ToArray();
+```
+This method is called once per solver instance, and it is where you parse the input data, provided as a string.
+For this puzzle, we split the input data into lines (`SplitLines` extension method), parse each line as an integer and
+store the result in a private field `_masses`.
 
-### Test Related
-The following methods can be used to provide test data that the automation will use to check your solver before trying to solve the exercise with your AoC provided input.
-AoCAutomaton support as many test examples as you may provide. It also supports providing example specific data for part one and two.
+### Solving the first part
+Let us disregard the method attributes for now and focus on the method itself:
+```[csharp]
+public override object GetAnswer1() 
+    => _masses.Aggregate<int, long>(0, (current, mass) => current + ComputeFuelForMass(mass));
+```
+This method computes the answer to the first part of the puzzle. Here, we use the `Aggregate` LINQ method to
+sum the fuel requirements for each mass in the `_masses` array. The `ComputeFuelForMass` method is a helper
+that calculates the fuel needed for a given mass.
 
-#### RegisterTestDataAndResult
-`Automaton RegisterTestDataAndResult(string data, object expected, int question = 1);`
+### Providing examples
+```[csharp]
+[Example("1969", 654)]
+[Example(1, "100756", 33583)]
+public override object GetAnswer1()... 
+```
+Now, coming back to the method attributes, 
+We can see that they are used to provide examples for the first part of the puzzle. 
+Those examples are straight from the AoC site.
+The automaton will use these  to test your solver logic before running it against the actual input data.
+The `Example` attribute has several signatures. The first one here is the simplest, 
+where the first parameter is the input data ("1969") and the second parameter is the expected result (654).
+The second example uses the day number (1) as the first parameter, which allows the automaton to reuse the same example
+for both parts of the puzzle as we will see later.
 
-where
+### Solving the second part
+```[csharp]
+[ReuseExample(1, 50346)]
+public override object GetAnswer2() 
+    => _masses.Aggregate<int, long>(0, (current, mass) => current + ComputeFuelForMass(mass, true));
+```
+This method computes the answer to the second part of the puzzle, in a similar way to the first part, with a slightly
+different logic in the `ComputeFuelForMass` method (it now takes into account the fuel needed for the fuel itself).
 
-`data`: input data to be used for testing purposes
-`expected`: the expected answer.
-`question` : identifies for which question part the data must be used. `1` for the first part (default), `2` for the second part.
+The `ReuseExample` attribute is used here to reuse the example from the first part of the puzzle. It takes the example
+id (1) and the expected result (50346) as parameters. In this case, this is equivalent to `[Example("100756", 50346)]`.
+The 'ResueExample' attribute is useful when an example value is large or complex, and is resued between the two parts of the puzzle.
 
-Provides input data for testing the solver as well as the expected answer, either for question 1 or 2.
-You can register as much test data as you wish (memory permitting, of course). 
-  
-When you register test data and expected answer for question 1, you can provide the expected answer for question two via a subsequent call to `RegisterTestResult` (or via `AskVisualConfirmation`).
-
- 
-#### RegisterTestData
-`Automaton RegisterTestData(string data, int question = 3);`
-
-where
-
-`data`: input data to be used for testing purposes
-`question` : identifies for which question part the data must be used. `1` for the first part, `2` for the second part or `3` for both parts (default case).
-
-Provides input data for testing the solver. By default this test data will be used for both part of the question, but you can specify which part this is for.
-You can register as much test data as you wish (memory permitting, of course). 
-
-Note that test data and test results must be registered in the same order, 
-otherwise there will be mix-ups.
-
-#### RegisterTestResult
-`public Automaton RegisterTestResult(object expected, int question = 1)`
-where
-
-`expected`: the expected answer.
-`question` : identifies for which question part the data must be used. `1` for the first part or `2` for the second part.
-
-Provides an expected result for testing the solver. Associated test data must have already been registered, otherwise an exception is raised, with one tolerance: 
-you can register one (1) result for part two without providing test data for it. AoCAutomaton will automatically reuse the test data provided for part one. 
-
-Note that test data and test results must be registered in the same order,
-otherwise there will be mix ups.
-
-#### RequestVisualConfirmation
-`public Automaton AskVisualConfirmation(int question = 1)`
-where
+### Helper method
+```[csharp]
+private static long ComputeFuelForMass(int mass, bool withFuel = false)...
+```
+This is a private helper method that is specific to this puzzle, it is here to remind you that you are free to structure
+your solver class as you see fit. You can add any number of private or public methods, fields, properties, etc.
 
 
-`question` : identifies for which question part the data must be used. `1` for the first part or `2` for the second part.
-
-Provides an expected result for testing the solver. Associated test data must have already been registered, otherwise an exception is raised, with one tolerance: 
-you can register one (1) result for part two without providing test data for it. AoCAutomaton will automatically reuse the test data provided for part one. 
-
-Note that test data and test results must be registered in the same order,
-otherwise there will be mix ups.
+**That's it!**, you are now ready to write your own solver classes and use the automaton to solve the puzzles.
+The rest of this dodcumentation will provide more details on the available features and how to customize your solvers.
 
 ## Provided solver designs
 You can choose any of the design of each of your solver.
