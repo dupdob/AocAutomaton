@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{9BDAB26E-7AA
 		Changelog.md = Changelog.md
 		LICENSE.md = LICENSE.md
 		README.md = README.md
+		Documentation.md = Documentation.md
+		FAQ.md = FAQ.md
 	EndProjectSection
 EndProject
 Global
