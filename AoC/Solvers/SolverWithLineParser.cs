@@ -22,15 +22,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
+
 namespace AoC
 {
-    public abstract class SolverWithLineParser : SolverWithDataAsLines
+    [Obsolete("Please use SolverWithParser and string.SplitLines extension method.")]
+    public abstract class SolverWithLineParser : SolverWithParser
     {
         protected abstract void ParseLine(string line, int index, int lineCount);
 
-        protected override void ParseLines(string[] lines)
+        protected override void Parse(string data)
         {
             var index = 0;
+            var lines = data.SplitLines();
             foreach (var line in lines) ParseLine(line, index++, lines.Length);            
         }
         

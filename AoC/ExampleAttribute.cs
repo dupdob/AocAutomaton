@@ -32,22 +32,19 @@ namespace AoC;
 /// <param name="id">arbitrary id for this example. This id should be reused via a <see cref="ReuseExampleAttribute"/>.</param>
 /// <param name="input">example input</param>
 /// <param name="expected">expected value (should be int, long or string)</param>
-/// <param name="textParameter">extra text parameter specific to this example</param>
 /// <param name="parameters">numerical parameters specific to this example (eg iteration count)</param>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public class ExampleAttribute(
     int id,
     string input,
     object expected,
-    string textParameter,
-    params int[] parameters)
+    params object[] parameters)
     : Attribute
 {
     public int Id { get; } = id;
     public string Input { get; } = input;
     public object Expected { get; } = expected;
-    public string TextParameter { get; } = textParameter;
-    public int[] Parameters { get; } = parameters;
+    public object[] Parameters { get; } = parameters;
 
     /// <summary>
     /// Declare an example for the given day with optional parameters.
@@ -55,26 +52,6 @@ public class ExampleAttribute(
     /// <param name="input">example input</param>
     /// <param name="expected">expected value (should be int, long or string)</param>
     /// <param name="parameters">numerical parameters specific to this example (eg iteration count)</param>
-    public ExampleAttribute(string input, object expected, params int[] parameters): this(input, expected, null, parameters){}
+    public ExampleAttribute(string input, object expected, params object[] parameters): this(-1, input, expected, parameters){}
 
-    /// <summary>
-    /// Declare an example for the given day with a specific id an optional parameters.
-    /// </summary>
-    /// <param name="id">arbitrary id for this example. This id should be reused via a <see cref="ReuseExampleAttribute"/>.</param>
-    /// <param name="input">example input</param>
-    /// <param name="expected">expected value (should be int, long or string)</param>
-    /// <param name="parameters">numerical parameters specific to this example (eg iteration count)</param>
-    public ExampleAttribute(int id, string input, object expected, params int[] parameters) : this(id, input, expected, string.Empty, parameters)
-    {}
-    
-    /// <summary>
-    /// Declare an example for the given day with a specific id an optional parameters.
-    /// </summary>
-    /// <param name="input">example input</param>
-    /// <param name="expected">expected value (should be int, long or string)</param>
-    /// <param name="textParameter">extra text parameter specific to this example</param>
-    /// <param name="parameters">numerical parameters specific to this example (eg iteration count)</param>
-    public ExampleAttribute(string input, object expected, string textParameter, params int[] parameters) : this(0, input, expected, textParameter, parameters)
-    {
-    }
 }

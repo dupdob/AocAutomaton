@@ -48,10 +48,10 @@ namespace AoC.AoCTests
 
         public string InputData { get; private set; }
 
-        public List<(int question, string data)> AllInputs = new();
-        public bool _isTest;
-        public int[] _extraParameters;
-        public string _extra;
+        private List<(int question, string data)> AllInputs = new();
+
+        public bool IsTest;
+        public object[] ExtraParameters;
 
         public void SetupRun(DayAutomaton automaton)
         {
@@ -59,11 +59,10 @@ namespace AoC.AoCTests
             _testDataBuilder?.Invoke(automaton);
         }
 
-        public void InitRun(bool isTest, string extra, params int[] extraParameters)
+        public void InitRun(bool isTest, params object[] extraParameters)
         {
-            _isTest = isTest;
-            _extra = extra;
-            _extraParameters = extraParameters;
+            IsTest = isTest;
+            ExtraParameters = extraParameters;
         }
 
         public object GetAnswer1(string data)

@@ -42,7 +42,7 @@ namespace AoC
         /// <param name="isTest">set to true if this is an example</param>
         /// <param name="extraText">supplemental text</param>
         /// <param name="extraParameters">any extra parameters provided along test data.</param>
-        void InitRun(bool isTest, string extraText, params int[] extraParameters);
+        void InitRun(bool isTest, params object[] extraParameters);
         
         /// <summary>
         /// This method is called to get the answer to the first part of the problem

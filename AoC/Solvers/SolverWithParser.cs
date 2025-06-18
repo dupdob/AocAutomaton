@@ -32,10 +32,8 @@ namespace AoC
 
         protected bool IsTest { get; private set; }
 
-        protected int[] ExtraParameters { get; private set; } = [];
-
-        protected string Extra { get; private set; }
-
+        protected object[] ExtraParameters { get; private set; } = [];
+        
         private string Data
         {
             set
@@ -50,10 +48,9 @@ namespace AoC
             }
         }
 
-        public void InitRun(bool isTest, string extra, params int[] extraParameters)
+        public void InitRun(bool isTest, params object[] extraParameters)
         {
             IsTest = isTest;
-            Extra = extra;
             ExtraParameters = extraParameters ?? ExtraParameters;
         }
 
@@ -70,9 +67,9 @@ namespace AoC
         /// </remarks>
         protected abstract void Parse(string data);
 
-        protected int GetParameter(int index, int defaultValue) => ExtraParameters.Length > index ? ExtraParameters[index] : defaultValue;
+        protected int GetParameter(int index, int defaultValue) => ExtraParameters.Length > index ? ((int) ExtraParameters[index]) : defaultValue;
 
-        protected int[] GetParameters(int[] defaultValues)
+        protected object[] GetParameters(object[] defaultValues)
         {
             if (ExtraParameters.Length == 0)
             {
@@ -83,7 +80,7 @@ namespace AoC
                 return ExtraParameters;
             }
             // we need to complete with default values
-            var result = new int[defaultValues.Length];
+            var result = new object[defaultValues.Length];
             Array.Copy(ExtraParameters, result, ExtraParameters.Length);
             for(var i = ExtraParameters.Length; i < defaultValues.Length; i++)
             {

@@ -31,7 +31,7 @@ public class SolverWithSharedExamples: ISolver
     {
     }
 
-    public void InitRun(bool isTest, string extraText, params int[] extraParameters)
+    public void InitRun(bool isTest, params object[] extraParameters)
     {
     }
     

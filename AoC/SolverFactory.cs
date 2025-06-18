@@ -88,11 +88,10 @@ public class SolverFactory
     /// </summary>
     /// <param name="data">input data to be used by the solver.</param>
     /// <param name="forTest">true if it is for test purposes</param>
-    /// <param name="extraText">extra text string</param>
     /// <param name="extraParameters">initial data for the solver (optional)</param>
     /// <returns>the appropriate <see cref="ISolver"/> implementation.</returns>
     /// <remarks>build a new instance or return a previously built instance associated with the same data (if <see cref="CacheActive"/> is true).</remarks>
-    public ISolver GetSolver(string data, bool forTest, string extraText, int[] extraParameters)
+    public ISolver GetSolver(string data, bool forTest, object[] extraParameters)
     {
         // is this for general setup?
         if (data == null)
@@ -101,10 +100,6 @@ public class SolverFactory
         }
         
         var builder = new StringBuilder();
-        if (!string.IsNullOrEmpty(extraText))
-        {
-            builder.Append(extraText);
-        }
 
         if (extraParameters != null)
         {
@@ -112,30 +107,30 @@ public class SolverFactory
             {
                 builder.Append(',');
             }
-
+        
             builder.AppendJoin(',', extraParameters);
         }
         
         var init =  builder.ToString();
 
-        if (!_solvers.TryGetValue(init, out var solvers))
+        if (!_solvers.TryGetValue(data, out var solvers))
         {
             solvers = new Dictionary<string, ISolver>();
             if (CacheActive)
             {
-                _solvers[init] = solvers;
+                _solvers[data] = solvers;
             }
         }
         
-        if (solvers!.TryGetValue(data, out var solver))
+        if (solvers!.TryGetValue(init, out var solver))
         {
             return solver;
         }
 
         // we need to build a new solver
         solver = _builder();
-        solvers[data] = solver;
-        solver.InitRun(forTest, extraText, extraParameters);
+        solvers[init] = solver;
+        solver.InitRun(forTest, extraParameters);
         return solver;
     }
 }

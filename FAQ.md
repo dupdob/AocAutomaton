@@ -2,20 +2,20 @@
 Welcome to the FAQ section of Aoc Automation. 
 Here, you'll find answers to common questions about the project, its features, and how to use it effectively.
 
-#### 1. What is Aoc Automation?
+### 1. What is Aoc Automation?
 Aoc Automation is a framework designed to automate the process of solving Advent of Code puzzles. 
 It provides a structured way to implement solvers, manage puzzle data, and handle input parsing.
 It is also able to interact with the Advent of Code website to retrieve puzzle data and submit answers, thus
 limiting the need for error-prone copy/pasting.
 
-#### 2. How do I create a new solver?
+### 2. How do I create a new solver?
 To create a new solver, you simply add a class inhering from `AocAutomation.SolverWithParser`.
 You need to override the Parse method to convert the input data into a format that your solver can work with.
 Then, implement the `GetAnswer1` and `GetAnswer2` methods to compute the answers for the two parts of the puzzle.
 One last thing: you must decorate it with the `DayAttribute` attribute to specify the day of the puzzle.
 
 
-#### 3. How do I run my solver?
+### 3. How do I run my solver?
 You can run your solver by using the `AocAutomation.Automaton` class. You must first create
 the desired automaton instance, then use the `Run` method to execute your solver.
 ```[csharp]
@@ -34,19 +34,19 @@ internal class Program
 }
 ```
 
-#### 4. How do I create other solvers?
+### 4. How do I create other solvers?
 To create other solvers, you create new classes similar to the first one.
 And you run them by adjusting the type parameter of the `RunDay` method.
 
 _Note: Future versions plan to provide auto discovery and selection but for now, 
 you must run them explicitly._
 
-#### 5 How do I test my solver against samples provided by AoC?
+### 5 How do I test my solver against samples provided by AoC?
 You must use the 'Example' attribute to specify the sample data for your solver.
 This attribute should be applied to the GetAnswer1 or GetAnswer2 methods,
 depending on which part of the puzzle you want to test.
 
-##### 5.1 Simple case
+#### 5.1 Simple case
 The basic usage is `[Example("sample data", result)]` where "sample data" is the input you want to test against
 and result is the expected output.
 
@@ -58,12 +58,12 @@ First, you must provide an 'id' to the `Example` attribute, like this
 Then, you can use the `[ReuseExample(id, resultForPart2)]` attribute on GetAnswer2 method
 to reuse the same sample data.
 
-#### 6. Why do GetAnswer1 and GetAnswer2 methods return `object`?
+### 6. Why do GetAnswer1 and GetAnswer2 methods return `object`?
 AoC puzzles expect answers can be numerical (most of the time) but also sometimes textual.
 To accommodate this, the methods return `object` so you can return any type of answer.
 AoC Automation expects you to return a string or integer type.
 
-##### 7. Why does AoC Automation refuse to submit my answer?
+### 7. Why does AoC Automation refuse to submit my answer?
 Aoc Automation will refuse to submit answer that are known to be wrong. There is no
 override to this behavior. If you are sure your answer is correct, you can still
 submit it manually on the Advent of Code website, then please open an issue.
@@ -76,9 +76,28 @@ AoC Automation will reject the following answers:
 - _any number that is greater than a previous answer that got a 'too high' response_
 - _any number that is lower than a previous answer that got a 'too low' response_
 
-Note that AoC Automation will report why it refused to submit your answer, 
-so you can adjust it accordingly.
+Note that AoC Automation will report why it refused to submit your answer.
+
+### 8. How do I handle puzzles with parameters?
 
 
-#### x. How do I handle exceptions in my solver?
+### 9. How do I handle puzzle where one must recognize text?
+Some AoC puzzles result in a low resolution image of a word
+(see [Aoc 2019 Day 8, second part](https://adventofcode.com/2019/day/8)).
+Aoc Automation does not provide any OCR capabilities, but there is an escape allowing a
+human to perform the translation.
+Mark the `GetAnswer1` or `GetAnswer2` method with the `VisualResultAttribute` attribute.
+Such as:
+```[csharp]
+[VisualResult]
+public override object GetAnswer1()
+{
+  ...
+}
+```
+Aoc Automation will then display the result and ask you to provide the corresponding answer.
+Note that behavior is the same for test and actual puzzle data.
+
+
+### x. How do I handle exceptions in my solver?
 Aoc Automation does not handle exceptions in your solver. They will be thrown as usual.

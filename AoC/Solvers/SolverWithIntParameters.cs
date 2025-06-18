@@ -29,8 +29,8 @@ namespace AoC;
 
 public abstract class SolverWithIntParameters : SolverWithParser
 {
-    private readonly int[] _defaultParamForPart1;
-    private readonly int[] _defaultParamForPart2;
+    private readonly object[] _defaultParamForPart1;
+    private readonly object[] _defaultParamForPart2;
 
     protected SolverWithIntParameters()
     {
@@ -44,7 +44,7 @@ public abstract class SolverWithIntParameters : SolverWithParser
                 continue;
             }
             var parameters = methodInfo.GetParameters();
-            var defValues = new int[parameters.Length];
+            var defValues = new object[parameters.Length];
             for (var i = 0; i < parameters.Length; i++)
             {
                 if (parameters[i].HasDefaultValue && parameters[i].ParameterType == typeof(int))
@@ -66,9 +66,9 @@ public abstract class SolverWithIntParameters : SolverWithParser
 
     public override object GetAnswer1() => GetAnswer1(GetParameters(_defaultParamForPart1));
 
-    protected abstract object GetAnswer1(int[] extraParameter);
+    protected abstract object GetAnswer1(object[] extraParameter);
 
     public override object GetAnswer2() => GetAnswer2(GetParameters(_defaultParamForPart2));
 
-    protected abstract object GetAnswer2(int[] extraParameter);
+    protected abstract object GetAnswer2(object[] extraParameter);
 }

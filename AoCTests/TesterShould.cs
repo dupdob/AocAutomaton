@@ -228,8 +228,7 @@ public class TesterShould
             
         foreach (var solverWithParam in list.Where(solverWithParam => solverWithParam.Data != null))
         {
-            Check.That(solverWithParam.GetExtra()).IsEqualTo("extra");
-            Check.That(solverWithParam.GetExtraParameters()).IsEqualTo(new []{1,2});
+            Check.That(solverWithParam.GetExtraParameters()).IsEqualTo(new object[]{"extra", 1,2});
         }
     }
         
@@ -253,7 +252,6 @@ public class TesterShould
             
         foreach (var solverWithParam in list.Where(solverWithParam => solverWithParam.Data != null))
         {
-            Check.That(solverWithParam.GetExtra()).IsNull();
             Check.That(solverWithParam.GetExtraParameters()).IsEqualTo(new []{1,2});
         }
     }
@@ -267,21 +265,25 @@ public class TesterShould
         var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
         var list = new List<AutoFakeSolverWithParam>();
-        engine.AddExample("Test").WithParameters("Test").Answer1(1);
         engine.RunDay(() =>
         {
-            var result = new AutoFakeSolverWithParam();
-            result.SetUpDay = () => engine.SetDefault(testInputData, 1, 2); 
+            var result = new AutoFakeSolverWithParam
+            {
+                SetUpDay = () =>
+                {
+                    engine.SetDefault(testInputData, 1, 2);
+                    engine.AddExample("Test").WithParameters(0, "Test").Answer1(1).WithParameters(1, "Test");
+                }
+            };
             list.Add(result);
             return result;
-        });
+        }); 
             
-        foreach (var solverWithParam in list.Where(solverWithParam => solverWithParam.Data != null))
+        foreach (var solverWithParam in list.Where(solverWithParam => solverWithParam.Data is "Test"))
         {
             // the text parameter should be equal to data
-            Check.That(solverWithParam.GetExtra()).IsEqualTo(solverWithParam.Data);
-            // but numerical parameters should be equal to degault
-            Check.That(solverWithParam.GetExtraParameters()).IsEqualTo(new []{1,2});
+            // but numerical parameters should be equal to default
+            Check.That(solverWithParam.GetExtraParameters()).IsEqualTo(new object[]{"Test", 1,2});
         }
     }
         
@@ -296,7 +298,6 @@ public class TesterShould
         {
             x.RegisterTestDataAndResult("random data", 1, 2);
             x.RegisterTestDataAndResult(testInputData, 1, 1);
-
         });
         using var console = new CaptureConsole();
         engine.RunDay(() => algo);

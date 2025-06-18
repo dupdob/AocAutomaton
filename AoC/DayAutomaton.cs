@@ -37,8 +37,7 @@ public class DayAutomaton
     private readonly List<TestData> _tests = [];
     private TestData _last;
     private DayState _dayState;
-    private string _defaultText;
-    private int[] _defaultParameters = [];
+    private object[] _defaultParameters = [];
     private int _currentDay;
 
     // user data (forced)
@@ -106,8 +105,7 @@ public class DayAutomaton
         _last = null;
         _dayState = null;
         _currentDay = value;
-        _defaultText = null;
-        _defaultParameters = null;
+        _defaultParameters = [];
         ResetBetweenQuestions = false;
     }
 
@@ -115,25 +113,14 @@ public class DayAutomaton
     /// Set default values for extra parameters. These will be used for your actual input and any test for which
     /// those parameters have not been overriden.
     /// </summary>
-    /// <param name="defaultText">default text parameters.</param>
     /// <param name="defaultParameters">default integer parameters</param>
     /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
     /// such as an iteration count or an initial text. </remarks>
-    public void SetDefault(string defaultText, params int[] defaultParameters)
+    public void SetDefault(params object[] defaultParameters)
     {
-        _defaultText = defaultText;
         _defaultParameters = defaultParameters;
     }
     
-    /// <summary>
-    /// Set default values for extra parameters. These will be used for your actual input and any test for which
-    /// those parameters have not been overriden.
-    /// </summary>
-    /// <param name="defaultParameters">default integer parameters</param>
-    /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
-    /// such as an iteration count or an initial text. </remarks>
-    public void SetDefault(params int[] defaultParameters) => SetDefault(null, defaultParameters);
-
     private object GetAnswer(ISolver algorithm, int id, string data)
     {
         var clock = new Stopwatch();
@@ -171,10 +158,10 @@ public class DayAutomaton
 
         _automaton.Trace($"* Test question {id} *");
         // Is there any actual test?
-        if (!_tests.Any(t => t.CanTest(id)))
+        if (!_tests.Any(t => t.CanTest(id-1)))
         {
             // we ensure at least one value is tested and request explicit confirmation
-            _tests.First().SetVisualConfirm(id);
+            _tests.First().SetVisualConfirm(id-1);
         }
         
         foreach (var testData in _tests)
@@ -188,7 +175,7 @@ public class DayAutomaton
             }
 
             // gets a cached algorithm if any
-            var testAlgo = factory.GetSolver(testData.Data, true, testData.Extra ?? _defaultText, testData.ExtraParameters ?? _defaultParameters);
+            var testAlgo = factory.GetSolver(testData.Data, true, testData.GetParameters(id-1, _defaultParameters));
             success = CheckAnswer(id, GetAnswer(testAlgo, id, testData.Data), expected, testData) && success;
         }
 
@@ -256,11 +243,11 @@ public class DayAutomaton
         
         if (question == 1)
         {
-            set.Answer1(expected);
+            set.RegisterAnswer(0, expected);
         }
         else
         {
-            set.Answer2(expected);
+            set.RegisterAnswer(1, expected);
         }
 
         _last = set;
@@ -310,7 +297,8 @@ public class DayAutomaton
             }
         }
         _tests.Add(new TestData(data, this));
-        return _tests[^1];
+        _last = _tests[^1];
+        return _last;
     }
         
     public ICollection<TestData> GetExamples() => _tests;
@@ -323,7 +311,7 @@ public class DayAutomaton
     [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
     public DayAutomaton AskVisualConfirm(int question)
     {
-        _last.SetVisualConfirm(question);
+        _last.SetVisualConfirm(question-1);
         return this;
     }
 
@@ -391,7 +379,7 @@ public class DayAutomaton
             
             // perform the actual run
             _automaton.Trace("* Computing answer 1 from your input. *");
-            var answer = GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 1, data);
+            var answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters), 1, data);
             _automaton.Trace($"* Attempting {answer ?? "null"} *");
 
             if (_dayState.First.Solved)
@@ -424,7 +412,7 @@ public class DayAutomaton
             }
 
             _automaton.Trace("* Computing answer 2 from your input. *");
-            answer = GetAnswer(factory.GetSolver(data, false, _defaultText, _defaultParameters), 2, data);
+            answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters), 2, data);
             return CheckResponse(2, answer);
         }
         finally
@@ -435,7 +423,7 @@ public class DayAutomaton
 
     private bool InitializeSolver(SolverFactory factory)
     {
-        var solver = factory.GetSolver(null, false, null, null);
+        var solver = factory.GetSolver(null, true, null);
         // use attributes
         ParseAttributes(solver);
         solver.SetupRun(this);
@@ -476,7 +464,7 @@ public class DayAutomaton
                 continue;
             }
 
-            AddExample(actual.Input, false).RegisterAnswer(1, sharedSample.Expected);
+            AddExample(actual.Input, false).RegisterAnswer(1, sharedSample.Expected).WithParameters(1, actual.Parameters);
         }
     }
 
@@ -495,7 +483,7 @@ public class DayAutomaton
                 sharedExamples[sample.Id] = sample;
             }
 
-            AddExample(sample.Input, false).RegisterAnswer(partId, sample.Expected).WithParameters(sample.TextParameter, sample.Parameters);
+            AddExample(sample.Input, false).RegisterAnswer(partId, sample.Expected).WithParameters(partId, sample.Parameters);
         }
 
         if (methodInfos.Any(m => m.GetCustomAttribute(typeof(VisualResultAttribute)) != null))

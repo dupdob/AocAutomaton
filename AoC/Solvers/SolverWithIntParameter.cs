@@ -26,12 +26,12 @@ using System.Reflection;
 
 namespace AoC;
 
-public abstract class SolverWithIntParameter : SolverWithParser
+public abstract class SolverWithParam<T> : SolverWithParser
 {
-    private readonly int _defaultParamForPart1;
-    private readonly int _defaultParamForPart2;
+    private readonly T _defaultParamForPart1;
+    private readonly T _defaultParamForPart2;
 
-    protected SolverWithIntParameter()
+    protected SolverWithParam()
     {
         // getdefault values for parameters
         var info = GetType().GetMethod(nameof(GetAnswer1), BindingFlags.Instance|BindingFlags.NonPublic, [typeof(int)]);
@@ -41,27 +41,41 @@ public abstract class SolverWithIntParameter : SolverWithParser
         _defaultParamForPart2 = GetDefaultValueForParam(info);
     }
 
-    private static int GetDefaultValueForParam(MethodInfo info)
+    private static T GetDefaultValueForParam(MethodInfo info)
     {
         if (info== null || info.GetParameters().Length == 0)
         {
-            return 0;
+            return default;
         }
         
         var parameterInfo = info.GetParameters()[0];
-        if (!parameterInfo.HasDefaultValue || parameterInfo.ParameterType != typeof(int))
+        if (!parameterInfo.HasDefaultValue || parameterInfo.ParameterType != typeof(T))
         {
-            return 0;
+            return default;
         }
 
-        return (int) parameterInfo.DefaultValue!;
+        return (T) parameterInfo.DefaultValue!;
     }
 
-    public override object GetAnswer1() => GetAnswer1(GetParameter(0, _defaultParamForPart1));
+    private T GetParameter(T defaultValue)
+    {
+        if (ExtraParameters.Length > 0 && ExtraParameters[0] is T param)
+        {
+            return param;
+        }
+        return defaultValue;
+    }
+    
+    public override object GetAnswer1() => GetAnswer1(GetParameter(_defaultParamForPart1));
 
-    protected abstract object GetAnswer1(int extraParameter);
+    protected abstract object GetAnswer1(T extraParameter);
 
-    public override object GetAnswer2() => GetAnswer2(GetParameter(0, _defaultParamForPart2));
+    public override object GetAnswer2() => GetAnswer2(GetParameter(_defaultParamForPart2));
 
-    protected abstract object GetAnswer2(int extraParameter);
+    protected abstract object GetAnswer2(T extraParameter);
 }
+
+public abstract class SolverWithIntParameter : SolverWithParam<int>
+{
+}
+

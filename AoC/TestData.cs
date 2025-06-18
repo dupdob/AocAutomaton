@@ -40,31 +40,26 @@ public class TestData
     
     public object[] Answers { get; } = new object[2];
 
-    public int[] ExtraParameters { get; private set; } = null;
-    
-    public string Extra { get; private set; }
+    private readonly object[][] _extraParameters = new object[2][];
 
     public bool[] VisualConfirm { get; } = new bool[2];
     
-    public bool CanTest(int id) => Answers[id - 1] != null || VisualConfirm[id-1];
+    public bool CanTest(int id) => Answers[id] != null || VisualConfirm[id];
 
-    public bool CanTest() => CanTest(1) || CanTest(2);
+    private bool CanTest() => CanTest(0) || CanTest(1);
 
-    public TestData WithParameters(params int[] parameters) => WithParameters(string.Empty, parameters);
-
-    public TestData WithParameters(string text, params int[] parameters)
+    public TestData WithParameters(int id, params object[] parameters)
     {
-        if (ExtraParameters?.Length>0 || !string.IsNullOrEmpty(Extra))
+        if (_extraParameters[id]?.Length>0)
         {
             if (!CanTest())
             {
                 throw new InvalidOperationException("Must specify an expected result before declaring a new test case");
             }
 
-            return _dayAutomaton.AddExample(this.Data).WithParameters(text, parameters);
+            return _dayAutomaton.AddExample(this.Data).WithParameters(id, parameters);
         }
-        ExtraParameters = parameters;
-        Extra = text;
+        _extraParameters[id] = parameters;
         return this;
     }
 
@@ -83,10 +78,26 @@ public class TestData
         return this;
     }
 
-
     public TestData SetVisualConfirm(int question)
     {
-        VisualConfirm[question-1] = true;
+        VisualConfirm[question] = true;
         return this;
+    }
+    
+    public object[] GetParameters(int part, object[] defaultParameters)
+    {
+        if (_extraParameters[part] == null || _extraParameters[part].Length == 0)
+        {
+            return defaultParameters;
+        }
+
+        var parameters = new object[Math.Max(defaultParameters.Length, _extraParameters[part].Length)];
+        for(var i = 0; i < parameters.Length; i++)
+        {
+            parameters[i] = i >= _extraParameters[part].Length || (_extraParameters[part][i] == null && i< defaultParameters.Length)
+                ? defaultParameters[i]
+                : _extraParameters[part][i];
+        }
+        return parameters;
     }
 }

@@ -28,9 +28,8 @@ namespace AoC.AoCTests;
 
 public class AutoFakeSolverWithParam : SolverWithParser
 {
-    public string GetExtra() => Extra;
  
-    public int[] GetExtraParameters() => ExtraParameters;
+    public object[] GetExtraParameters() => ExtraParameters;
     
     public string Data { get; private set; }
 
