@@ -212,7 +212,11 @@ public class TesterShould
     public void SupportDefaultExtraParametersWithText()
     {
         var testInputData = "Silly input data";
-        var fakeClient = new MockInterface(testInputData);
+        var fakeClient = new MockInterface(testInputData)
+        {
+            // ensure we don't try part 2
+            Status1 = AnswerStatus.Wrong
+        };
         var meta = new MockMeta();
         var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
@@ -221,7 +225,7 @@ public class TesterShould
         engine.RunDay(() =>
         {
             var result = new AutoFakeSolverWithParam();
-            result.SetUpDay = () => engine.SetDefault("extra" , 1, 2);
+            result.SetUpDay = () => engine.SetDefault(1, "extra" , 1, 2);
             list.Add(result);
             return result;
         });
@@ -236,7 +240,11 @@ public class TesterShould
     public void SupportDefaultExtraParameters()
     {
         var testInputData = "Silly input data";
-        var fakeClient = new MockInterface(testInputData);
+        var fakeClient = new MockInterface(testInputData)
+        {
+            // ensure we don't try part 2
+            Status1 = AnswerStatus.Wrong
+        };
         var meta = new MockMeta();
         var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
@@ -245,7 +253,7 @@ public class TesterShould
         engine.RunDay(() =>
         {
             var result = new AutoFakeSolverWithParam();
-            result.SetUpDay = () => engine.SetDefault(1, 2);
+            result.SetUpDay = () => engine.SetDefault(1, 1, 2);
             list.Add(result);
             return result;
         });
@@ -261,6 +269,7 @@ public class TesterShould
     {
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
+        fakeClient.Status1 = AnswerStatus.Wrong;
         var meta = new MockMeta();
         var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         using var console = new CaptureConsole();
@@ -271,7 +280,7 @@ public class TesterShould
             {
                 SetUpDay = () =>
                 {
-                    engine.SetDefault(testInputData, 1, 2);
+                    engine.SetDefault(1, testInputData, 1, 2);
                     engine.AddExample("Test").WithParameters(0, "Test").Answer1(1).WithParameters(1, "Test");
                 }
             };

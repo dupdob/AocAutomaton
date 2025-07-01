@@ -26,32 +26,33 @@ using System.Reflection;
 
 namespace AoC;
 
-public abstract class SolverWithParam<T> : SolverWithParser
+public abstract class SolverWithParams<T, TU> : SolverWithParser
 {
     private readonly T _defaultParamForPart1;
     private readonly T _defaultParamForPart2;
 
-    protected SolverWithParam()
+    protected SolverWithParams()
     {
         // getdefault values for parameters
-        var info = GetType().GetMethod(nameof(GetAnswer1), BindingFlags.Instance|BindingFlags.NonPublic, [typeof(int)]);
-        _defaultParamForPart1 = GetDefaultValueForParam(info);
+        var info = GetType().GetMethod(nameof(GetAnswer1), BindingFlags.Instance|BindingFlags.NonPublic, [typeof(T), typeof(TU)]);
+        _defaultParamForPart1 = (T) GetDefaultValueForParam(info, 0) ?? default(T);
 
-        info = GetType().GetMethod(nameof(GetAnswer2), BindingFlags.Instance|BindingFlags.NonPublic, [typeof(int)]);
-        _defaultParamForPart2 = GetDefaultValueForParam(info);
+        info = GetType().GetMethod(nameof(GetAnswer2), BindingFlags.Instance|BindingFlags.NonPublic, [typeof(T), typeof(TU)]);
+        _defaultParamForPart2 = (T) GetDefaultValueForParam(info, 0) ?? default(T);
     }
+    
 
-    private static T GetDefaultValueForParam(MethodInfo info)
+    private static object GetDefaultValueForParam(MethodInfo info, int index)
     {
         if (info== null || info.GetParameters().Length == 0)
         {
-            return default;
+            return null;
         }
         
-        var parameterInfo = info.GetParameters()[0];
+        var parameterInfo = info.GetParameters()[index];
         if (!parameterInfo.HasDefaultValue || parameterInfo.ParameterType != typeof(T))
         {
-            return default;
+            return null;
         }
 
         return (T) parameterInfo.DefaultValue!;
@@ -75,7 +76,4 @@ public abstract class SolverWithParam<T> : SolverWithParser
     protected abstract object GetAnswer2(T extraParameter);
 }
 
-public abstract class SolverWithIntParameter : SolverWithParam<int>
-{
-}
 

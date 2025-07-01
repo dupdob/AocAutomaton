@@ -37,7 +37,7 @@ public class DayAutomaton
     private readonly List<TestData> _tests = [];
     private TestData _last;
     private DayState _dayState;
-    private object[] _defaultParameters = [];
+    private object[][] _defaultParameters = new object[2][];
     private int _currentDay;
 
     // user data (forced)
@@ -80,7 +80,7 @@ public class DayAutomaton
     /// </summary>
     public bool ResetBetweenQuestions { get; set; }
 
-    public bool[] ResultIsVisual { get; } = new bool[2];
+    private bool[] ResultIsVisual { get; } = new bool[2];
 
     /// <summary>
     /// Gets/sets the current day
@@ -105,7 +105,7 @@ public class DayAutomaton
         _last = null;
         _dayState = null;
         _currentDay = value;
-        _defaultParameters = [];
+        _defaultParameters = new object[2][];
         ResetBetweenQuestions = false;
     }
 
@@ -116,9 +116,9 @@ public class DayAutomaton
     /// <param name="defaultParameters">default integer parameters</param>
     /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
     /// such as an iteration count or an initial text. </remarks>
-    public void SetDefault(params object[] defaultParameters)
+    public void SetDefault(int part = 1, params object[] defaultParameters)
     {
-        _defaultParameters = defaultParameters;
+        _defaultParameters[part - 1] = defaultParameters;
     }
     
     private object GetAnswer(ISolver algorithm, int id, string data)
@@ -379,7 +379,7 @@ public class DayAutomaton
             
             // perform the actual run
             _automaton.Trace("* Computing answer 1 from your input. *");
-            var answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters), 1, data);
+            var answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters[0]), 1, data);
             _automaton.Trace($"* Attempting {answer ?? "null"} *");
 
             if (_dayState.First.Solved)
@@ -412,7 +412,7 @@ public class DayAutomaton
             }
 
             _automaton.Trace("* Computing answer 2 from your input. *");
-            answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters), 2, data);
+            answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters[1]), 2, data);
             return CheckResponse(2, answer);
         }
         finally

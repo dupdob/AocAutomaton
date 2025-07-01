@@ -26,18 +26,10 @@ using System;
 
 namespace AoC;
 
-public class TestData
+public class TestData(string data, DayAutomaton dayAutomaton)
 {
-    private readonly DayAutomaton _dayAutomaton;
+    public string Data { get; } = data;
 
-    public TestData(string data, DayAutomaton dayAutomaton)
-    {
-        _dayAutomaton = dayAutomaton;
-        Data = data;
-    }
-    
-    public string Data { get; }
-    
     public object[] Answers { get; } = new object[2];
 
     private readonly object[][] _extraParameters = new object[2][];
@@ -57,7 +49,7 @@ public class TestData
                 throw new InvalidOperationException("Must specify an expected result before declaring a new test case");
             }
 
-            return _dayAutomaton.AddExample(this.Data).WithParameters(id, parameters);
+            return dayAutomaton.AddExample(this.Data).WithParameters(id, parameters);
         }
         _extraParameters[id] = parameters;
         return this;
@@ -84,18 +76,24 @@ public class TestData
         return this;
     }
     
-    public object[] GetParameters(int part, object[] defaultParameters)
+    public object[] GetParameters(int part, object[][] defaultParameters)
     {
+        var defParamatersForPart = defaultParameters[part];
+
+        if (defParamatersForPart == null)
+        {
+            return _extraParameters[part];
+        }
         if (_extraParameters[part] == null || _extraParameters[part].Length == 0)
         {
-            return defaultParameters;
+            return defParamatersForPart ?? [];
         }
 
-        var parameters = new object[Math.Max(defaultParameters.Length, _extraParameters[part].Length)];
+        var parameters = new object[Math.Max(defParamatersForPart.Length, _extraParameters[part].Length)];
         for(var i = 0; i < parameters.Length; i++)
         {
-            parameters[i] = i >= _extraParameters[part].Length || (_extraParameters[part][i] == null && i< defaultParameters.Length)
-                ? defaultParameters[i]
+            parameters[i] = i >= _extraParameters[part].Length || (_extraParameters[part][i] == null && i< defParamatersForPart.Length)
+                ? defParamatersForPart[i]
                 : _extraParameters[part][i];
         }
         return parameters;

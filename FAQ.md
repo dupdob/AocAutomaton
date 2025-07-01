@@ -34,7 +34,7 @@ internal class Program
 }
 ```
 
-### 4. How do I create other solvers?
+### 4. How do I create other solvers? (_in the same project_)
 To create other solvers, you create new classes similar to the first one.
 And you run them by adjusting the type parameter of the `RunDay` method.
 
@@ -42,17 +42,18 @@ _Note: Future versions plan to provide auto discovery and selection but for now,
 you must run them explicitly._
 
 ### 5 How do I test my solver against samples provided by AoC?
+That is a great question, and that is one of the main features of Aoc Automation.
 You must use the 'Example' attribute to specify the sample data for your solver.
 This attribute should be applied to the GetAnswer1 or GetAnswer2 methods,
 depending on which part of the puzzle you want to test.
 
-#### 5.1 Simple case
+#### 5.1 Simplest case
 The basic usage is `[Example("sample data", result)]` where "sample data" is the input you want to test against
 and result is the expected output.
 
-#### 5.2 Reuse
-Recent AoC puzzles reuse the same sample data for both parts of the puzzle. If you
-do not want to repeat the same sample data for both parts, you can use the `ReuseExample` attribute.
+#### 5.2 Reusing sample data for part 2
+Recent AoC puzzles usually reuse the same sample data for both parts of the puzzle. If you
+do not wish to repeat the same  data for both parts, you can use the `ReuseExample` attribute.
 First, you must provide an 'id' to the `Example` attribute, like this 
 `[Example(1, "sample data", resultForPart1)]` on GetAnswer1 method.
 Then, you can use the `[ReuseExample(id, resultForPart2)]` attribute on GetAnswer2 method
@@ -68,18 +69,69 @@ Aoc Automation will refuse to submit answer that are known to be wrong. There is
 override to this behavior. If you are sure your answer is correct, you can still
 submit it manually on the Advent of Code website, then please open an issue.
 AoC Automation will reject the following answers:
-- `null`: null is considered as failed to compute an answer
-- `""`: an empty string is considered as failed to compute an answer
-- `0`: 0 is considered as a failed to compute an answer
+- `null`, `""`, `0`: null, empty string and zero are considered as a failure to compute an answer
 - _any negative number_: there is no known puzzle that expects a negative answer
-- _any already attempted answer_
+- _any already attempted answer_: AoC automation assumes repeating the same answer will yield the same result, so
+it will not submit it and reuse the result that was cached on first attempt.
 - _any number that is greater than a previous answer that got a 'too high' response_
 - _any number that is lower than a previous answer that got a 'too low' response_
 
 Note that AoC Automation will report why it refused to submit your answer.
 
 ### 8. How do I handle puzzles with parameters?
+Some AoC puzzles have one (or more) parameters on top of the puzzle input. See 
+[AoC 2015 Day 14](https://adventofcode.com/2015/day/14): the sample provides an answer for an elapsed time of 1000
+seconds, but your suppose to compute the answer for 2503 seconds.
+The easiest way to handle this is to have your solver class inherit from `AocAutomation.SolverWithParam`.
+This class provides overloaded `GetAnswer1` and `GetAnswer2` methods that accept an extra parameter.
+You must specify the default value for the paramter in the signature of the method, and you can 
+provide any customized value with the `Example` attribute(s). 
+For Day 2014-14, it would look like this:
+```[csharp]
+[Day(14)]
+public class ReinderOlympicsSolver : AocAutomation.SolverWithParam<int>
+{
 
+    // we provide an example for this part and add the actual paramter value
+    [Example(1, @" Comet can fly 14 km/s for 10 seconds, but then must rest for 127 seconds.
+    Dancer can fly 16 km/s for 11 seconds, but then must rest for 162 seconds.",
+    1120, 
+    // the parameter value is 1000 for this example
+    1000)]
+    public override object GetAnswer1(int elapsedTime = 2503)
+    {
+    ...
+    }
+    
+    // this example reuses the same input data and parameter value.
+    [ReuseExample(1, 689)]
+    public override object GetAnswer2(int elapsedTime = 2503)
+    {
+    ...
+    }
+    
+    public override void Parse(string data)
+    {
+    ..
+    }
+}
+```
+AoC Automaton will ensure the example data will use the provided parameter value
+when running the solver (1000 seconds in this case), and the default value (2503 seconds) when running the actual puzzle.
+
+In short, if your puzzle requires one parameter, you can use the `SolverWithParam<T>` class as this:
+1) Inherit from `SolverWithParam<T>` where T is the type of the parameter (could be anything, but usually `int` or `string`)
+2) Override the `GetAnswer1(T param = default)` and `GetAnswer2(T param = default)` methods, providing a 
+default value for the parameter.
+3) Use the `Example` attribute to provide sample data and expected results, including the parameter value
+(as the last argument).
+
+That's it! AoC Automation will handle the parameter for you, and you can run your solver as usual. 
+Note that there is no compile time type check for the parameter value defined in the `Example` attribute. A type mismatch
+will result in a runtime exception when the automaton tries to run your solver with the provided example data.
+
+If you need two parameters, you can use the `SolverWithTwoParams<T1, T2>` class with the same approach.
+No three parameters support is available at this time, you can use tuple instead.
 
 ### 9. How do I handle puzzle where one must recognize text?
 Some AoC puzzles result in a low resolution image of a word
