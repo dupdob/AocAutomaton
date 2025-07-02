@@ -89,7 +89,7 @@ Here is a simple example of a program that uses the automaton to solve the Day 1
 Warning: Minor Spoilers ahead. This is not the actual solution, but a sample code
 with a slightly different formula from the actual exercise to illustrate how to use the automaton.
 
-```[csharp]
+```csharp
 internal class Program
 {
     // this is the entry point of your program
@@ -137,7 +137,7 @@ public class TheSolver: SolverWithParser
 
 Let's break down the code:
 ### Solver class definition
-```[csharp]
+```csharp
 [Day(1)]
 public class TheSolver: SolverWithParser...
 ```
@@ -146,7 +146,7 @@ We provide the day number via the `DayAttribute`. This is required so the automa
 where to get input data and post your answer.
 
 ### Parsing the input data
-```[csharp]
+```csharp
 protected override void Parse(string data) 
     => _masses = data.SplitLines().Select(int.Parse).ToArray();
 ```
@@ -156,7 +156,7 @@ store the result in a private field `_masses`.
 
 ### Solving the first part
 Let us disregard the method attributes for now and focus on the method itself:
-```[csharp]
+```csharp
 public override object GetAnswer1() 
     => _masses.Aggregate<int, long>(0, (current, mass) => current + ComputeFuelForMass(mass));
 ```
@@ -165,7 +165,7 @@ sum the fuel requirements for each mass in the `_masses` array. The `ComputeFuel
 that calculates the fuel needed for a given mass.
 
 ### Providing examples
-```[csharp]
+```csharp
 [Example("1969", 654)]
 [Example(1, "100756", 33583)]
 public override object GetAnswer1()... 
@@ -180,7 +180,7 @@ The second example uses the day number (1) as the first parameter, which allows 
 for both parts of the puzzle as we will see later.
 
 ### Solving the second part
-```[csharp]
+```csharp
 [ReuseExample(1, 50346)]
 public override object GetAnswer2() 
     => _masses.Aggregate<int, long>(0, (current, mass) => current + ComputeFuelForMass(mass, true));
@@ -193,7 +193,7 @@ id (here 1) and the expected result (here 50346) as parameters. In this case, th
 The 'ResueExample' attribute is useful when an example value is large or complex, and is resued between the two parts of the puzzle.
 
 ### Helper method
-```[csharp]
+```csharp
 private static long ComputeFuelForMass(int mass, bool withFuel = false)...
 ```
 This is a private helper method that is specific to this puzzle, it is here to remind you that you are free to structure
@@ -201,6 +201,6 @@ your solver class as you see fit. You can add any number of private or public me
 
 **That's it!**, you are now ready to write your own solver classes and use the automaton to solve the puzzles.
 
-
+Want more ? Check the [FAQ](FAQ.md) for more details on how to use the automaton,
 
 [1]:	https://adventofcode.com/

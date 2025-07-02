@@ -18,14 +18,14 @@ One last thing: you must decorate it with the `DayAttribute` attribute to specif
 ### 3. How do I run my solver?
 You can run your solver by using the `AocAutomation.Automaton` class. You must first create
 the desired automaton instance, then use the `Run` method to execute your solver.
-```[csharp]
+```csharp
 internal class Program
 {
     // this is the entry point of your program
     private void Main()
     {
         // create an automaton that interacts with the AoC website
-        // you must provide the year of the puzzles you want to solve
+        // you must provide the year of the  puzzles you want to solve
         var automaton = Automaton.WebsiteAutomaton(2025);
         // run a specific day by providing the solver class
         automaton.RunDay<TheSolver>();
@@ -34,24 +34,45 @@ internal class Program
 }
 ```
 
-### 4. How do I create other solvers? (_in the same project_)
+### 4. How to parse the input data?
+To parse the input data, you override the `Parse` method in your solver class, it receives the input data as a string.
+Aoc Automation provides two string extension methods to help you parse the data:
+- `SplitLines()` which splits a string into an array of lines, removing any trailing newline characters. 
+You can then parse each line as needed.
+Example usage:
+```csharp
+string input = "line1\nline2\nline3";
+string[] lines = input.SplitLines();
+// lines will contain ["line1", "line2", "line3"]
+```
+
+- `SplitBlocks()` which splits a string into an array of blocks, where each block is separated by two newlines (i.e an
+  empty line). you can then parse each block as you see fit. Example usage:
+```csharp
+string input = "block1\nline1\nline2\n\nblock2\nline1\nline2";
+List<string[]> blocks = input.SplitBlocks();
+// blocks will contain {["block1", "line1", "line2"], ["block2", "line1", "line2"]}
+```
+
+
+### 5. How do I create other solvers? (_in the same project_)
 To create other solvers, you create new classes similar to the first one.
 And you run them by adjusting the type parameter of the `RunDay` method.
 
 _Note: Future versions plan to provide auto discovery and selection but for now, 
 you must run them explicitly._
 
-### 5 How do I test my solver against samples provided by AoC?
+### 6 How do I test my solver against samples provided by AoC?
 That is a great question, and that is one of the main features of Aoc Automation.
 You must use the 'Example' attribute to specify the sample data for your solver.
 This attribute should be applied to the GetAnswer1 or GetAnswer2 methods,
 depending on which part of the puzzle you want to test.
 
-#### 5.1 Simplest case
+#### 6.1 Simplest case
 The basic usage is `[Example("sample data", result)]` where "sample data" is the input you want to test against
 and result is the expected output.
 
-#### 5.2 Reusing sample data for part 2
+#### 6.2 Reusing sample data for part 2
 Recent AoC puzzles usually reuse the same sample data for both parts of the puzzle. If you
 do not wish to repeat the same  data for both parts, you can use the `ReuseExample` attribute.
 First, you must provide an 'id' to the `Example` attribute, like this 
@@ -59,12 +80,12 @@ First, you must provide an 'id' to the `Example` attribute, like this
 Then, you can use the `[ReuseExample(id, resultForPart2)]` attribute on GetAnswer2 method
 to reuse the same sample data.
 
-### 6. Why do GetAnswer1 and GetAnswer2 methods return `object`?
+### 7. Why do GetAnswer1 and GetAnswer2 methods return `object`?
 AoC puzzles expect answers can be numerical (most of the time) but also sometimes textual.
 To accommodate this, the methods return `object` so you can return any type of answer.
 AoC Automation expects you to return a string or integer type.
 
-### 7. Why does AoC Automation refuse to submit my answer?
+### 8. Why does AoC Automation refuse to submit my answer?
 Aoc Automation will refuse to submit answer that are known to be wrong. There is no
 override to this behavior. If you are sure your answer is correct, you can still
 submit it manually on the Advent of Code website, then please open an issue.
@@ -78,7 +99,7 @@ it will not submit it and reuse the result that was cached on first attempt.
 
 Note that AoC Automation will report why it refused to submit your answer.
 
-### 8. How do I handle puzzles with parameters?
+### 9. How do I handle puzzles with parameters?
 Some AoC puzzles have one (or more) parameters on top of the puzzle input. See 
 [AoC 2015 Day 14](https://adventofcode.com/2015/day/14): the sample provides an answer for an elapsed time of 1000
 seconds, but your suppose to compute the answer for 2503 seconds.
@@ -87,7 +108,7 @@ This class provides overloaded `GetAnswer1` and `GetAnswer2` methods that accept
 You must specify the default value for the paramter in the signature of the method, and you can 
 provide any customized value with the `Example` attribute(s). 
 For Day 2014-14, it would look like this:
-```[csharp]
+```csharp
 [Day(14)]
 public class ReinderOlympicsSolver : AocAutomation.SolverWithParam<int>
 {
@@ -133,14 +154,14 @@ will result in a runtime exception when the automaton tries to run your solver w
 If you need two parameters, you can use the `SolverWithTwoParams<T1, T2>` class with the same approach.
 No three parameters support is available at this time, you can use tuple instead.
 
-### 9. How do I handle puzzle where one must recognize text?
+### 10. How do I handle puzzle where one must recognize text?
 Some AoC puzzles result in a low resolution image of a word
 (see [Aoc 2019 Day 8, second part](https://adventofcode.com/2019/day/8)).
 Aoc Automation does not provide any OCR capabilities, but there is an escape allowing a
 human to perform the translation.
 Mark the `GetAnswer1` or `GetAnswer2` method with the `VisualResultAttribute` attribute.
 Such as:
-```[csharp]
+```csharp
 [VisualResult]
 public override object GetAnswer1()
 {

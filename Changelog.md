@@ -1,5 +1,24 @@
 # Changelog for AoC Automaton
 
+# V 1.0 alpha 01
+## Overview
+Add support simpler support for puzzles with extra parameters, such as the one for [Day 14-2015](https://adventofcode.com/2015/day/14).
+Add string extension methods to simplify the parsing of input data:
+- `SplitLines()` which splits a string into an array of lines, removing any trailing newline characters. Example usage:
+```[csharp]
+string input = "line1\nline2\nline3";
+string[] lines = input.SplitLines();
+// lines will contain ["line1", "line2", "line3"]
+```
+
+- `SplitBlocks()` which splits a string into an array of blocks, where each block is separated by two newlines (i.e an 
+empty line). Example usage:
+```[csharp]
+string input = "block1\nline1\nline2\n\nblock2\nline1\nline2";
+List<string[]> blocks = input.SplitBlocks();
+// blocks will contain {["block1", "line1", "line2"], ["block2", "line1", "line2"]}
+```
+
 
 # V 0.9
 ## Overview

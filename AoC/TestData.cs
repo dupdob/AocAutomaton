@@ -78,22 +78,22 @@ public class TestData(string data, DayAutomaton dayAutomaton)
     
     public object[] GetParameters(int part, object[][] defaultParameters)
     {
-        var defParamatersForPart = defaultParameters[part];
+        var defParametersForPart = defaultParameters[part];
 
-        if (defParamatersForPart == null)
+        if (defParametersForPart == null)
         {
             return _extraParameters[part];
         }
         if (_extraParameters[part] == null || _extraParameters[part].Length == 0)
         {
-            return defParamatersForPart ?? [];
+            return defParametersForPart ?? [];
         }
 
-        var parameters = new object[Math.Max(defParamatersForPart.Length, _extraParameters[part].Length)];
+        var parameters = new object[Math.Max(defParametersForPart.Length, _extraParameters[part].Length)];
         for(var i = 0; i < parameters.Length; i++)
         {
-            parameters[i] = i >= _extraParameters[part].Length || (_extraParameters[part][i] == null && i< defParamatersForPart.Length)
-                ? defParamatersForPart[i]
+            parameters[i] = i >= _extraParameters[part].Length || (_extraParameters[part][i] == null && i< defParametersForPart.Length)
+                ? defParametersForPart[i]
                 : _extraParameters[part][i];
         }
         return parameters;
