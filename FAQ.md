@@ -154,7 +154,30 @@ will result in a runtime exception when the automaton tries to run your solver w
 If you need two parameters, you can use the `SolverWithTwoParams<T1, T2>` class with the same approach.
 No three parameters support is available at this time, you can use tuple instead.
 
-### 10. How do I handle puzzle where one must recognize text?
+### 10. How do I handle puzzles without an example?
+Some AoC puzzles do not provide an example. Or to be more precise, the provided example covers only part of the problem.
+For example, [AoC 2015 Day 21](https://adventofcode.com/2015/day/21) provides an example of combat between the player and
+the monster, while the puzzle requires you to find the cheapest equipment to defeat the monster.
+This should drive you to implement a 'combat simulation' method that could be tested against the example.
+
+AoC Automation supports this via the `UnitTestAttribute` attribute that you can apply to any method in your solver class.
+The syntax is:
+```csharp
+[UnitTest(result, param1, param2, ...)]
+```
+Where `result` is the expected result of the test, and `param1`, `param2`, etc. are the parameters to pass to the method.
+
+Here is a signature matching the example above:
+```csharp
+[UnitTest(true, 8, 5, 5, 12, 7, 2)]
+private static bool FightMonster(int hitPoints, int damage, int armor, int monsterHitPoints, int monsterDamage, int monsterArmor)
+```
+You can declare as many test case as you need on any method in your solver class.The method should be `static`, as all
+unit tests will be run against the same instance of your solver class (in the current implementation).
+
+When you run your solver, AoC Automation will automatically run all unit tests and report any failure.
+
+### 11. How do I handle puzzle where one must recognize text?
 Some AoC puzzles result in a low resolution image of a word
 (see [Aoc 2019 Day 8, second part](https://adventofcode.com/2019/day/8)).
 Aoc Automation does not provide any OCR capabilities, but there is an escape allowing a

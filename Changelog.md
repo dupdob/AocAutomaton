@@ -2,10 +2,18 @@
 
 # V 1.0 alpha 01
 ## Overview
+### Documentation
+A FAQ as be made available to help you get started with AoC Automaton: [FAQ](FAQ.md).
+[Documentation](Documentation.md) file has been cleared as its content wad no longer relevant due to the new architecture.
+A new documentation will be provided in the future.
+
+### Extra parameters
 Add support simpler support for puzzles with extra parameters, such as the one for [Day 14-2015](https://adventofcode.com/2015/day/14).
+
+### Parsing input data
 Add string extension methods to simplify the parsing of input data:
 - `SplitLines()` which splits a string into an array of lines, removing any trailing newline characters. Example usage:
-```[csharp]
+```csharp
 string input = "line1\nline2\nline3";
 string[] lines = input.SplitLines();
 // lines will contain ["line1", "line2", "line3"]
@@ -13,11 +21,15 @@ string[] lines = input.SplitLines();
 
 - `SplitBlocks()` which splits a string into an array of blocks, where each block is separated by two newlines (i.e an 
 empty line). Example usage:
-```[csharp]
+```csharp
 string input = "block1\nline1\nline2\n\nblock2\nline1\nline2";
 List<string[]> blocks = input.SplitBlocks();
 // blocks will contain {["block1", "line1", "line2"], ["block2", "line1", "line2"]}
 ```
+
+### Unit tests
+Add unit test capability via the `UnitTest` attribute. This allows you to define unit tests for any solver method.
+See the FAQ for more details on how to use it.
 
 
 # V 0.9
