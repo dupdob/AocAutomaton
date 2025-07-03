@@ -97,7 +97,6 @@ and parse the data appropriately. _Note: this is now the base class for all Solv
   3. Visual confirm is not activated (for this data)
 
 
-
 # The one with a fix(V 0.2.2)
 - Question is flagged as solved in the state appropriately
 
