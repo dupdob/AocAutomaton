@@ -155,8 +155,8 @@ If you need two parameters, you can use the `SolverWithTwoParams<T1, T2>` class 
 No three parameters support is available at this time, you can use tuple instead.
 
 ### 10. How do I handle puzzles without an example?
-Some AoC puzzles do not provide an example. Or to be more precise, the provided example covers only part of the problem.
-For example, [AoC 2015 Day 21](https://adventofcode.com/2015/day/21) provides an example of combat between the player and
+Some AoC puzzles do not provide an example. Or to be more specific, the provided example covers only part of the problem.
+For example, [AoC 2015 Day 21](https://adventofcode.com/2015/day/21) provides an example of a combat between the player and
 the monster, while the puzzle requires you to find the cheapest equipment to defeat the monster.
 This should drive you to implement a 'combat simulation' method that could be tested against the example.
 
@@ -177,11 +177,15 @@ unit tests will be run against the same instance of your solver class (in the cu
 
 When you run your solver, AoC Automation will automatically run all unit tests and report any failure.
 
-### 11. How do I handle puzzle where one must recognize text?
+### 11. Can I use Aoc Automation WITHOUT the Advent of Code website integration?
+While Aoc Automation is designed to work with the Advent of Code website, you can use it without the website integration.
+Main interaction will happen through the console, and you can provide the input data manually or loading a file.
+
+### 12. How do I handle puzzle where one must recognize text?
 Some AoC puzzles result in a low resolution image of a word
 (see [Aoc 2019 Day 8, second part](https://adventofcode.com/2019/day/8)).
-Aoc Automation does not provide any OCR capabilities, but there is an escape allowing a
-human to perform the translation.
+Aoc Automation does not provide any OCR capabilities, but there is an option allowing a
+human (namely you) to perform the translation.
 Mark the `GetAnswer1` or `GetAnswer2` method with the `VisualResultAttribute` attribute.
 Such as:
 ```csharp
@@ -192,8 +196,10 @@ public override object GetAnswer1()
 }
 ```
 Aoc Automation will then display the result and ask you to provide the corresponding answer.
-Note that behavior is the same for test and actual puzzle data.
+Note that behavior is the same for test and actual puzzle data, that is if you provide an example
+or unit test, it will also ask you to provide the result's translation (and check it against
+the expected answer).
 
 
-### x. How do I handle exceptions in my solver?
+### 13. How do I handle exceptions in my solver?
 Aoc Automation does not handle exceptions in your solver. They will be thrown as usual.

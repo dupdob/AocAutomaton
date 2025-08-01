@@ -22,39 +22,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
+using System.Collections.Generic;
 
 namespace AoC.AoCTests;
 
-internal class MockInterface(string data) : IInteract
+[Day(12)]
+public class FakeSolverWithParam : SolverWithParam<int>
 {
-    public AnswerStatus Status1 { get; set; } = AnswerStatus.Good;
-    public AnswerStatus Status2 { get; set; } = AnswerStatus.Good;
+    internal readonly Queue<int> Parameter = [];
 
-    public void InitializeDay(int year, int day, string rootpath, string dataPath)
-    { }
-
-    public void CleanUpDay()
-    { }
-
-    public AnswerStatus SubmitAnswer(int id, string answer)
+    protected override void Parse(string data)
     {
-        return id == 1 ? Status1 : Status2;
     }
 
-    public string GetPersonalInput() => data;
-    public string GetInteractiveInput()
+    [Example("123", 1, 2)]
+    protected override object GetAnswer1(int extraParameter = 0)
     {
-        throw new NotImplementedException();
+        Parameter.Enqueue(extraParameter);
+        return 1;
     }
-
-    public void Trace(string message)
+    
+    protected override object GetAnswer2(int extraParameter = 0)
     {
-        Console.WriteLine(message);
-    }
-
-    public void ReportError(string message)
-    {
-        Console.Error.WriteLine(message);
+        Parameter.Enqueue(extraParameter);
+        return 1;
     }
 }

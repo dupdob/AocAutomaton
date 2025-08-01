@@ -22,39 +22,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
+using System.IO.Abstractions.TestingHelpers;
+using NFluent;
+using NUnit.Framework;
 
 namespace AoC.AoCTests;
 
-internal class MockInterface(string data) : IInteract
+public class AutomatonShould
 {
-    public AnswerStatus Status1 { get; set; } = AnswerStatus.Good;
-    public AnswerStatus Status2 { get; set; } = AnswerStatus.Good;
-
-    public void InitializeDay(int year, int day, string rootpath, string dataPath)
-    { }
-
-    public void CleanUpDay()
-    { }
-
-    public AnswerStatus SubmitAnswer(int id, string answer)
+    [Test]
+    public void ExtractExtraParametersFromAttribute()
     {
-        return id == 1 ? Status1 : Status2;
-    }
+        var userInterface = new MockInterface("testData");
+        var sut = new Automaton(2025, userInterface, new MockFileSystem());
+        userInterface.Status1 = AnswerStatus.Wrong;
+        var solver = new FakeSolverWithParam();
+        sut.RunDay(()=> solver);
 
-    public string GetPersonalInput() => data;
-    public string GetInteractiveInput()
-    {
-        throw new NotImplementedException();
-    }
+        Check.That(solver.Parameter.ToArray()).Is([2, 0]);
 
-    public void Trace(string message)
-    {
-        Console.WriteLine(message);
-    }
-
-    public void ReportError(string message)
-    {
-        Console.Error.WriteLine(message);
     }
 }

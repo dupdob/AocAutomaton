@@ -34,4 +34,5 @@ public interface IAutomaton
     DateTime Now();
     void Trace(string message);
     void ReportError(string message);
+    bool AskYesNo();
 }

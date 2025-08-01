@@ -451,6 +451,7 @@ namespace AoC.AoCTests
 
             fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
             var meta = new MockMeta();
+            meta.AskYesNoResult = false;
             var inputInterface = new HttpInterface(fakeClient, meta.FileSystem);
             var engine = new DayAutomaton(meta, meta.FileSystem, inputInterface);
 
@@ -458,8 +459,9 @@ namespace AoC.AoCTests
             engine.RunDay(() => algo);
             algo = new FakeSolver(10, 13, null);
             engine.RunDay(() => algo);
-            Check.That(algo.GetAnswer1Calls).IsEqualTo(1);
-            Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
+            Check.That(algo.GetAnswer1Calls).Is(1);
+            Check.That(algo.GetAnswer2Calls).Is(0);
+            Check.That(meta.AskYesNoCount).Is(1);
         }
         
         [Test]

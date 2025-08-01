@@ -32,7 +32,7 @@ namespace AoC;
 /// That is it will ask input data to be keyed in, report result on the console
 /// and ask for confirmation.
 /// </summary>
-public class ConsoleUserInterface : IInteract
+public class  ConsoleUserInterface : IInteract
 {
     public void InitializeDay(int year, int day, string rootPath, string dayPath)
     {
@@ -53,7 +53,7 @@ public class ConsoleUserInterface : IInteract
             return AnswerStatus.Wrong;
         }
         Console.WriteLine("Is this answer valid ? (y/n");
-        return Automaton.AskYesNo() ? AnswerStatus.Good : AnswerStatus.Wrong;
+        return Automaton.IsYes(GetInteractiveInput()) ? AnswerStatus.Good : AnswerStatus.Wrong;
     }
 
     public string GetPersonalInput()
@@ -62,7 +62,7 @@ public class ConsoleUserInterface : IInteract
         var lines = new List<string>();
         for(;;)
         {
-            var line = Console.ReadLine();
+            var line = GetConsoleInput();
             if (string.IsNullOrEmpty(line) && string.IsNullOrEmpty(lines[^1]))
             {
                 // two end of lines, we remove the last line and stop
@@ -74,6 +74,10 @@ public class ConsoleUserInterface : IInteract
 
         return string.Join(Environment.NewLine, lines);
     }
+
+    internal static string GetConsoleInput() => Console.ReadLine();
+
+    public string GetInteractiveInput() => GetConsoleInput();
 
     public void Trace(string message) => Console.WriteLine(message);
 

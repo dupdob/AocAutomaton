@@ -146,6 +146,8 @@ namespace AoC
             return result;
         }
 
+        public string GetInteractiveInput() => ConsoleUserInterface.GetConsoleInput();
+
         public void Trace(string message) => Console.WriteLine(message);
 
         public void ReportError(string message) => Console.Error.WriteLine(message);

@@ -113,6 +113,7 @@ public class DayAutomaton
     /// Set default values for extra parameters. These will be used for your actual input and any test for which
     /// those parameters have not been overriden.
     /// </summary>
+    /// <param name="part">Puzzle part (1 or 2)</param>
     /// <param name="defaultParameters">default integer parameters</param>
     /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
     /// such as an iteration count or an initial text. </remarks>
@@ -203,7 +204,7 @@ public class DayAutomaton
             _automaton.Trace(testData.Data);
             _automaton.Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
             _automaton.Trace(answer.ToString());
-            if (!Automaton.AskYesNo())
+            if (!_automaton.AskYesNo())
             {
                 return false;
             }
@@ -388,7 +389,7 @@ public class DayAutomaton
                 if (answer == null || _dayState.First.Answer != answer.ToString())
                 {
                     _automaton.Trace($"Solver no longer provides correct answer. Continue?");
-                    if (!Automaton.AskYesNo())
+                    if (!_automaton.AskYesNo())
                     {
                         // we ask for confirmation
                         return false;
@@ -560,7 +561,7 @@ public class DayAutomaton
 
         _automaton.Trace($"Day {Day} has already been solved (first part:{_dayState.First.Answer}, second part:{_dayState.Second.Answer}). Nothing to do.");
         _automaton.Trace("Do you want to run it anyway?");
-        return Automaton.AskYesNo();
+        return _automaton.AskYesNo();
     }
 
     private bool CheckSetup()

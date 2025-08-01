@@ -32,9 +32,6 @@ public class Automaton : IAutomaton
     private readonly IFileSystem _fileSystem;
     private readonly Func<DateTime> _now;
     private readonly IInteract _userInterface;
-    public string RootPath { get; private set; } = "./";
-    public int Year { get; }
-    public string DataPathNameFormat { get; private set;  } = "./";
 
     public Automaton(int year, IInteract userInterface = null, IFileSystem fileSystem = null, Func<DateTime> now = null)
     {
@@ -43,6 +40,10 @@ public class Automaton : IAutomaton
         _userInterface = userInterface ?? new ConsoleUserInterface();
         _fileSystem = fileSystem ?? new FileSystem();
     }
+    
+    public string RootPath { get; private set; } = "./";
+    public int Year { get; }
+    public string DataPathNameFormat { get; private set;  } = "./";
 
     public DateTime Now() => _now();
 
@@ -53,6 +54,13 @@ public class Automaton : IAutomaton
     /// <returns>An AoC automaton instance</returns>
     public static Automaton WebsiteAutomaton(int year =0) => new(year, new HttpInterface());
 
+    /// <summary>
+    /// Builds an automaton that will interact with the console.
+    /// </summary>
+    /// <param name="year">event</param>
+    /// <returns>An AoC automaton instance that can run solvers</returns>
+    public static Automaton ConsoleAutomaton(int year = 0) => new(year, new ConsoleUserInterface());
+    
     /// <summary>
     /// Sets the path used by the engine to cache data (input and response).
     /// You can provide a format pattern string, knowing that {0} will be replaced by
@@ -80,17 +88,22 @@ public class Automaton : IAutomaton
         DataPathNameFormat = dataPath;
     }
 
-
     public void Trace(string message) => _userInterface.Trace(message);
 
     public void ReportError(string message) => _userInterface.ReportError(message);
 
-    public static bool AskYesNo()
+    public bool AskYesNo() => IsYes(_userInterface.GetInteractiveInput());
+
+    internal static bool IsYes(string assessment)
     {
-        var assessment = Console.ReadLine()?.ToLower();
-        return !string.IsNullOrEmpty(assessment) && assessment[0] == 'y';
+        return !string.IsNullOrEmpty(assessment) && "Yy".Contains(assessment[0]);
     }
 
+    /// <summary>
+    /// Ask for an input from the user.
+    /// </summary>
+    /// <returns>the user's input</returns>
+    /// <remarks>Currently reads a line from the console</remarks>
     public static string AskInput() => Console.ReadLine();
     
     /// <summary>
@@ -99,20 +112,28 @@ public class Automaton : IAutomaton
     /// <typeparam name="T"><see cref="ISolver" /> type for the day.</typeparam>
     /// <exception cref="InvalidOperationException">when the method fails to create an instance of the algorithm.</exception>
     /// <returns>true if problem was solved (both parts)</returns>
-    public bool RunDay<T>() where T : ISolver
-    {
-        var automaton = new DayAutomaton( this, this._fileSystem, this._userInterface);
-        return automaton.RunDay(SolverFactory.ForType<T>());
-    }
+    public bool RunDay<T>() where T : ISolver => BuildDayAutomationAndRun(SolverFactory.ForType<T>());
 
     /// <summary>
     /// Runs a given day
     /// </summary>
     /// <param name="builder">delegate that must return s a solver</param>
     /// <returns>true if problem was solved (both parts)</returns>
-    public bool RunDay(Func<ISolver> builder)
+    public bool RunDay(Func<ISolver> builder) => BuildDayAutomationAndRun(new SolverFactory(builder));
+    
+    /// <summary>
+    /// Runs a solver against a input stored in a file  
+    /// </summary>
+    /// <param name="fileName">filename of the input data</param>
+    /// <typeparam name="T">solver type</typeparam>
+    /// <returns>true if the problem was solved</returns>
+    /// <remarks>this method raises an exception if the input file is not found.</remarks>
+    public bool RunDayOnFile<T>(string fileName) where T : ISolver
     {
-        var automaton = new DayAutomaton( this, this._fileSystem, this._userInterface);
-        return automaton.RunDay(new SolverFactory(builder));
+        var automaton =  new DayAutomaton(this, this._fileSystem, this._userInterface);
+        automaton.LoadUserData(fileName);
+        return automaton.RunDay(SolverFactory.ForType<T>());
     }
+    
+    private bool BuildDayAutomationAndRun(SolverFactory factory) => new DayAutomaton(this, this._fileSystem, this._userInterface).RunDay(factory);
 }

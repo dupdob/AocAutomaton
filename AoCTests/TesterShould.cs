@@ -35,19 +35,10 @@ namespace AoC.AoCTests;
 
 public class TesterShould
 {
-
-    private static MockFileSystem GetFileSystem()
-    {
-        var mockFileSystem = new MockFileSystem();
-        mockFileSystem.Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
-        mockFileSystem.Directory.CreateDirectory(mockFileSystem.Directory.GetCurrentDirectory());
-        return mockFileSystem;
-    }
-
     [Test]
     public void StopWhenFirstTestFails()
     {
-        var testInputData = "Silly input data";
+        const string testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
         var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient);
@@ -327,6 +318,7 @@ public class TesterShould
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);
         var meta = new MockMeta();
+        meta.AskYesNoResult = false;
         var engine = new DayAutomaton(meta, meta.FileSystem, fakeClient); 
         var algo = new FakeSolver(10, 1, 2, x =>
         {
@@ -457,6 +449,8 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
         };
             
         var meta = new MockMeta(new DateTime(2015, 12, 10));
+        meta.AskYesNoResult = false;
+
         meta.FileSystem.File.WriteAllText("AoC-2015-10-state.json", test.ToJson());
         var testInputData = "Silly input data";
         var fakeClient = new MockInterface(testInputData);

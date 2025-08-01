@@ -77,6 +77,13 @@ public interface IInteract
     /// </summary>
     /// <returns>The personal as a string.</returns>
     string GetPersonalInput();
+
+    /// <summary>
+    /// Called by automation when a manual input is required.
+    /// </summary>
+    /// <returns></returns>
+    string GetInteractiveInput();
+    
     /// <summary>
     /// Called by automation to trace events
     /// </summary>

@@ -31,6 +31,9 @@ namespace AoC.AoCTests;
 
 internal class MockMeta: IAutomaton
 {
+    public int AskYesNoCount;
+    public bool AskYesNoResult = true;
+
     public MockMeta(DateTime? referenceDate = null)
     {
         ReferenceDate = referenceDate;
@@ -60,5 +63,11 @@ internal class MockMeta: IAutomaton
     public void ReportError(string message)
     {
         Console.WriteLine(message);
+    }
+
+    public bool AskYesNo()
+    {
+        AskYesNoCount++;
+        return AskYesNoResult;
     }
 }
