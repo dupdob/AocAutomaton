@@ -465,6 +465,27 @@ namespace AoC.AoCTests
         }
         
         [Test]
+        public void ContinueWhenManuallyConfirmed()
+        {
+            var fakeClient = new AoCFakeClient();
+            using var console = new CaptureConsole();
+
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            var meta = new MockMeta();
+            meta.AskYesNoResult = true;
+            var inputInterface = new HttpInterface(fakeClient, meta.FileSystem);
+            var engine = new DayAutomaton(meta, meta.FileSystem, inputInterface);
+
+            var algo = new FakeSolver(10, 12, null);
+            engine.RunDay(() => algo);
+            algo = new FakeSolver(10, 13, null);
+            engine.RunDay(() => algo);
+            Check.That(algo.GetAnswer1Calls).Is(1);
+            Check.That(algo.GetAnswer2Calls).Is(1);
+            Check.That(meta.AskYesNoCount).Is(1);
+        }
+        
+        [Test]
         public void ResetAlgorithmBetweenQuestions()
         {
             var fakeClient = new AoCFakeClient();

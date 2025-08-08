@@ -24,6 +24,7 @@
 
 using System.IO.Abstractions.TestingHelpers;
 using NFluent;
+using NFluent.Mocks;
 using NUnit.Framework;
 
 namespace AoC.AoCTests;
@@ -40,6 +41,16 @@ public class AutomatonShould
         sut.RunDay(()=> solver);
 
         Check.That(solver.Parameter.ToArray()).Is([2, 0]);
+    }
 
+    [Test]
+    public void ExtractDayFromName()
+    {
+        using var console = new CaptureConsole();
+        var userInterface = new MockInterface("testData");
+        var sut = new Automaton(2025, userInterface, new MockFileSystem());
+        userInterface.Status1 = AnswerStatus.Wrong;
+        sut.RunDay<BasicSolver12>();
+        Check.That(console.Output).Contains("assuming day 12.");
     }
 }

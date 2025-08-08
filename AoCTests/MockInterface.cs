@@ -43,6 +43,7 @@ internal class MockInterface(string data) : IInteract
     }
 
     public string GetPersonalInput() => data;
+    
     public string GetInteractiveInput()
     {
         throw new NotImplementedException();

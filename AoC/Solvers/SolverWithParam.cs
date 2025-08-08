@@ -54,15 +54,6 @@ public abstract class SolverWithParam<T> : SolverWithParser
 
         return (T) parameterInfo.DefaultValue!;
     }
-
-    private T GetParameter(T defaultValue)
-    {
-        if (ExtraParameters.Length > 0 && ExtraParameters[0] is T param)
-        {
-            return param;
-        }
-        return defaultValue;
-    }
     
     public override object GetAnswer1() => GetAnswer1((T) ExtraParameters[0]);
 

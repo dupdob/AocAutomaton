@@ -36,29 +36,17 @@ public class SolverWithAttribute : ISolver
     }
  
     [Example("test", 2)]
-    public object GetAnswer1(string data)
-    {
-        return null;
-    }
+    public object GetAnswer1(string data) => null;
 
     [UnitTest("result", 1)]
-    public static string SomeMethod(int param)
-    {
-        return "result";
-    }
+    public static string SomeMethod(int param) => "result";
 
     [UnitTest("other", 2)]
-    public string SomeOtherMethod(int param)
-    {
-        return "result";
-    }
+    public string SomeOtherMethod(int param) => "result";
 
     [Example("test", "response")]
     [Example("OtherTest", 3)]
-    public object GetAnswer2(string data)
-    {
-        return null;
-    }
+    public object GetAnswer2(string data) => null;
 }
 
 [Day(13)]

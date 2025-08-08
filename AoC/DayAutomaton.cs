@@ -29,6 +29,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AoC;
 
@@ -444,7 +445,17 @@ public class DayAutomaton
         {
             Day = dayAttribute.Day;
         }
-
+        else
+        {
+            // try parsing the name
+            var scan = Regex.Match(solver.GetType().Name, @"[^\d](\d\d?)$");
+            if (scan.Success)
+            {
+                _automaton.Trace($"Warning: no DayAttribute found on {solver.GetType().Name}, assuming day {scan.Groups[1].Value}.");
+                Day = int.Parse(scan.Groups[1].Value);
+            }
+        }
+        
         // get examples data
         // see if there are example attributes
         var methodInfos = solver.GetType().GetMethods(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic);

@@ -37,7 +37,6 @@ internal class MockMeta: IAutomaton
     public MockMeta(DateTime? referenceDate = null)
     {
         ReferenceDate = referenceDate;
-        //FileSystem.Directory.SetCurrentDirectory(Directory.GetCurrentDirectory());
         FileSystem.Directory.CreateDirectory(FileSystem.Directory.GetCurrentDirectory());
     }
 
@@ -50,20 +49,11 @@ internal class MockMeta: IAutomaton
     
     public DateTime? ReferenceDate { get; set; }
         
-    public DateTime Now()
-    {
-        return ReferenceDate ?? DateTime.Now;
-    }
+    public DateTime Now() => ReferenceDate ?? DateTime.Now;
 
-    public void Trace(string message)
-    {
-        Console.WriteLine(message);
-    }
+    public void Trace(string message) => Console.WriteLine(message);
 
-    public void ReportError(string message)
-    {
-        Console.WriteLine(message);
-    }
+    public void ReportError(string message) => Console.WriteLine(message);
 
     public bool AskYesNo()
     {

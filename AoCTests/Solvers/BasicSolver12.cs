@@ -24,20 +24,14 @@
 
 namespace AoC.AoCTests;
 
-[Day(13)]
-internal class SolverWithSharedExampleWithWrongId: ISolver
+public class BasicSolver12 : SolverWithParser
 {
-    public void SetupRun(DayAutomaton automaton)
+    protected override void Parse(string data)
     {
     }
 
-    public void InitRun(bool isTest, params object[] extraParameters)
-    {
-    }
-    
-    [Example("Shared example", 1)]
-    public object GetAnswer1(string data) => null;
+    public override object GetAnswer1() => 1;
 
-    [ReuseExample(1, 1)]
-    public object GetAnswer2(string data) => null;
+
+    public override object GetAnswer2() => null;
 }

@@ -28,7 +28,6 @@ namespace AoC.AoCTests;
 
 public class AutoFakeSolverWithParam : SolverWithParser
 {
- 
     public object[] GetExtraParameters() => ExtraParameters;
     
     public string Data { get; private set; }
@@ -43,10 +42,7 @@ public class AutoFakeSolverWithParam : SolverWithParser
         SetUpDay?.Invoke();
     }
 
-    protected override void Parse(string data)
-    {
-        Data = data;
-    }
+    protected override void Parse(string data) => Data = data;
 
     public override object GetAnswer1() => 1L;
 

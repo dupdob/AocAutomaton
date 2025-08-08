@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -32,6 +33,8 @@ using System.Threading.Tasks;
 
 namespace AoC
 {
+    [ExcludeFromCodeCoverage(
+        Justification = "Need to mock AoC Website for tests.")]
     public sealed class AoCClient: AoCClientBase
     {
         private readonly HttpClient _client;

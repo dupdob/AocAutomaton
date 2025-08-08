@@ -23,8 +23,10 @@
 // SOFTWARE.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AoC;
 
+[ExcludeFromCodeCoverage(Justification = "Obsolete")]
 [Obsolete("Please use Automaton.WebsiteAutomaton instead.")]
 public class HttpAutomaton(int year = 0) : Automaton(year, new HttpInterface());

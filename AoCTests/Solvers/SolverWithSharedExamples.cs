@@ -36,14 +36,8 @@ public class SolverWithSharedExamples: ISolver
     }
     
     [Example(1, "Shared example", 1)]
-    public object GetAnswer1(string data)
-    {
-        return null;
-    }
+    public object GetAnswer1(string data) => null;
 
     [ReuseExample(1, 1)]
-    public object GetAnswer2(string data)
-    {
-        return null;
-    }
+    public object GetAnswer2(string data) => null;
 }
