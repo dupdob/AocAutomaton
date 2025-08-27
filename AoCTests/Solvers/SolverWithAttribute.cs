@@ -22,6 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Generic;
+
 namespace AoC.AoCTests;
 
 [Day(13)]
@@ -36,7 +38,7 @@ public class SolverWithAttribute : ISolver
     }
  
     [Example("test", 2)]
-    public object GetAnswer1(string data) => null;
+    public virtual object GetAnswer1(string data) => null;
 
     [UnitTest("result", 1)]
     public static string SomeMethod(int param) => "result";
@@ -50,27 +52,38 @@ public class SolverWithAttribute : ISolver
 }
 
 [Day(13)]
-public class SolverWithVisualAttribute: ISolver
+internal class SolverWithSkippableAttribute : ISolver
 {
-    public const string VisualResult = "this is a visual result";
+    // number of times methods are called
+    public static Dictionary<string, int> PartOneOccurrences { get; } = new();
+    public static Dictionary<string, int> PartTwoOccurrences { get; } = new();
 
+    public static void ResetStatistics()
+    {
+        PartOneOccurrences.Clear();
+        PartTwoOccurrences.Clear();
+    }
+    
     public void SetupRun(DayAutomaton dayAutomaton)
     {
-        
     }
 
     public void InitRun(bool isTest, params object[] extraParameters)
     {
     }
 
-    [VisualResult]
+    [Skippable]
+    [Example("test", 2)]
     public object GetAnswer1(string data)
     {
-        return VisualResult;
+        PartOneOccurrences[data] = PartOneOccurrences.GetValueOrDefault(data) + 1;
+        return 2;
     }
 
+    [Example("OtherTest", 3)]
     public object GetAnswer2(string data)
     {
-        return null;
+        PartTwoOccurrences[data] = PartTwoOccurrences.GetValueOrDefault(data) + 1;
+        return 3;
     }
 }

@@ -49,6 +49,10 @@ public class DayAutomaton
     private readonly IInteract _userInterface;
     private readonly string _dataPathNameFormat;
     private readonly string _dataRootPath;
+    private string StateFileName => $"AoC-{_year,4}-{Day,2}-state.json";
+    private const string IgnoreFilter = "Aoc-*-state.json";
+    private const int LastDay = 25;
+    private bool _canSkipPart1;
 
     /// <summary>
     /// Build an automation instance
@@ -66,22 +70,18 @@ public class DayAutomaton
         _dataRootPath = _automaton.RootPath;
     }
     
-    private string StateFileName => $"AoC-{_year,4}-{Day,2}-state.json";
-    private const string IgnoreFilter = "Aoc-*-state.json";
-    private const int LastDay = 25;
-
     private string StatePathName => string.IsNullOrEmpty(DataPath)
         ? StateFileName
         : _fileSystem.Path.Combine(DataPath, StateFileName);
     
     private string DataPath => string.Format(_dataPathNameFormat, Day, _year);
     
+    private bool[] ResultIsVisual { get; } = new bool[2];
+
     /// <summary>
-    /// Build a new solver for question 2 instead of using the one build for question 1 (if sets to true).
+    /// Build a new solver for part 2 instead of using the one build for part 1 (if sets to true).
     /// </summary>
     public bool ResetBetweenQuestions { get; set; }
-
-    private bool[] ResultIsVisual { get; } = new bool[2];
 
     /// <summary>
     /// Gets/sets the current day
@@ -118,11 +118,8 @@ public class DayAutomaton
     /// <param name="defaultParameters">default integer parameters</param>
     /// <remarks>Use this method when the advent of code use some custom parameters that are not part of the input,
     /// such as an iteration count or an initial text. </remarks>
-    public void SetDefault(int part = 1, params object[] defaultParameters)
-    {
-        _defaultParameters[part - 1] = defaultParameters;
-    }
-    
+    public void SetDefault(int part = 1, params object[] defaultParameters) => _defaultParameters[part - 1] = defaultParameters;
+
     private object GetAnswer(ISolver algorithm, int id, string data)
     {
         var clock = new Stopwatch();
@@ -151,27 +148,28 @@ public class DayAutomaton
 
     private bool RunTests(int id, SolverFactory factory)
     {
-        var success = true;
         if (_tests.Count == 0)
         {
-            _automaton.Trace($"* /!\\ no test for question {id}! *");
+            _automaton.Trace($"* /!\\ no test for part {id}! *");
             return true;
         }
 
-        _automaton.Trace($"* Test question {id} *");
+        _automaton.Trace($"* Test part {id} *");
         // Is there any actual test?
         if (!_tests.Any(t => t.CanTest(id-1)))
         {
-            // we ensure at least one value is tested and request explicit confirmation
+            // we make sure at least one the provided test data is used for test 
+            // when no expected value has been provided for this part
             _tests.First().SetVisualConfirm(id-1);
         }
         
+        var success = true;
         foreach (var testData in _tests)
         {
             var expected = testData.Answers[id - 1];
             // we skip running the test if we are not interested in the result for any reason
-            if (expected == null && (id==2 || ResetBetweenQuestions) 
-                                 && !testData.VisualConfirm[id - 1])
+            if (expected == null && !testData.VisualConfirm[id - 1]
+                                 && (id==2 || ResetBetweenQuestions || _canSkipPart1))
             {
                 continue;
             }
@@ -203,7 +201,7 @@ public class DayAutomaton
 
             _automaton.Trace("Testing with:");
             _automaton.Trace(testData.Data);
-            _automaton.Trace("provided a result but no expected answer provided. Please confirm result manually (y/n). Result below.");
+            _automaton.Trace("gave a result but no expected answer provided. Please confirm this result is valid (y/n):");
             _automaton.Trace(answer.ToString());
             if (!_automaton.AskYesNo())
             {
@@ -231,10 +229,10 @@ public class DayAutomaton
     /// </summary>
     /// <param name="data">input data as a string.</param>
     /// <param name="expected">expected result (either string or a number).</param>
-    /// <param name="question">question id (1 or 2)</param>
+    /// <param name="part">part id (1 or 2)</param>
     /// <returns>The automation base instance for linked calls.</returns>
     [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
-    public DayAutomaton RegisterTestDataAndResult(string data, object expected, int question)
+    public DayAutomaton RegisterTestDataAndResult(string data, object expected, int part)
     {
         var set = _tests.FirstOrDefault(t => t.Data== data);
         if (set == null)
@@ -242,15 +240,8 @@ public class DayAutomaton
             set = new TestData(data, this);
             _tests.Add(set);
         }
-        
-        if (question == 1)
-        {
-            set.RegisterAnswer(0, expected);
-        }
-        else
-        {
-            set.RegisterAnswer(1, expected);
-        }
+
+        set.RegisterAnswer(part-1, expected);
 
         _last = set;
         return this;
@@ -274,7 +265,7 @@ public class DayAutomaton
     /// </summary>
     /// <param name="data">input data as a string.</param>
     /// <returns>The automation base instance for linked calls.</returns>
-    [Obsolete("Prefer AddExample instead.")]
+    [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
     public DayAutomaton RegisterTestData(string data)
     {
         RegisterTest(data);
@@ -308,12 +299,12 @@ public class DayAutomaton
     /// <summary>
     /// Register that the result should be manually confirmed during execution
     /// </summary>
-    /// <param name="question">question's answer to be confirmed manually</param>
+    /// <param name="part">part's answer to be confirmed manually</param>
     /// <returns>The automation base instance for linked calls.</returns>
     [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
-    public DayAutomaton AskVisualConfirm(int question)
+    public DayAutomaton AskVisualConfirm(int part)
     {
-        _last.SetVisualConfirm(question-1);
+        _last.SetVisualConfirm(part-1);
         return this;
     }
 
@@ -322,16 +313,16 @@ public class DayAutomaton
     /// </summary>
     /// <remarks>You need to declare the associated test data first with <see cref="RegisterTestData"/></remarks>
     /// <param name="expected">expected result (either string or a number).</param>
-    /// <param name="question">question id (1 or 2)</param>
+    /// <param name="part">part id (1 or 2)</param>
     /// <returns>The automation base instance for linked calls.</returns>
     [Obsolete("Prefer ExampleAttribute or AddExample method instead.")]
-    public DayAutomaton RegisterTestResult(object expected, int question = 1)
+    public DayAutomaton RegisterTestResult(object expected, int part = 1)
     {
         if (_last == null)
         {
             throw new ApplicationException("You must call RegisterTestData before calling this method.");
         }
-        if (question == 1)
+        if (part == 1)
         {
             _last.Answer1(expected);
         }
@@ -369,58 +360,74 @@ public class DayAutomaton
             }
             
             factory.CacheActive = !ResetBetweenQuestions;
-            
-            // tests if data are provided
-            var testsSucceeded = RunTests(1, factory); 
-            
             var data = GetPersonalInput();
-            if (!testsSucceeded)
-            {
-                return false;
-            }
-            
-            // perform the actual run
-            _automaton.Trace("* Computing answer 1 from your input. *");
-            var answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters[0]), 1, data);
-            _automaton.Trace($"* Attempting {answer ?? "null"} *");
-
-            if (_dayState.First.Solved)
-            {
-                _automaton.Trace($"* Answer 1 already solved: {_dayState.First.Answer} *");
-                if (answer == null || _dayState.First.Answer != answer.ToString())
-                {
-                    _automaton.Trace($"Solver no longer provides correct answer. Continue?");
-                    if (!_automaton.AskYesNo())
-                    {
-                        // we ask for confirmation
-                        return false;
-                    }
-                }
-            }
-            else if (!CheckResponse(1, answer))
-            {
-                return false;
-            }
-
-            if (Day == LastDay)
-            {
-                _automaton.Trace($"* Only one question on day {Day}. You're done! *");
-                return true;
-            }
-            
-            if (!RunTests(2, factory))
-            {
-                return false;
-            }
-
-            _automaton.Trace("* Computing answer 2 from your input. *");
-            answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters[1]), 2, data);
-            return CheckResponse(2, answer);
+            return HandlePart1(factory, data) && HandlePart2(factory, data);
         }
         finally
         {
             CleanUpDay();
         }
+    }
+
+    private bool HandlePart2(SolverFactory factory, string data)
+    {
+        if (Day == LastDay)
+        {
+            _automaton.Trace($"* Only one part on day {Day}. You're done! *");
+            return true;
+        }
+            
+        if (!RunTests(2, factory))
+        {
+            return false;
+        }
+
+        _automaton.Trace("* Computing answer 2 from your input. *");
+        var answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters[1]), 2, data);
+        return CheckResponse(2, answer);
+    }
+
+    private bool HandlePart1(SolverFactory factory, string data)
+    {
+        if (_canSkipPart1 && _dayState.First.Solved)
+        {
+            // we skip part 1
+            _automaton.Trace($"* Skipping part 1, already solved: {_dayState.First.Answer} *");
+            return true;
+        }
+
+        // tests if data are provided
+        if (!RunTests(1, factory))
+        { 
+            return false;
+        }
+            
+        // perform the actual run
+        _automaton.Trace("* Computing answer 1 from your input. *");
+        var answer = GetAnswer(factory.GetSolver(data, false, _defaultParameters[0]), 1, data);
+        _automaton.Trace($"* Attempting {answer ?? "null"} *");
+
+        if (_dayState.First.Solved)
+        {
+            _automaton.Trace($"* Answer 1 already solved: {_dayState.First.Answer} *");
+            if (_dayState.First.Answer == answer?.ToString())
+            {
+                return true;
+            }
+            
+            _automaton.Trace($"Solver no longer provides correct answer. Continue?");
+            if (!_automaton.AskYesNo())
+            {
+                // we ask for confirmation
+                return false;
+            }
+        }
+        else if (!CheckResponse(1, answer))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private bool InitializeSolver(SolverFactory factory)
@@ -429,12 +436,7 @@ public class DayAutomaton
         // use attributes
         ParseAttributes(solver);
         solver.SetupRun(this);
-        if (!CheckSetup())
-        {
-            return false;
-        }
-
-        return RunUniTest(solver);
+        return CheckSetup() && RunUniTest(solver);
     }
 
     private void ParseAttributes(ISolver solver)
@@ -482,7 +484,7 @@ public class DayAutomaton
 
     private Dictionary<int, ExampleAttribute> ParseMethodAttributes(IEnumerable<MethodInfo> methodInfos, int partId)
     {
-        // get samples declared on GetAnswser1
+        // get samples declared on method
         var samples = methodInfos
             .SelectMany(m =>m.GetCustomAttributes(typeof(ExampleAttribute), false))
             .Cast<ExampleAttribute>().ToList();
@@ -498,9 +500,22 @@ public class DayAutomaton
             AddExample(sample.Input, false).RegisterAnswer(partId, sample.Expected).WithParameters(partId, sample.Parameters);
         }
 
+        // should the result be visually interpreted? (OCR)
         if (methodInfos.Any(m => m.GetCustomAttribute(typeof(VisualResultAttribute)) != null))
         {
             ResultIsVisual[partId] = true;
+        }
+        
+        // can we skip part 1?
+        if (!methodInfos.Any(m => m.GetCustomAttribute(typeof(SkippableAttribute)) != null)) return sharedExamples;
+        // this part is skippable
+        if (partId == 0)
+        {
+            _canSkipPart1 = true;
+        }
+        else
+        {
+            _automaton.Trace("Warning: Skipping part 2 has no effect.");
         }
 
         return sharedExamples;

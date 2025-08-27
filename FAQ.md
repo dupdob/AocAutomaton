@@ -172,8 +172,9 @@ Here is a signature matching the example above:
 [UnitTest(true, 8, 5, 5, 12, 7, 2)]
 private static bool FightMonster(int hitPoints, int damage, int armor, int monsterHitPoints, int monsterDamage, int monsterArmor)
 ```
-You can declare as many test case as you need on any method in your solver class.The method should be `static`, as all
-unit tests will be run against the same instance of your solver class (in the current implementation).
+You can declare as many test case as you need on any method in your solver class. The method should be `static`., as all
+If this is an instance method, all unit tests will be run against a single instance of your solver class 
+(in the current implementation).
 
 When you run your solver, AoC Automation will automatically run all unit tests and report any failure.
 
@@ -200,6 +201,10 @@ Note that behavior is the same for test and actual puzzle data, that is if you p
 or unit test, it will also ask you to provide the result's translation (and check it against
 the expected answer).
 
-
 ### 13. How do I handle exceptions in my solver?
 Aoc Automation does not handle exceptions in your solver. They will be thrown as usual.
+
+### 14. How to I test part of my solver?
+
+See question 10 above. You can use the `UnitTestAttribute` attribute to test any part of your solver.
+This is useful for testing complex logic or algorithms that are not directly related to the puzzle input.

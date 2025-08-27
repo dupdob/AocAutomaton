@@ -2,7 +2,7 @@
 // 
 //  AocAutomaton
 // 
-//  Copyright (c) 2022 Cyrille DUPUYDAUBY
+//  Copyright (c) 2025 Cyrille DUPUYDAUBY
 // ---
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +24,27 @@
 
 namespace AoC.AoCTests;
 
-public class AutoFakeSolver: SolverWithParser
+[Day(13)]
+public class SolverWithVisualAttribute: ISolver
 {
-    public static int Count { get; private set; }
+    public const string VisualResult = "this is a visual result";
 
-    public AutoFakeSolver() => Count += 1;
-
-    public override void SetupRun(DayAutomaton httpAutomatonBase) => httpAutomatonBase.Day = 10;
-    
-    protected override void Parse(string data)
+    public void SetupRun(DayAutomaton dayAutomaton)
     {
     }
 
-    public override object GetAnswer1() => 1L;
+    public void InitRun(bool isTest, params object[] extraParameters)
+    {
+    }
 
-    public override object GetAnswer2() => "theResponse";
+    [VisualResult]
+    public object GetAnswer1(string data)
+    {
+        return VisualResult;
+    }
 
+    public object GetAnswer2(string data)
+    {
+        return null;
+    }
 }

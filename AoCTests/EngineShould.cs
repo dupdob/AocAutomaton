@@ -75,6 +75,28 @@ namespace AoC.AoCTests
         }
         
         [Test]
+        public void SkipPartOneWithSkippableAttribute()
+        {   
+            var fakeClient = new AoCFakeClient();
+            fakeClient.SetAnswerResponseFilename(1, TestHelpers.GoodAnswerFile);
+            fakeClient.SetAnswerResponseFilename(2, TestHelpers.GoodAnswerFile);
+            const string testInputData = "Silly input data";
+            fakeClient.SetInputData(testInputData);
+            var meta = new MockMeta();
+            var inputInterface = new HttpInterface(fakeClient, meta.FileSystem);
+            var engine = new DayAutomaton(meta, meta.FileSystem, inputInterface);
+            var algo = new SolverWithSkippableAttribute();
+            SolverWithSkippableAttribute.ResetStatistics();
+            engine.RunDay(new SolverFactory(() => algo));
+            // verify the first part has been skipped for one of the examples
+            Check.That(SolverWithSkippableAttribute.PartOneOccurrences).Not.ContainsKey("OtherTest");
+            //
+            SolverWithSkippableAttribute.ResetStatistics();
+            engine.RunDay(new SolverFactory(() => algo));
+            Check.That(SolverWithSkippableAttribute.PartOneOccurrences).IsEmpty();
+        }
+        
+        [Test]
         public void SetUpEverythingProperlyWhenPartHasVisualResult()
         {
             var fakeClient = new AoCFakeClient();

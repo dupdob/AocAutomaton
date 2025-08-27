@@ -48,8 +48,6 @@ namespace AoC.AoCTests
 
         public string InputData { get; private set; }
 
-        private List<(int question, string data)> AllInputs = new();
-
         public bool IsTest;
         public object[] ExtraParameters;
 
@@ -68,7 +66,6 @@ namespace AoC.AoCTests
         public object GetAnswer1(string data)
         {
             InputData = data;
-            AllInputs.Add((1, data));
             GetAnswer1Calls++;
             return _answer1;
         }
@@ -76,7 +73,6 @@ namespace AoC.AoCTests
         public object GetAnswer2(string data)
         {
             GetAnswer2Calls++;
-            AllInputs.Add((2, data));
             return _answer2;
         }
     }

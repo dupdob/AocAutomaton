@@ -50,7 +50,7 @@ public class TesterShould
         // and not the second
         Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
         // it should say that no answer was provided
-        Check.That(console.Output).Contains("* Test question 1 *");
+        Check.That(console.Output).Contains("* Test part 1 *");
         Check.That(console.Output).Contains("Test failed: got 1 instead of 2 using:");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
@@ -71,7 +71,7 @@ public class TesterShould
         // and not the second
         Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
         // it should say that no answer was provided
-        Check.That(console.Output).Contains("* Test question 1 *");
+        Check.That(console.Output).Contains("* Test part 1 *");
         Check.That(console.Output).Contains("Test failed: got no answer instead of 2 using:");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
@@ -96,7 +96,7 @@ public class TesterShould
         // and once the second
         Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
         // it should say that no answer was provided
-        Check.That(console.Output).Contains("* Test question 1 *");
+        Check.That(console.Output).Contains("* Test part 1 *");
         Check.That(console.Output).Contains("Question 2 failed!");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
@@ -137,8 +137,8 @@ public class TesterShould
         // and not the second
         Check.That(algo.GetAnswer2Calls).IsEqualTo(0);
         // it should say that no answer was provided
-        Check.That(console.Output).Contains("* Test question 1 *");
-        Check.That(console.Output).Not.Contains("Question 1");
+        Check.That(console.Output).Contains("* Test part 1 *");
+        Check.That(console.Output).Not.Contains("Part 1");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
     }
@@ -163,7 +163,7 @@ public class TesterShould
         // and not the second
         Check.That(algo.GetAnswer2Calls).IsEqualTo(1);
         // it should say that no answer was provided
-        Check.That(console.Output).Contains("* Test question 2 *");
+        Check.That(console.Output).Contains("* Test part 2 *");
         Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
@@ -306,7 +306,7 @@ public class TesterShould
         // Second test fails
         Check.That(algo.GetAnswer2Calls).IsEqualTo(1);
 
-        Check.That(console.Output).Contains("* Test question 2 *");
+        Check.That(console.Output).Contains("* Test part 2 *");
         Check.That(console.Output).Contains("Test failed: got 2 instead of 1 using:");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
@@ -333,9 +333,9 @@ public class TesterShould
         Check.That(algo.GetAnswer1Calls).IsEqualTo(3);
         // and only two times for second test (as the second test is not confirmed manually)
         Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
-        Check.That(console.Output).Contains("* Test question 2 *");
+        Check.That(console.Output).Contains("* Test part 2 *");
         Check.That(console.Output)
-            .Contains("but no expected answer provided. Please confirm result manually (y/n). Result below.");
+            .Contains("gave a result but no expected answer provided. Please confirm this result is valid (y/n):");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
     }
@@ -356,11 +356,11 @@ public class TesterShould
         using var console = new CaptureConsole();
         console.InputLine("y");
         engine.RunDay(() => algo);
-        // we have two calls to question as we confirmed the answer
+        // we have two calls to part as we confirmed the answer
         Check.That(algo.GetAnswer2Calls).IsEqualTo(2);
-        Check.That(console.Output).Contains("* Test question 2 *");
+        Check.That(console.Output).Contains("* Test part 2 *");
         Check.That(console.Output)
-            .Contains("but no expected answer provided. Please confirm result manually (y/n). Result below.");
+            .Contains("gave a result but no expected answer provided. Please confirm this result is valid (y/n):");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
     }
@@ -382,7 +382,7 @@ public void AskVisualConfirmationWhenNoExpectedValueProvided()
         Check.That(algo.GetAnswer1Calls).IsEqualTo(2);
         // and only two times for second test (as the second test is not confirmed manually)
         Check.That(console.Output)
-            .Contains("but no expected answer provided. Please confirm result manually (y/n). Result below.");
+            .Contains("gave a result but no expected answer provided. Please confirm this result is valid (y/n):");
         // it should have received the provided input data
         Check.That(algo.InputData).IsEqualTo(testInputData);
     }
