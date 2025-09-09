@@ -1,5 +1,5 @@
 
-_Note_: this document is currently a dump of the old documentation. It mostly concerns now obsolete methods.
+_Note_: this document is currently a dump of the old documentation. It mostly covers now obsolete methods.
 
 
 ## Provided solver designs

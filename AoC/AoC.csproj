@@ -2,11 +2,10 @@
 
     <PropertyGroup>
         <LangVersion>default</LangVersion>
-        <PackageVersion>1.0-alpha01</PackageVersion>
-        <Title>Advent Of Code automaton</Title>
+        <PackageVersion>1.0-RC01</PackageVersion>
+        <Title>Advent of Code Automaton</Title>
         <Authors>Cyrille DUPUYDAUBY</Authors>
-        <Description>Provides a skeleton automaton that will ease doing the AoC puzzles in C#.
-This supersedes the previous package that I can no longer update.</Description>
+        <Description>AoC Automaton provides a seamless integration framework so you can focus on solving Advent of Code puzzles. </Description>
         <TargetFrameworks>net7.0;net9.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageProjectUrl>https://github.com/dupdob/AocAutomaton</PackageProjectUrl>
@@ -15,7 +14,7 @@ This supersedes the previous package that I can no longer update.</Description>
         <RepositoryType>Git</RepositoryType>
         <Copyright>© 2022-25 Cyrille Dupuydauby</Copyright>
         <PackageTags>Aoc;C#</PackageTags>
-        <PackageReleaseNotes>Handle too high/low hints from AoC website</PackageReleaseNotes>
+        <PackageReleaseNotes>New attribute based design</PackageReleaseNotes>
         <AssemblyVersion>1.0.0.01</AssemblyVersion>
         <FileVersion>1.0.0.01</FileVersion>
         <PackageIcon>ico.png</PackageIcon>

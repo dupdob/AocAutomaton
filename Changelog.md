@@ -1,14 +1,31 @@
 # Changelog for AoC Automaton
 
-# V 1.0 alpha 01
+# V 1.0 
 ## Overview
 ### Documentation
 A FAQ as be made available to help you get started with AoC Automaton: [FAQ](FAQ.md).
 [Documentation](Documentation.md) file has been cleared as its content wad no longer relevant due to the new architecture.
 A new documentation will be provided in the future.
+AocAutomation mainly relies on Attributes to configure the solver, provides examples and their associated expected
+results, unit tests, workflow options etc...
+The FAQ provides details on how to use them.
 
 ### Extra parameters
-Add support simpler support for puzzles with extra parameters, such as the one for [Day 14-2015](https://adventofcode.com/2015/day/14).
+Add support simpler support for puzzles with extra parameters, such as the one for [Day 14-2015](https://adventofcode.com/2015/day/14). 
+Just ensure your solver class inherits from `SolverWithParam<T>` (or `SolverWithParams<T,TU>` for two parameters), 
+implement the `GetAnswer1(T param)` (or `GetAnswer1(T param1, TU param2)`) providing the default value for the
+parameter(s) in the signature. And you need to provide the appropriate value(s) for these parameter(s) for 
+examples such as:
+```csharp
+// we have an extra parameter of type int, with a default value of 1000
+// and a specific value of 165 for the example input
+[Example("example input", 1000, 165)]
+public override object GetAnswer1(int param = 1000)
+{
+    // your logic here
+}
+```
+
 
 ### Parsing input data
 Add string extension methods to simplify the parsing of input data:
@@ -31,6 +48,7 @@ List<string[]> blocks = input.SplitBlocks();
 Add unit test capability via the `UnitTest` attribute. This allows you to define unit tests for any solver method.
 See the FAQ for more details on how to use it.
 
+### 
 
 # V 0.9
 ## Overview

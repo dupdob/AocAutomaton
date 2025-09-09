@@ -10,10 +10,9 @@ limiting the need for error-prone copy/pasting.
 
 ### 2. How do I create a new solver?
 To create a new solver, you simply add a class inhering from `AocAutomation.SolverWithParser`.
-You need to override the Parse method to convert the input data into a format that your solver can work with.
+You need to override the `Parse` method to convert the text input data into a format that your solver can work with.
 Then, implement the `GetAnswer1` and `GetAnswer2` methods to compute the answers for the two parts of the puzzle.
 One last thing: you must decorate it with the `DayAttribute` attribute to specify the day of the puzzle.
-
 
 ### 3. How do I run my solver?
 You can run your solver by using the `AocAutomation.Automaton` class. You must first create
@@ -33,7 +32,6 @@ internal class Program
     }
 }
 ```
-
 ### 4. How to parse the input data?
 To parse the input data, you override the `Parse` method in your solver class, it receives the input data as a string.
 Aoc Automation provides two string extension methods to help you parse the data:
@@ -53,7 +51,6 @@ string input = "block1\nline1\nline2\n\nblock2\nline1\nline2";
 List<string[]> blocks = input.SplitBlocks();
 // blocks will contain {["block1", "line1", "line2"], ["block2", "line1", "line2"]}
 ```
-
 
 ### 5. How do I create other solvers? (_in the same project_)
 To create other solvers, you create new classes similar to the first one.
@@ -201,10 +198,15 @@ Note that behavior is the same for test and actual puzzle data, that is if you p
 or unit test, it will also ask you to provide the result's translation (and check it against
 the expected answer).
 
-### 13. How do I handle exceptions in my solver?
-Aoc Automation does not handle exceptions in your solver. They will be thrown as usual.
+### 13. My solver is slow, what can I do?
+First of all, AoCAutomaton does not impose any performance overhead on your solver.
 
-### 14. How to I test part of my solver?
 
+### 14. How do I handle exceptions in my solver?
+Aoc Automation does not catch nor handle exceptions in your solver. They will be thrown as usual
+and there is no high level exception catching for now. So you should handle them within your solver if 
+you need to.
+
+### 15. How to I test part of my solver?
 See question 10 above. You can use the `UnitTestAttribute` attribute to test any part of your solver.
 This is useful for testing complex logic or algorithms that are not directly related to the puzzle input.
